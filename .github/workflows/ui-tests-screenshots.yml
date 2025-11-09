@@ -55,15 +55,15 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       
       - name: Install CocoaPods Dependencies
-      run: |
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "  📦 Installing CocoaPods Dependencies"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        cd source/ios/AdaptiveCards
-        pod install --verbose
-        echo "✅ CocoaPods dependencies installed"
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  📦 Installing CocoaPods Dependencies"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          cd source/ios/AdaptiveCards
+          pod install --verbose
+          echo "✅ CocoaPods dependencies installed"
 
-    - name: Setup Simulator
+      - name: Setup Simulator
       id: simulator
       run: |
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
