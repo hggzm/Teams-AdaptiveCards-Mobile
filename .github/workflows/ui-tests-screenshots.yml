@@ -84,9 +84,6 @@ jobs:
           # Give it a moment to stabilize
           sleep 5
       
-      - name: Make Script Executable
-        run: chmod +x ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh
-      
       - name: Run UI Tests with Screenshots
         id: ui-tests
         continue-on-error: true
@@ -95,12 +92,15 @@ jobs:
           echo "  📱 Running UI Tests with Screenshot Capture"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
+          # Make script executable
+          chmod +x ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh
+          
           if [ -n "${{ github.event.inputs.test_name }}" ]; then
             echo "Running specific test: ${{ github.event.inputs.test_name }}"
-            ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh ${{ matrix.test-mode }} "${{ github.event.inputs.test_name }}"
+            bash ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh ${{ matrix.test-mode }} "${{ github.event.inputs.test_name }}"
           else
             echo "Running all UI tests"
-            ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh ${{ matrix.test-mode }}
+            bash ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh ${{ matrix.test-mode }}
           fi
         timeout-minutes: 45
         env:

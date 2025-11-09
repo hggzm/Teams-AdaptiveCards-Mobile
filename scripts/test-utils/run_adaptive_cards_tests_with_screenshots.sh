@@ -47,9 +47,11 @@ DESTINATION="platform=iOS Simulator,name=${DEVICE},OS=${IOS_VERSION}"
 
 # Paths
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-WORKSPACE="${SCRIPT_DIR}/source/ios/AdaptiveCards/AdaptiveCards.xcworkspace"
-SDK_PROJECT="${SCRIPT_DIR}/source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards.xcodeproj"
-VISUALIZER_PROJECT="${SCRIPT_DIR}/source/ios/AdaptiveCards/ADCIOSVisualizer/ADCIOSVisualizer.xcodeproj"
+# Find repo root (go up from scripts/test-utils to repo root)
+REPO_ROOT="$( cd "${SCRIPT_DIR}/../.." && pwd )"
+WORKSPACE="${REPO_ROOT}/source/ios/AdaptiveCards/AdaptiveCards.xcworkspace"
+SDK_PROJECT="${REPO_ROOT}/source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards.xcodeproj"
+VISUALIZER_PROJECT="${REPO_ROOT}/source/ios/AdaptiveCards/ADCIOSVisualizer/ADCIOSVisualizer.xcodeproj"
 
 # Schemes
 SDK_SCHEME="AdaptiveCards"
@@ -61,7 +63,7 @@ VISUALIZER_TEST_TARGET="ADCIOSVisualizerUITests/ADCIOSVisualizerUITests"
 
 # Screenshot configuration
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-SCREENSHOT_BASE_DIR="${SCRIPT_DIR}/screenshots"
+SCREENSHOT_BASE_DIR="${REPO_ROOT}/screenshots"
 SCREENSHOT_DIR="${SCREENSHOT_BASE_DIR}/${TIMESTAMP}"
 CAPTURE_INTERVAL=1  # Seconds between periodic screenshots (0 = disabled)
 
