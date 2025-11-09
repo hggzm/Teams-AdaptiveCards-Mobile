@@ -1013,4 +1013,18 @@
     [element tap];
 }
 
+- (void)testMagicFileInjection
+{
+    // Simple test following the same pattern as other tests
+    // Open the test card we created in samples/v1.3/Tests/
+    [self openCardForVersion:@"v1.3" forCardType:@"Tests" withCardName:@"MagicFileInjectionTest.json"];
+    [NSThread sleepForTimeInterval:1.0];
+    [self captureScreenshot:@"01_magic_file_injection_test"];
+    
+    // Scroll down to capture more of the card
+    [testApp swipeUp];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"02_scrolled_down"];
+}
+
 @end

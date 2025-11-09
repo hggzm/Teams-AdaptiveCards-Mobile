@@ -155,8 +155,11 @@ shared_ptr<SubmitAction> buildAction(const string &path, const string &title)
 
 - (void)updateAdaptiveViewWithNewPath:(NSString *)path
 {
+    // Show file browser (magic file check is now inside getAdaptiveFileBrowserView)
+    self.hidden = NO;
     NSError *error;
     NSArray *directoryContents = [_fileManager contentsOfDirectoryAtPath:path error:&error];
+    
     UIView *view = [self getAdaptiveFileBrowserView:directoryContents parentDir:path];
     [self addSubview:view];
     [_adaptiveView removeFromSuperview];

@@ -1,0 +1,214 @@
+name: Magic File Injection Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      magic_file_json:
+        description: 'Custom Adaptive Card JSON to inject and test (leave empty for default test card)'
+        required: false
+        default: ''
+
+jobs:
+  magic-file-test:
+    name: Run Magic File Injection Test
+    runs-on: macos-14
+    
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Show Environment Info
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🔧 Environment Information"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "macOS Version:"
+          sw_vers
+          echo ""
+          echo "Xcode Version:"
+          xcodebuild -version
+          echo ""
+          echo "Available Simulators:"
+          xcrun simctl list devices available | grep "iPhone"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      
+      - name: Install CocoaPods Dependencies
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  📦 Installing CocoaPods Dependencies"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          cd source/ios/AdaptiveCards
+          pod install --verbose
+          echo "✅ CocoaPods dependencies installed"
+
+      - name: Inject Custom Magic File JSON
+        if: github.event.inputs.magic_file_json != ''
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🎯 Injecting Custom Adaptive Card JSON"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Backup original file
+          cp samples/v1.3/Tests/MagicFileInjectionTest.json samples/v1.3/Tests/MagicFileInjectionTest.json.backup
+          
+          # Write custom JSON to magic file
+          echo '${{ github.event.inputs.magic_file_json }}' > samples/v1.3/Tests/MagicFileInjectionTest.json
+          
+          echo "✅ Custom JSON injected into MagicFileInjectionTest.json"
+          echo ""
+          echo "Preview (first 20 lines):"
+          head -n 20 samples/v1.3/Tests/MagicFileInjectionTest.json
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Show Test Card Info
+        if: github.event.inputs.magic_file_json == ''
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  📄 Using Default Test Card"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Default card content:"
+          cat samples/v1.3/Tests/MagicFileInjectionTest.json
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Setup Simulator
+        id: simulator
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🚀 Booting iPhone 16 simulator..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Find iPhone 16 simulator
+          SIMULATOR_ID=$(xcrun simctl list devices | grep "iPhone 16 (" | grep -v "Pro" | grep -v "Plus" | head -1 | grep -oE '\([A-F0-9\-]+\)' | tr -d '()')
+          
+          if [ -z "$SIMULATOR_ID" ]; then
+            echo "❌ iPhone 16 simulator not found"
+            exit 1
+          fi
+          
+          echo "Using simulator: $SIMULATOR_ID"
+          
+          # Boot the simulator
+          xcrun simctl boot "$SIMULATOR_ID" || true
+          
+          # Wait for simulator to be ready
+          echo "Waiting for simulator to fully boot..."
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          
+          echo "✅ Simulator ready"
+      
+      - name: Run Magic File Injection Test
+        id: magic-test
+        continue-on-error: true
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🎯 Running Magic File Injection Test"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Make script executable
+          chmod +x ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh
+          
+          # Run only the magic file injection test
+          bash ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh visualizer testMagicFileInjection
+        timeout-minutes: 20
+        env:
+          FASTLANE_SKIP_UPDATE_CHECK: true
+          FASTLANE_DISABLE_COLORS: true
+      
+      - name: Restore Original Magic File
+        if: always() && github.event.inputs.magic_file_json != ''
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🔄 Restoring Original Magic File"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          if [ -f samples/v1.3/Tests/MagicFileInjectionTest.json.backup ]; then
+            mv samples/v1.3/Tests/MagicFileInjectionTest.json.backup samples/v1.3/Tests/MagicFileInjectionTest.json
+            echo "✅ Restored original MagicFileInjectionTest.json"
+          fi
+
+      - name: Collect Test Results
+        if: always()
+        id: test-results
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  📊 Collecting Test Results"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Find latest screenshot directory
+          LATEST_DIR=$(ls -td screenshots/*/ 2>/dev/null | head -1)
+          
+          if [ -z "$LATEST_DIR" ]; then
+            echo "⚠️ No screenshot directory found"
+            echo "test_status=unknown" >> $GITHUB_OUTPUT
+            echo "screenshot_count=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "Screenshot directory: $LATEST_DIR"
+          
+          # Count screenshots
+          XCTEST_COUNT=$(ls "$LATEST_DIR"visualizer/xctest_*.png 2>/dev/null | wc -l | xargs)
+          AUTO_COUNT=$(ls "$LATEST_DIR"visualizer/auto_*.png 2>/dev/null | wc -l | xargs)
+          TOTAL_COUNT=$((XCTEST_COUNT + AUTO_COUNT))
+          
+          echo "XCTest screenshots: $XCTEST_COUNT"
+          echo "Auto screenshots: $AUTO_COUNT"
+          echo "Total screenshots: $TOTAL_COUNT"
+          
+          # Determine test status
+          if [ "${{ steps.magic-test.outcome }}" == "success" ]; then
+            TEST_STATUS="✅ Passed"
+            echo "test_status=passed" >> $GITHUB_OUTPUT
+          else
+            TEST_STATUS="❌ Failed"
+            echo "test_status=failed" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "screenshot_count=$TOTAL_COUNT" >> $GITHUB_OUTPUT
+          echo "xctest_count=$XCTEST_COUNT" >> $GITHUB_OUTPUT
+          echo "auto_count=$AUTO_COUNT" >> $GITHUB_OUTPUT
+          
+          # Create summary
+          echo "## 🎯 Magic File Injection Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** $TEST_STATUS" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ github.event.inputs.magic_file_json }}" ]; then
+            echo "**Card Source:** 🎯 Custom JSON injected via workflow input" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Card Source:** 📄 Default test card" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "**Total Screenshots:** $TOTAL_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "  - XCTest Screenshots: $XCTEST_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "  - Auto Screenshots: $AUTO_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📸 What Was Captured" >> $GITHUB_STEP_SUMMARY
+          echo "- Initial card load (after 1.0s render time)" >> $GITHUB_STEP_SUMMARY
+          echo "- Card after scrolling down (after 0.5s)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 Download artifacts below to view the screenshots" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: magic-file-screenshots-${{ github.run_number }}
+          path: |
+            screenshots/**/visualizer/*.png
+            !screenshots/**/TestResults.xcresult/**
+          if-no-files-found: warn
+          retention-days: 30
+          compression-level: 6
+      
+      - name: Upload Test Results Bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: magic-file-test-results-${{ github.run_number }}
+          path: screenshots/**/TestResults.xcresult
+          if-no-files-found: warn
+          retention-days: 14
