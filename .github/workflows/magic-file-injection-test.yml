@@ -55,13 +55,22 @@ jobs:
           # Backup original file
           cp samples/v1.3/Tests/MagicFileInjectionTest.json samples/v1.3/Tests/MagicFileInjectionTest.json.backup
           
-          # Write custom JSON to magic file
-          echo '${{ github.event.inputs.magic_file_json }}' > samples/v1.3/Tests/MagicFileInjectionTest.json
+          # Write custom JSON to magic file using printf to handle the input properly
+          printf '%s\n' '${{ github.event.inputs.magic_file_json }}' > samples/v1.3/Tests/MagicFileInjectionTest.json
           
           echo "✅ Custom JSON injected into MagicFileInjectionTest.json"
           echo ""
+          echo "File size: $(wc -c < samples/v1.3/Tests/MagicFileInjectionTest.json) bytes"
+          echo ""
           echo "Preview (first 20 lines):"
           head -n 20 samples/v1.3/Tests/MagicFileInjectionTest.json
+          echo ""
+          echo "Validating JSON syntax..."
+          if python3 -m json.tool samples/v1.3/Tests/MagicFileInjectionTest.json > /dev/null 2>&1; then
+            echo "✅ JSON is valid"
+          else
+            echo "⚠️ JSON validation failed - continuing anyway"
+          fi
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
@@ -177,7 +186,8 @@ jobs:
           echo "## 🎯 Magic File Injection Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Status:** $TEST_STATUS" >> $GITHUB_STEP_SUMMARY
-          if [ -n "${{ github.event.inputs.magic_file_json }}" ]; then
+          # Check if custom JSON was provided (safer check)
+          if [ -f samples/v1.3/Tests/MagicFileInjectionTest.json.backup ]; then
             echo "**Card Source:** 🎯 Custom JSON injected via workflow input" >> $GITHUB_STEP_SUMMARY
           else
             echo "**Card Source:** 📄 Default test card" >> $GITHUB_STEP_SUMMARY
