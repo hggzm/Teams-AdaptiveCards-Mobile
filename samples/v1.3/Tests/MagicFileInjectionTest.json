@@ -1,0 +1,24 @@
+{
+  "type": "AdaptiveCard",
+  "version": "1.3",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "🎯 Magic File Injection Test",
+      "size": "large",
+      "weight": "bolder",
+      "color": "accent"
+    },
+    {
+      "type": "TextBlock",
+      "text": "This card demonstrates the magic file injection system working correctly!",
+      "wrap": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "If you can see this, the system is ready for CI/CD integration.",
+      "wrap": true,
+      "color": "good"
+    }
+  ]
+}
