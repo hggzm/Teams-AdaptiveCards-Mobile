@@ -7,7 +7,7 @@ on:
       - 'source/ios/**'
       - 'samples/**'
       - '.github/workflows/ui-tests-screenshots.yml'
-      - 'run_adaptive_cards_tests_with_screenshots.sh'
+      - 'scripts/test-utils/**'
   
   push:
     branches: [ main, master ]
@@ -54,38 +54,40 @@ jobs:
           xcrun simctl list devices available | grep "iPhone"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       
-      - name: Setup iOS Simulator
+      - name: Install CocoaPods Dependencies
         run: |
-          echo "🚀 Booting iPhone 16 simulator..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  📦 Installing CocoaPods Dependencies"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          cd source/ios/AdaptiveCards
+          pod install --verbose
+          echo "✅ CocoaPods dependencies installed"
+
+      - name: Setup Simulator
+        id: simulator
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🚀 Booting iPhone 16 simulator..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
-          # Create iPhone 16 if it doesn't exist (for older Xcode versions)
-          DEVICE_ID=$(xcrun simctl list devices available | grep "iPhone 16 (" | head -1 | grep -o '([^)]*-[^)]*)' | tr -d '()')
+          # Find iPhone 16 simulator
+          SIMULATOR_ID=$(xcrun simctl list devices | grep "iPhone 16 (" | grep -v "Pro" | grep -v "Plus" | head -1 | grep -oE '\([A-F0-9\-]+\)' | tr -d '()')
           
-          if [ -z "$DEVICE_ID" ]; then
-            echo "Creating iPhone 16 simulator..."
-            DEVICE_ID=$(xcrun simctl create "iPhone 16" "iPhone 16")
+          if [ -z "$SIMULATOR_ID" ]; then
+            echo "❌ iPhone 16 simulator not found"
+            exit 1
           fi
           
-          echo "Using simulator: $DEVICE_ID"
+          echo "Using simulator: $SIMULATOR_ID"
           
-          # Boot simulator
-          xcrun simctl boot "$DEVICE_ID" || echo "Simulator already booted"
+          # Boot the simulator
+          xcrun simctl boot "$SIMULATOR_ID" || true
           
-          # Wait for boot
+          # Wait for simulator to be ready
           echo "Waiting for simulator to fully boot..."
-          for i in {1..30}; do
-            if xcrun simctl bootstatus "$DEVICE_ID" | grep -q "Boot status: Booted"; then
-              echo "✅ Simulator booted successfully"
-              break
-            fi
-            sleep 2
-          done
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
           
-          # Give it a moment to stabilize
-          sleep 5
-      
-      - name: Make Script Executable
-        run: chmod +x ./run_adaptive_cards_tests_with_screenshots.sh
+          echo "✅ Simulator ready"
       
       - name: Run UI Tests with Screenshots
         id: ui-tests
@@ -95,12 +97,15 @@ jobs:
           echo "  📱 Running UI Tests with Screenshot Capture"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
+          # Make script executable
+          chmod +x ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh
+          
           if [ -n "${{ github.event.inputs.test_name }}" ]; then
             echo "Running specific test: ${{ github.event.inputs.test_name }}"
-            ./run_adaptive_cards_tests_with_screenshots.sh ${{ matrix.test-mode }} "${{ github.event.inputs.test_name }}"
+            bash ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh ${{ matrix.test-mode }} "${{ github.event.inputs.test_name }}"
           else
             echo "Running all UI tests"
-            ./run_adaptive_cards_tests_with_screenshots.sh ${{ matrix.test-mode }}
+            bash ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh ${{ matrix.test-mode }}
           fi
         timeout-minutes: 45
         env:
@@ -202,77 +207,27 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
       
-      - name: Comment on PR
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const testStatus = '${{ steps.test-results.outputs.test_status }}';
-            const screenshotCount = '${{ steps.test-results.outputs.screenshot_count }}';
-            const xctestCount = '${{ steps.test-results.outputs.xctest_count }}';
-            const autoCount = '${{ steps.test-results.outputs.auto_count }}';
-            const testMode = '${{ matrix.test-mode }}';
-            const runNumber = '${{ github.run_number }}';
-            const runId = '${{ github.run_id }}';
-            
-            const statusEmoji = testStatus === 'passed' ? '✅' : '❌';
-            const statusText = testStatus === 'passed' ? '**PASSED**' : '**FAILED**';
-            
-            const comment = `## ${statusEmoji} UI Test Results - ${statusText}
-            
-            ### 📱 Test Information
-            - **Mode:** \`${testMode}\`
-            - **Status:** ${statusText}
-            - **Total Screenshots:** ${screenshotCount}
-              - XCTest Screenshots: ${xctestCount}
-              - Auto Screenshots: ${autoCount}
-            
-            ### 📸 View Screenshots
-            
-            Download the artifacts from the workflow run to view captured screenshots:
-            
-            | Artifact | Description |
-            |----------|-------------|
-            | \`xctest-screenshots-${testMode}-${runNumber}\` | Screenshots captured within test code |
-            | \`auto-screenshots-${testMode}-${runNumber}\` | Automated periodic screenshots |
-            | \`all-screenshots-${testMode}-${runNumber}\` | All screenshots combined |
-            | \`test-results-bundle-${testMode}-${runNumber}\` | Complete XCTest result bundle |
-            
-            ### 🔗 Links
-            
-            [📊 View Workflow Run](${context.payload.repository.html_url}/actions/runs/${runId})
-            
-            ---
-            <details>
-            <summary>💡 How to use screenshots</summary>
-            
-            1. Go to the [workflow run](${context.payload.repository.html_url}/actions/runs/${runId})
-            2. Scroll to the **Artifacts** section at the bottom
-            3. Download the desired artifact
-            4. Extract and view the PNG files
-            
-            **XCTest screenshots** (\`xctest_*.png\`) show specific UI states captured during test execution.
-            **Auto screenshots** (\`auto_*.png\`) are captured periodically during test execution.
-            
-            </details>
-            `;
-            
-            try {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: comment
-              });
-            } catch (error) {
-              console.log('Failed to create comment:', error);
-            }
-      
-      - name: Check Test Status
-        if: steps.ui-tests.outcome == 'failure'
+      - name: Generate Test Summary
+        if: always()
         run: |
-          echo "❌ UI tests failed"
-          exit 1
+          echo "## 📱 UI Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Mode:** \`${{ matrix.test-mode }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ steps.test-results.outputs.test_status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Total Screenshots:** ${{ steps.test-results.outputs.screenshot_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "  - XCTest Screenshots: ${{ steps.test-results.outputs.xctest_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "  - Auto Screenshots: ${{ steps.test-results.outputs.auto_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### � Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download artifacts from the workflow run to view captured screenshots." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact | Description |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| \`xctest-screenshots-${{ matrix.test-mode }}-${{ github.run_number }}\` | Screenshots captured within test code |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`auto-screenshots-${{ matrix.test-mode }}-${{ github.run_number }}\` | Automated periodic screenshots |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`all-screenshots-${{ matrix.test-mode }}-${{ github.run_number }}\` | All screenshots combined |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`test-results-bundle-${{ matrix.test-mode }}-${{ github.run_number }}\` | Complete XCTest result bundle |" >> $GITHUB_STEP_SUMMARY
 
   summary:
     name: Test Summary
