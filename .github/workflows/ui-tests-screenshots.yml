@@ -7,7 +7,7 @@ on:
       - 'source/ios/**'
       - 'samples/**'
       - '.github/workflows/ui-tests-screenshots.yml'
-      - 'run_adaptive_cards_tests_with_screenshots.sh'
+      - 'scripts/test-utils/**'
   
   push:
     branches: [ main, master ]
@@ -85,7 +85,7 @@ jobs:
           sleep 5
       
       - name: Make Script Executable
-        run: chmod +x ./run_adaptive_cards_tests_with_screenshots.sh
+        run: chmod +x ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh
       
       - name: Run UI Tests with Screenshots
         id: ui-tests
@@ -97,10 +97,10 @@ jobs:
           
           if [ -n "${{ github.event.inputs.test_name }}" ]; then
             echo "Running specific test: ${{ github.event.inputs.test_name }}"
-            ./run_adaptive_cards_tests_with_screenshots.sh ${{ matrix.test-mode }} "${{ github.event.inputs.test_name }}"
+            ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh ${{ matrix.test-mode }} "${{ github.event.inputs.test_name }}"
           else
             echo "Running all UI tests"
-            ./run_adaptive_cards_tests_with_screenshots.sh ${{ matrix.test-mode }}
+            ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh ${{ matrix.test-mode }}
           fi
         timeout-minutes: 45
         env:
