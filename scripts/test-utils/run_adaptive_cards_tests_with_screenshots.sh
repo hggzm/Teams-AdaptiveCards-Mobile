@@ -43,7 +43,7 @@ NC='\033[0m'
 
 DEVICE="iPhone 16"
 IOS_VERSION="18.6"
-DESTINATION="platform=iOS Simulator,name=${DEVICE},OS=${IOS_VERSION}"
+# DESTINATION will be set dynamically based on booted simulator
 
 # Paths
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -270,6 +270,22 @@ run_sdk_tests() {
     local test_name="${1:-}"
     
     print_header "🧪 Running AdaptiveCards SDK Tests"
+    
+    # Get simulator ID and set destination
+    local sim_id=$(get_simulator_id)
+    if [ -z "$sim_id" ]; then
+        echo -e "${RED}❌ Could not find simulator: $DEVICE${NC}"
+        return 1
+    fi
+    
+    # Set destination using simulator ID
+    DESTINATION="platform=iOS Simulator,id=${sim_id}"
+    
+    # Boot simulator if needed
+    if ! xcrun simctl list devices | grep "$sim_id" | grep -q "Booted"; then
+        boot_simulator "$sim_id"
+    fi
+    
     print_config
     
     echo -e "${YELLOW}ℹ${NC} SDK tests are unit tests without UI - skipping screenshot capture"
@@ -341,6 +357,9 @@ run_visualizer_tests() {
     fi
     
     echo -e "${CYAN}Simulator ID: ${sim_id}${NC}"
+    
+    # Set destination using simulator ID
+    DESTINATION="platform=iOS Simulator,id=${sim_id}"
     
     # Boot simulator if needed
     if ! xcrun simctl list devices | grep "$sim_id" | grep -q "Booted"; then
