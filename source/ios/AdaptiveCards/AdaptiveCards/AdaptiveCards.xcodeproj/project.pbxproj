@@ -337,6 +337,18 @@
 		84AE295A27FFA26F00D01B82 /* ContentSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 84AE295527FFA26F00D01B82 /* ContentSource.h */; };
 		84AE295B27FFA26F00D01B82 /* CaptionSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 84AE295627FFA26F00D01B82 /* CaptionSource.h */; };
 		84AE295C27FFA26F00D01B82 /* CaptionSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84AE295727FFA26F00D01B82 /* CaptionSource.cpp */; };
+		9003A4572E99F70D00722657 /* ChainOfThoughtModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9003A4492E99F70D00722657 /* ChainOfThoughtModels.swift */; };
+		9003A4582E99F70D00722657 /* AdaptiveCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9003A4542E99F70D00722657 /* AdaptiveCardView.swift */; };
+		9003A4592E99F70D00722657 /* StreamingHostingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9003A44C2E99F70D00722657 /* StreamingHostingView.swift */; };
+		9003A45A2E99F70D00722657 /* StreamingTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9003A44F2E99F70D00722657 /* StreamingTextView.swift */; };
+		9003A45B2E99F70D00722657 /* StreamingTextHostingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9003A44E2E99F70D00722657 /* StreamingTextHostingView.swift */; };
+		9003A45C2E99F70D00722657 /* AdaptiveCardTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9003A4532E99F70D00722657 /* AdaptiveCardTableView.swift */; };
+		9003A45D2E99F70D00722657 /* StreamingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9003A44D2E99F70D00722657 /* StreamingModels.swift */; };
+		9003A45E2E99F70D00722657 /* AdaptiveCardElementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9003A4512E99F70D00722657 /* AdaptiveCardElementView.swift */; };
+		9003A45F2E99F70D00722657 /* AdaptiveCardsSharedSwiftModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9003A4522E99F70D00722657 /* AdaptiveCardsSharedSwiftModel.swift */; };
+		9003A4602E99F70D00722657 /* ChainOfThoughtHostingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9003A4482E99F70D00722657 /* ChainOfThoughtHostingView.swift */; };
+		9003A4612E99F70D00722657 /* ChainOfThoughtView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9003A44A2E99F70D00722657 /* ChainOfThoughtView.swift */; };
+		9003A4622E99F70D00722657 /* SwiftAdaptiveCardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9003A4552E99F70D00722657 /* SwiftAdaptiveCardViewModel.swift */; };
 		901FE9AA2E04BD9800CD77C6 /* SwiftParseContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 901FE9972E04BD9800CD77C6 /* SwiftParseContext.swift */; };
 		901FE9AB2E04BD9800CD77C6 /* SwiftMarkDownHtmlGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 901FE9902E04BD9800CD77C6 /* SwiftMarkDownHtmlGenerator.swift */; };
 		901FE9AC2E04BD9800CD77C6 /* SwiftActionElementParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 901FE9892E04BD9800CD77C6 /* SwiftActionElementParser.swift */; };
@@ -389,6 +401,11 @@
 		901FEA052E04BE3D00CD77C6 /* MarkDownUnitTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 901FE9E22E04BE3D00CD77C6 /* MarkDownUnitTest.swift */; };
 		901FEA062E04BE3D00CD77C6 /* AdaptiveCardParseExceptionTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 901FE9D42E04BE3D00CD77C6 /* AdaptiveCardParseExceptionTest.swift */; };
 		901FEA072E04BE3D00CD77C6 /* SemanticVersionTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 901FE9E62E04BE3D00CD77C6 /* SemanticVersionTest.swift */; };
+		907D60DE2E9CA7F90098818B /* OpenAIAppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907D60DB2E9CA7F90098818B /* OpenAIAppView.swift */; };
+		907D60DF2E9CA7F90098818B /* WebViewContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907D60DC2E9CA7F90098818B /* WebViewContainer.swift */; };
+		907D60E02E9CA7F90098818B /* OpenAIAppModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907D60DA2E9CA7F90098818B /* OpenAIAppModels.swift */; };
+		907D60E12E9CA7F90098818B /* OpenAIAppHostingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907D60D92E9CA7F90098818B /* OpenAIAppHostingView.swift */; };
+		907D60E42E9CAEA10098818B /* ACOAdaptiveCard+OpenAIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907D60E22E9CAEA10098818B /* ACOAdaptiveCard+OpenAIApp.swift */; };
 		B35633222C060D7900F1C999 /* ValueChangedActionTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = B35633212C060D7900F1C999 /* ValueChangedActionTests.mm */; };
 		B35633242C060EEF00F1C999 /* ValueChangedActionValid.json in Resources */ = {isa = PBXBuildFile; fileRef = B35633232C060EEF00F1C999 /* ValueChangedActionValid.json */; };
 		B35633272C06E4FC00F1C999 /* ValueChangedActionInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = B35633262C06E4FC00F1C999 /* ValueChangedActionInvalid.json */; };
@@ -1024,6 +1041,18 @@
 		84AE295527FFA26F00D01B82 /* ContentSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ContentSource.h; path = ../../../../shared/cpp/ObjectModel/ContentSource.h; sourceTree = "<group>"; };
 		84AE295627FFA26F00D01B82 /* CaptionSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CaptionSource.h; path = ../../../../shared/cpp/ObjectModel/CaptionSource.h; sourceTree = "<group>"; };
 		84AE295727FFA26F00D01B82 /* CaptionSource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CaptionSource.cpp; path = ../../../../shared/cpp/ObjectModel/CaptionSource.cpp; sourceTree = "<group>"; };
+		9003A4482E99F70D00722657 /* ChainOfThoughtHostingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChainOfThoughtHostingView.swift; sourceTree = "<group>"; };
+		9003A4492E99F70D00722657 /* ChainOfThoughtModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChainOfThoughtModels.swift; sourceTree = "<group>"; };
+		9003A44A2E99F70D00722657 /* ChainOfThoughtView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChainOfThoughtView.swift; sourceTree = "<group>"; };
+		9003A44C2E99F70D00722657 /* StreamingHostingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamingHostingView.swift; sourceTree = "<group>"; };
+		9003A44D2E99F70D00722657 /* StreamingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamingModels.swift; sourceTree = "<group>"; };
+		9003A44E2E99F70D00722657 /* StreamingTextHostingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamingTextHostingView.swift; sourceTree = "<group>"; };
+		9003A44F2E99F70D00722657 /* StreamingTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamingTextView.swift; sourceTree = "<group>"; };
+		9003A4512E99F70D00722657 /* AdaptiveCardElementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveCardElementView.swift; sourceTree = "<group>"; };
+		9003A4522E99F70D00722657 /* AdaptiveCardsSharedSwiftModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveCardsSharedSwiftModel.swift; sourceTree = "<group>"; };
+		9003A4532E99F70D00722657 /* AdaptiveCardTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveCardTableView.swift; sourceTree = "<group>"; };
+		9003A4542E99F70D00722657 /* AdaptiveCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveCardView.swift; sourceTree = "<group>"; };
+		9003A4552E99F70D00722657 /* SwiftAdaptiveCardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftAdaptiveCardViewModel.swift; sourceTree = "<group>"; };
 		901FE9892E04BD9800CD77C6 /* SwiftActionElementParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftActionElementParser.swift; sourceTree = "<group>"; };
 		901FE98A2E04BD9800CD77C6 /* SwiftAdaptiveBase64Util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftAdaptiveBase64Util.swift; sourceTree = "<group>"; };
 		901FE98B2E04BD9800CD77C6 /* SwiftElementParserRegistration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftElementParserRegistration.swift; sourceTree = "<group>"; };
@@ -1076,6 +1105,11 @@
 		901FE9E72E04BE3D00CD77C6 /* TableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableTests.swift; sourceTree = "<group>"; };
 		901FE9E82E04BE3D00CD77C6 /* TextParsingTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextParsingTest.swift; sourceTree = "<group>"; };
 		901FE9E92E04BE3D00CD77C6 /* UnsupportedtypesParsingTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnsupportedtypesParsingTest.swift; sourceTree = "<group>"; };
+		907D60D92E9CA7F90098818B /* OpenAIAppHostingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIAppHostingView.swift; sourceTree = "<group>"; };
+		907D60DA2E9CA7F90098818B /* OpenAIAppModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIAppModels.swift; sourceTree = "<group>"; };
+		907D60DB2E9CA7F90098818B /* OpenAIAppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIAppView.swift; sourceTree = "<group>"; };
+		907D60DC2E9CA7F90098818B /* WebViewContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewContainer.swift; sourceTree = "<group>"; };
+		907D60E22E9CAEA10098818B /* ACOAdaptiveCard+OpenAIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ACOAdaptiveCard+OpenAIApp.swift"; sourceTree = "<group>"; };
 		9240A5BA903EB4E235296A01 /* Pods-AdaptiveCards.apprelease.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AdaptiveCards.apprelease.xcconfig"; path = "Target Support Files/Pods-AdaptiveCards/Pods-AdaptiveCards.apprelease.xcconfig"; sourceTree = "<group>"; };
 		92C9540BDB87B09349BF0018 /* Pods-AdaptiveCards-AdaptiveCardsTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AdaptiveCards-AdaptiveCardsTests.release.xcconfig"; path = "Target Support Files/Pods-AdaptiveCards-AdaptiveCardsTests/Pods-AdaptiveCards-AdaptiveCardsTests.release.xcconfig"; sourceTree = "<group>"; };
 		B35633212C060D7900F1C999 /* ValueChangedActionTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ValueChangedActionTests.mm; sourceTree = "<group>"; };
@@ -1671,6 +1705,42 @@
 			name = Action.Execute;
 			sourceTree = "<group>";
 		};
+		9003A44B2E99F70D00722657 /* ChainOfThought */ = {
+			isa = PBXGroup;
+			children = (
+				9003A4482E99F70D00722657 /* ChainOfThoughtHostingView.swift */,
+				9003A4492E99F70D00722657 /* ChainOfThoughtModels.swift */,
+				9003A44A2E99F70D00722657 /* ChainOfThoughtView.swift */,
+			);
+			path = ChainOfThought;
+			sourceTree = "<group>";
+		};
+		9003A4502E99F70D00722657 /* Streaming */ = {
+			isa = PBXGroup;
+			children = (
+				9003A44C2E99F70D00722657 /* StreamingHostingView.swift */,
+				9003A44D2E99F70D00722657 /* StreamingModels.swift */,
+				9003A44E2E99F70D00722657 /* StreamingTextHostingView.swift */,
+				9003A44F2E99F70D00722657 /* StreamingTextView.swift */,
+			);
+			path = Streaming;
+			sourceTree = "<group>";
+		};
+		9003A4562E99F70D00722657 /* SwiftViews */ = {
+			isa = PBXGroup;
+			children = (
+				907D60DD2E9CA7F90098818B /* OpenAIApp */,
+				9003A44B2E99F70D00722657 /* ChainOfThought */,
+				9003A4502E99F70D00722657 /* Streaming */,
+				9003A4512E99F70D00722657 /* AdaptiveCardElementView.swift */,
+				9003A4522E99F70D00722657 /* AdaptiveCardsSharedSwiftModel.swift */,
+				9003A4532E99F70D00722657 /* AdaptiveCardTableView.swift */,
+				9003A4542E99F70D00722657 /* AdaptiveCardView.swift */,
+				9003A4552E99F70D00722657 /* SwiftAdaptiveCardViewModel.swift */,
+			);
+			path = SwiftViews;
+			sourceTree = "<group>";
+		};
 		901FE98F2E04BD9800CD77C6 /* Legacy */ = {
 			isa = PBXGroup;
 			children = (
@@ -1709,6 +1779,7 @@
 		901FE9A92E04BD9800CD77C6 /* SwiftAdaptiveCards */ = {
 			isa = PBXGroup;
 			children = (
+				9003A4562E99F70D00722657 /* SwiftViews */,
 				FA7F18E32E884AC60052B2C6 /* ExpressionEngine */,
 				901FE98F2E04BD9800CD77C6 /* Legacy */,
 				901FE9912E04BD9800CD77C6 /* Markdown */,
@@ -1774,6 +1845,26 @@
 				901FE9EA2E04BE3D00CD77C6 /* ObjectModel */,
 			);
 			path = SwiftAdaptiveCardsTests;
+			sourceTree = "<group>";
+		};
+		907D60DD2E9CA7F90098818B /* OpenAIApp */ = {
+			isa = PBXGroup;
+			children = (
+				907D60E32E9CAEA10098818B /* Extensions */,
+				907D60D92E9CA7F90098818B /* OpenAIAppHostingView.swift */,
+				907D60DA2E9CA7F90098818B /* OpenAIAppModels.swift */,
+				907D60DB2E9CA7F90098818B /* OpenAIAppView.swift */,
+				907D60DC2E9CA7F90098818B /* WebViewContainer.swift */,
+			);
+			path = OpenAIApp;
+			sourceTree = "<group>";
+		};
+		907D60E32E9CAEA10098818B /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				907D60E22E9CAEA10098818B /* ACOAdaptiveCard+OpenAIApp.swift */,
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 		CFF954CC29819A6B00F321C3 /* DynamicTypeahead */ = {
@@ -2957,6 +3048,10 @@
 				F448730D1EE2261F00FCAFAE /* FactSet.cpp in Sources */,
 				F44873031EE2261F00FCAFAE /* ColumnSet.cpp in Sources */,
 				F4FE456F1F1985200071D9E5 /* ACRColumnSetView.mm in Sources */,
+				907D60DE2E9CA7F90098818B /* OpenAIAppView.swift in Sources */,
+				907D60DF2E9CA7F90098818B /* WebViewContainer.swift in Sources */,
+				907D60E02E9CA7F90098818B /* OpenAIAppModels.swift in Sources */,
+				907D60E12E9CA7F90098818B /* OpenAIAppHostingView.swift in Sources */,
 				F44872FD1EE2261F00FCAFAE /* ChoiceInput.cpp in Sources */,
 				F42E51761FEC3840008F9642 /* MarkDownParsedResult.cpp in Sources */,
 				46DF37AE2C902F97001C254F /* Carousel.cpp in Sources */,
@@ -3108,6 +3203,19 @@
 				6B2242A32233439E000ACDA1 /* TextElementProperties.cpp in Sources */,
 				F42741251EFB274C00399FBB /* ACRColumnRenderer.mm in Sources */,
 				F4F255701F98247600A80D39 /* ACOBaseActionElement.mm in Sources */,
+				9003A4572E99F70D00722657 /* ChainOfThoughtModels.swift in Sources */,
+				9003A4582E99F70D00722657 /* AdaptiveCardView.swift in Sources */,
+				9003A4592E99F70D00722657 /* StreamingHostingView.swift in Sources */,
+				9003A45A2E99F70D00722657 /* StreamingTextView.swift in Sources */,
+				9003A45B2E99F70D00722657 /* StreamingTextHostingView.swift in Sources */,
+				9003A45C2E99F70D00722657 /* AdaptiveCardTableView.swift in Sources */,
+				9003A45D2E99F70D00722657 /* StreamingModels.swift in Sources */,
+				9003A45E2E99F70D00722657 /* AdaptiveCardElementView.swift in Sources */,
+				9003A45F2E99F70D00722657 /* AdaptiveCardsSharedSwiftModel.swift in Sources */,
+				9003A4602E99F70D00722657 /* ChainOfThoughtHostingView.swift in Sources */,
+				9003A4612E99F70D00722657 /* ChainOfThoughtView.swift in Sources */,
+				907D60E42E9CAEA10098818B /* ACOAdaptiveCard+OpenAIApp.swift in Sources */,
+				9003A4622E99F70D00722657 /* SwiftAdaptiveCardViewModel.swift in Sources */,
 				46DF37BC2C903377001C254F /* ACRCarouselViewRenderer.mm in Sources */,
 				6BFF99C525FFF53E0028069F /* AuthCardButton.cpp in Sources */,
 				4608EE8E2BF5C1B800543095 /* ACRRatingInputRenderer.mm in Sources */,
