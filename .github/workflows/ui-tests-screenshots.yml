@@ -21,11 +21,6 @@ on:
         required: false
         default: ''
 
-permissions:
-  contents: read
-  pull-requests: write
-  issues: write
-
 jobs:
   ui-tests:
     name: Run UI Tests with Screenshots
@@ -212,72 +207,27 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
       
-      - name: Comment on PR
-        if: always() && github.event_name == 'pull_request'
-        continue-on-error: true
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const testStatus = '${{ steps.test-results.outputs.test_status }}';
-            const screenshotCount = '${{ steps.test-results.outputs.screenshot_count }}';
-            const xctestCount = '${{ steps.test-results.outputs.xctest_count }}';
-            const autoCount = '${{ steps.test-results.outputs.auto_count }}';
-            const testMode = '${{ matrix.test-mode }}';
-            const runNumber = '${{ github.run_number }}';
-            const runId = '${{ github.run_id }}';
-            
-            const statusEmoji = testStatus === 'passed' ? '✅' : '❌';
-            const statusText = testStatus === 'passed' ? '**PASSED**' : '**FAILED**';
-            
-            const comment = `## ${statusEmoji} UI Test Results - ${statusText}
-            
-            ### 📱 Test Information
-            - **Mode:** \`${testMode}\`
-            - **Status:** ${statusText}
-            - **Total Screenshots:** ${screenshotCount}
-              - XCTest Screenshots: ${xctestCount}
-              - Auto Screenshots: ${autoCount}
-            
-            ### 📸 View Screenshots
-            
-            Download the artifacts from the workflow run to view captured screenshots:
-            
-            | Artifact | Description |
-            |----------|-------------|
-            | \`xctest-screenshots-${testMode}-${runNumber}\` | Screenshots captured within test code |
-            | \`auto-screenshots-${testMode}-${runNumber}\` | Automated periodic screenshots |
-            | \`all-screenshots-${testMode}-${runNumber}\` | All screenshots combined |
-            | \`test-results-bundle-${testMode}-${runNumber}\` | Complete XCTest result bundle |
-            
-            ### 🔗 Links
-            
-            [📊 View Workflow Run](${context.payload.repository.html_url}/actions/runs/${runId})
-            
-            ---
-            <details>
-            <summary>💡 How to use screenshots</summary>
-            
-            1. Go to the [workflow run](${context.payload.repository.html_url}/actions/runs/${runId})
-            2. Scroll to the **Artifacts** section at the bottom
-            3. Download the desired artifact
-            4. Extract and view the PNG files
-            
-            **XCTest screenshots** (\`xctest_*.png\`) show specific UI states captured during test execution.
-            **Auto screenshots** (\`auto_*.png\`) are captured periodically during test execution.
-            
-            </details>
-            `;
-            
-            try {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: comment
-              });
-            } catch (error) {
-              console.log('Failed to create comment:', error);
-            }
+      - name: Generate Test Summary
+        if: always()
+        run: |
+          echo "## 📱 UI Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Mode:** \`${{ matrix.test-mode }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ steps.test-results.outputs.test_status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Total Screenshots:** ${{ steps.test-results.outputs.screenshot_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "  - XCTest Screenshots: ${{ steps.test-results.outputs.xctest_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "  - Auto Screenshots: ${{ steps.test-results.outputs.auto_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### � Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download artifacts from the workflow run to view captured screenshots." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact | Description |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| \`xctest-screenshots-${{ matrix.test-mode }}-${{ github.run_number }}\` | Screenshots captured within test code |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`auto-screenshots-${{ matrix.test-mode }}-${{ github.run_number }}\` | Automated periodic screenshots |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`all-screenshots-${{ matrix.test-mode }}-${{ github.run_number }}\` | All screenshots combined |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`test-results-bundle-${{ matrix.test-mode }}-${{ github.run_number }}\` | Complete XCTest result bundle |" >> $GITHUB_STEP_SUMMARY
       
       - name: Check Test Status
         if: steps.ui-tests.outcome == 'failure'
