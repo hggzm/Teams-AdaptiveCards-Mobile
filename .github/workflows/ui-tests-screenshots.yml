@@ -64,30 +64,30 @@ jobs:
           echo "✅ CocoaPods dependencies installed"
 
       - name: Setup Simulator
-      id: simulator
-      run: |
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "  🚀 Booting iPhone 16 simulator..."
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        
-        # Find iPhone 16 simulator
-        SIMULATOR_ID=$(xcrun simctl list devices | grep "iPhone 16 (" | grep -v "Pro" | grep -v "Plus" | head -1 | grep -oE '\([A-F0-9\-]+\)' | tr -d '()')
-        
-        if [ -z "$SIMULATOR_ID" ]; then
-          echo "❌ iPhone 16 simulator not found"
-          exit 1
-        fi
-        
-        echo "Using simulator: $SIMULATOR_ID"
-        
-        # Boot the simulator
-        xcrun simctl boot "$SIMULATOR_ID" || true
-        
-        # Wait for simulator to be ready
-        echo "Waiting for simulator to fully boot..."
-        xcrun simctl bootstatus "$SIMULATOR_ID" -b
-        
-        echo "✅ Simulator ready"
+        id: simulator
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🚀 Booting iPhone 16 simulator..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Find iPhone 16 simulator
+          SIMULATOR_ID=$(xcrun simctl list devices | grep "iPhone 16 (" | grep -v "Pro" | grep -v "Plus" | head -1 | grep -oE '\([A-F0-9\-]+\)' | tr -d '()')
+          
+          if [ -z "$SIMULATOR_ID" ]; then
+            echo "❌ iPhone 16 simulator not found"
+            exit 1
+          fi
+          
+          echo "Using simulator: $SIMULATOR_ID"
+          
+          # Boot the simulator
+          xcrun simctl boot "$SIMULATOR_ID" || true
+          
+          # Wait for simulator to be ready
+          echo "Waiting for simulator to fully boot..."
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          
+          echo "✅ Simulator ready"
       
       - name: Run UI Tests with Screenshots
         id: ui-tests
