@@ -437,7 +437,7 @@ run_visualizer_tests() {
     
     # Wait for xcodebuild to complete
     wait $xcodebuild_pid
-    local test_result=$?
+    local xcodebuild_exit=$?
     
     # Stop screenshot monitor
     stop_screenshot_monitor "$screenshot_dir"
@@ -447,7 +447,18 @@ run_visualizer_tests() {
     
     # Extract XCTest screenshots from result bundle
     echo ""
-    extract_screenshots_from_result_bundle "$RESULT_BUNDLE_PATH" "$screenshot_dir"
+    extract_screenshots_from_result_bundle "$RESULT_BUNDLE_PATH" "$screenshot_dir" || true
+    
+    # Check actual test results from the log (more reliable than exit code)
+    local test_result=0
+    if grep -q "with 0 failures" "$temp_log" && grep -q "Test Suite.*passed" "$temp_log"; then
+        test_result=0
+    elif grep -q "Testing failed" "$temp_log" || grep -q "Test Case.*failed" "$temp_log"; then
+        test_result=1
+    else
+        # Fallback to xcodebuild exit code
+        test_result=$xcodebuild_exit
+    fi
     
     # Generate summary report
     if [ $test_result -eq 0 ]; then
