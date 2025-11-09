@@ -54,35 +54,40 @@ jobs:
           xcrun simctl list devices available | grep "iPhone"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       
-      - name: Setup iOS Simulator
-        run: |
-          echo "🚀 Booting iPhone 16 simulator..."
-          
-          # Create iPhone 16 if it doesn't exist (for older Xcode versions)
-          DEVICE_ID=$(xcrun simctl list devices available | grep "iPhone 16 (" | head -1 | grep -o '([^)]*-[^)]*)' | tr -d '()')
-          
-          if [ -z "$DEVICE_ID" ]; then
-            echo "Creating iPhone 16 simulator..."
-            DEVICE_ID=$(xcrun simctl create "iPhone 16" "iPhone 16")
-          fi
-          
-          echo "Using simulator: $DEVICE_ID"
-          
-          # Boot simulator
-          xcrun simctl boot "$DEVICE_ID" || echo "Simulator already booted"
-          
-          # Wait for boot
-          echo "Waiting for simulator to fully boot..."
-          for i in {1..30}; do
-            if xcrun simctl bootstatus "$DEVICE_ID" | grep -q "Boot status: Booted"; then
-              echo "✅ Simulator booted successfully"
-              break
-            fi
-            sleep 2
-          done
-          
-          # Give it a moment to stabilize
-          sleep 5
+      - name: Install CocoaPods Dependencies
+      run: |
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "  📦 Installing CocoaPods Dependencies"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        cd source/ios/AdaptiveCards
+        pod install --verbose
+        echo "✅ CocoaPods dependencies installed"
+
+    - name: Setup Simulator
+      id: simulator
+      run: |
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "  🚀 Booting iPhone 16 simulator..."
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        # Find iPhone 16 simulator
+        SIMULATOR_ID=$(xcrun simctl list devices | grep "iPhone 16 (" | grep -v "Pro" | grep -v "Plus" | head -1 | grep -oE '\([A-F0-9\-]+\)' | tr -d '()')
+        
+        if [ -z "$SIMULATOR_ID" ]; then
+          echo "❌ iPhone 16 simulator not found"
+          exit 1
+        fi
+        
+        echo "Using simulator: $SIMULATOR_ID"
+        
+        # Boot the simulator
+        xcrun simctl boot "$SIMULATOR_ID" || true
+        
+        # Wait for simulator to be ready
+        echo "Waiting for simulator to fully boot..."
+        xcrun simctl bootstatus "$SIMULATOR_ID" -b
+        
+        echo "✅ Simulator ready"
       
       - name: Run UI Tests with Screenshots
         id: ui-tests
