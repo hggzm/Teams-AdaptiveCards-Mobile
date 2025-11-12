@@ -1,0 +1,248 @@
+name: UI Tests with Screenshots
+
+on:
+  pull_request:
+    branches: [ main, master, develop ]
+    paths:
+      - 'source/ios/**'
+      - 'samples/**'
+      - '.github/workflows/ui-tests-screenshots.yml'
+      - 'scripts/test-utils/**'
+  
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'source/ios/**'
+  
+  workflow_dispatch:
+    inputs:
+      test_name:
+        description: 'Specific test to run (leave empty for all tests)'
+        required: false
+        default: ''
+
+jobs:
+  ui-tests:
+    name: Run UI Tests with Screenshots
+    runs-on: macos-14
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        test-mode: [visualizer]
+    
+    timeout-minutes: 60
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Show Environment Info
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🔧 Environment Information"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "macOS Version:"
+          sw_vers
+          echo ""
+          echo "Xcode Version:"
+          xcodebuild -version
+          echo ""
+          echo "Available Simulators:"
+          xcrun simctl list devices available | grep "iPhone"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      
+      - name: Install CocoaPods Dependencies
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  📦 Installing CocoaPods Dependencies"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          cd source/ios/AdaptiveCards
+          pod install --verbose
+          echo "✅ CocoaPods dependencies installed"
+
+      - name: Setup Simulator
+        id: simulator
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🚀 Booting iPhone 16 simulator..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Find iPhone 16 simulator
+          SIMULATOR_ID=$(xcrun simctl list devices | grep "iPhone 16 (" | grep -v "Pro" | grep -v "Plus" | head -1 | grep -oE '\([A-F0-9\-]+\)' | tr -d '()')
+          
+          if [ -z "$SIMULATOR_ID" ]; then
+            echo "❌ iPhone 16 simulator not found"
+            exit 1
+          fi
+          
+          echo "Using simulator: $SIMULATOR_ID"
+          
+          # Boot the simulator
+          xcrun simctl boot "$SIMULATOR_ID" || true
+          
+          # Wait for simulator to be ready
+          echo "Waiting for simulator to fully boot..."
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          
+          echo "✅ Simulator ready"
+      
+      - name: Run UI Tests with Screenshots
+        id: ui-tests
+        continue-on-error: true
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  📱 Running UI Tests with Screenshot Capture"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Make script executable
+          chmod +x ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh
+          
+          if [ -n "${{ github.event.inputs.test_name }}" ]; then
+            echo "Running specific test: ${{ github.event.inputs.test_name }}"
+            bash ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh ${{ matrix.test-mode }} "${{ github.event.inputs.test_name }}"
+          else
+            echo "Running all UI tests"
+            bash ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh ${{ matrix.test-mode }}
+          fi
+        timeout-minutes: 45
+        env:
+          FASTLANE_SKIP_UPDATE_CHECK: true
+          FASTLANE_DISABLE_COLORS: true
+      
+      - name: Collect Test Results
+        if: always()
+        id: test-results
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  📊 Collecting Test Results"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Find latest screenshot directory
+          LATEST_DIR=$(ls -td screenshots/*/ 2>/dev/null | head -1)
+          
+          if [ -z "$LATEST_DIR" ]; then
+            echo "⚠️ No screenshot directory found"
+            echo "test_status=unknown" >> $GITHUB_OUTPUT
+            echo "screenshot_count=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "Screenshot directory: $LATEST_DIR"
+          
+          # Count screenshots
+          XCTEST_COUNT=$(ls "$LATEST_DIR"visualizer/xctest_*.png 2>/dev/null | wc -l | xargs)
+          AUTO_COUNT=$(ls "$LATEST_DIR"visualizer/auto_*.png 2>/dev/null | wc -l | xargs)
+          TOTAL_COUNT=$((XCTEST_COUNT + AUTO_COUNT))
+          
+          echo "XCTest screenshots: $XCTEST_COUNT"
+          echo "Auto screenshots: $AUTO_COUNT"
+          echo "Total screenshots: $TOTAL_COUNT"
+          
+          # Determine test status
+          if [ "${{ steps.ui-tests.outcome }}" == "success" ]; then
+            TEST_STATUS="✅ Passed"
+            echo "test_status=passed" >> $GITHUB_OUTPUT
+          else
+            TEST_STATUS="❌ Failed"
+            echo "test_status=failed" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "screenshot_count=$TOTAL_COUNT" >> $GITHUB_OUTPUT
+          echo "xctest_count=$XCTEST_COUNT" >> $GITHUB_OUTPUT
+          echo "auto_count=$AUTO_COUNT" >> $GITHUB_OUTPUT
+          echo "screenshot_dir=$(basename $LATEST_DIR)" >> $GITHUB_OUTPUT
+          
+          # Create summary
+          echo "## 📱 UI Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** $TEST_STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Mode:** ${{ matrix.test-mode }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Total Screenshots:** $TOTAL_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "  - XCTest Screenshots: $XCTEST_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "  - Auto Screenshots: $AUTO_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 Download artifacts to view screenshots" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload XCTest Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xctest-screenshots-${{ matrix.test-mode }}-${{ github.run_number }}
+          path: screenshots/**/visualizer/xctest_*.png
+          if-no-files-found: warn
+          retention-days: 30
+          compression-level: 6
+      
+      - name: Upload Auto Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-screenshots-${{ matrix.test-mode }}-${{ github.run_number }}
+          path: screenshots/**/visualizer/auto_*.png
+          if-no-files-found: warn
+          retention-days: 30
+          compression-level: 6
+      
+      - name: Upload All Screenshots (Combined)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-screenshots-${{ matrix.test-mode }}-${{ github.run_number }}
+          path: |
+            screenshots/**/visualizer/*.png
+            !screenshots/**/TestResults.xcresult/**
+          if-no-files-found: warn
+          retention-days: 30
+          compression-level: 6
+      
+      - name: Upload Test Results Bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-bundle-${{ matrix.test-mode }}-${{ github.run_number }}
+          path: screenshots/**/TestResults.xcresult
+          if-no-files-found: warn
+          retention-days: 14
+      
+      - name: Generate Test Summary
+        if: always()
+        run: |
+          echo "## 📱 UI Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Mode:** \`${{ matrix.test-mode }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ steps.test-results.outputs.test_status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Total Screenshots:** ${{ steps.test-results.outputs.screenshot_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "  - XCTest Screenshots: ${{ steps.test-results.outputs.xctest_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "  - Auto Screenshots: ${{ steps.test-results.outputs.auto_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### � Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download artifacts from the workflow run to view captured screenshots." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact | Description |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| \`xctest-screenshots-${{ matrix.test-mode }}-${{ github.run_number }}\` | Screenshots captured within test code |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`auto-screenshots-${{ matrix.test-mode }}-${{ github.run_number }}\` | Automated periodic screenshots |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`all-screenshots-${{ matrix.test-mode }}-${{ github.run_number }}\` | All screenshots combined |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`test-results-bundle-${{ matrix.test-mode }}-${{ github.run_number }}\` | Complete XCTest result bundle |" >> $GITHUB_STEP_SUMMARY
+
+  summary:
+    name: Test Summary
+    needs: ui-tests
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## 🎉 UI Tests Workflow Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All test jobs have finished. Check individual job results above." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Artifacts Available" >> $GITHUB_STEP_SUMMARY
+          echo "- XCTest screenshots (captured in test code)" >> $GITHUB_STEP_SUMMARY
+          echo "- Auto screenshots (periodic captures)" >> $GITHUB_STEP_SUMMARY
+          echo "- Complete test result bundles" >> $GITHUB_STEP_SUMMARY

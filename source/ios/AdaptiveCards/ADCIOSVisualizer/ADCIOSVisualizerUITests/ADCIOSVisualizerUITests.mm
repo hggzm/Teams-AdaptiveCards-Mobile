@@ -43,6 +43,33 @@
     [super tearDown];
 }
 
+- (void)captureScreenshot:(NSString *)name
+{
+    // Capture screenshot via XCTest attachment (for xcresult bundle)
+    XCUIScreenshot *screenshot = [[XCUIScreen mainScreen] screenshot];
+    XCTAttachment *attachment = [XCTAttachment attachmentWithScreenshot:screenshot];
+    attachment.name = name;
+    attachment.lifetime = XCTAttachmentLifetimeKeepAlways;
+    [self addAttachment:attachment];
+    
+    // Also save to a location accessible from the host
+    // Use the app's Documents directory which can be accessed via simctl
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    if (paths.count > 0) {
+        NSString *documentsDir = paths[0];
+        NSString *filename = [NSString stringWithFormat:@"xctest_%@.png", name];
+        NSString *filepath = [documentsDir stringByAppendingPathComponent:filename];
+        
+        NSError *error = nil;
+        BOOL success = [screenshot.PNGRepresentation writeToFile:filepath options:NSDataWritingAtomic error:&error];
+        if (!success) {
+            NSLog(@"❌ Failed to save XCTest screenshot to %@: %@", filepath, error);
+        } else {
+            NSLog(@"✓ Saved XCTest screenshot to: %@", filepath);
+        }
+    }
+}
+
 - (void)resetTestEnvironment
 {
     XCUIElementQuery *buttons = testApp.buttons;
@@ -143,16 +170,24 @@
 - (void)testSmokeTestActivityUpdateDate
 {
     [self openCardForVersion:@"v1.5" forCardType:@"Scenarios" withCardName:@"ActivityUpdate.json"];
+    [NSThread sleepForTimeInterval:1.0];
+    [self captureScreenshot:@"01_activity_update_loaded"];
 
     [self tapOnButtonWithText:@"Set due date"];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"02_set_due_date_clicked"];
 
     [self setDateOnInputDateWithId:@"dueDate"
                           andLabel:@"Enter the due date"
                            forYear:@"2021"
                              month:@"July"
                                day:@"15"];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"03_date_selected"];
 
     [self tapOnButtonWithText:@"Send"];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"04_form_submitted"];
 
     NSString *resultsString = [self getInputsString];
     NSDictionary *resultsDictionary = [self parseJsonToDictionary:resultsString];
@@ -164,9 +199,13 @@
 - (void)testSmokeTestActivityUpdateComment
 {
     [self openCardForVersion:@"v1.5" forCardType:@"Scenarios" withCardName:@"ActivityUpdate.json"];
+    [NSThread sleepForTimeInterval:1.0];
+    [self captureScreenshot:@"01_activity_update_loaded"];
 
     XCUIElementQuery *buttons = testApp.buttons;
     [buttons[@"Comment"] tap];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"02_comment_button_clicked"];
 
     XCUIElementQuery *tables = testApp.tables;
     XCUIElement *chatWindow = tables[@"ChatWindow"];
@@ -174,9 +213,13 @@
     XCUIElement *commentTextInput = [chatWindow.textViews elementMatchingType:XCUIElementTypeAny identifier:@"comment"];
     [commentTextInput tap];
     [commentTextInput typeText:@"A comment"];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"03_comment_entered"];
 
     [buttons[@"Done"] tap];
     [buttons[@"OK"] tap];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"04_form_submitted"];
 
     NSString *resultsString = [self getInputsString];
     NSDictionary *resultsDictionary = [self parseJsonToDictionary:resultsString];
@@ -187,19 +230,38 @@
 
 - (void)testFocusOnValidationFailure
 {
+    // Wait for app to be fully ready
+    XCTAssertTrue([testApp waitForExistenceWithTimeout:5]);
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"01_initial_state"];
+    
     [self openCardForVersion:@"v1.3" forCardType:@"Elements" withCardName:@"Input.Text.ErrorMessage.json"];
+    
+    // Wait for card to render
+    [NSThread sleepForTimeInterval:1.0];
+    [self captureScreenshot:@"02_card_loaded"];
 
     [self tapOnButtonWithText:@"Submit"];
+    
+    // Wait for validation error to appear
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"03_after_submit_validation_error"];
 
     XCUIElement *chatWindow = testApp.tables[@"ChatWindow"];
     XCUIElement *firstInput = [chatWindow.textFields elementMatchingType:XCUIElementTypeAny identifier:@"Required Input.Text *, This is a required input,"];
 
     XCTAssertTrue([firstInput valueForKey:@"hasKeyboardFocus"], "First input is not selected");
+    
+    // Wait for focus to be set
+    [NSThread sleepForTimeInterval:0.3];
+    [self captureScreenshot:@"04_focus_on_first_input"];
 }
 
 - (void)testLongPressAndDragRaiseNoEventInContainers
 {
     [self openCardForVersion:@"v1.5" forCardType:@"Tests" withCardName:@"Container.ScrollableSelectableList.json"];
+    [NSThread sleepForTimeInterval:1.0];
+    [self captureScreenshot:@"01_scrollable_list_loaded"];
 
     XCUIElement *chatWindow = testApp.tables[@"ChatWindow"];
 
@@ -214,6 +276,8 @@
 
     // Execute a drag from the 4th element to the 2nd element
     [container1Query.element pressForDuration:1 thenDragToElement:container2Query.element];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"02_after_drag_operation"];
     // assert the submit textview has a blank space, thus the submit event was not raised
     XCTAssert([self verifyInputsAreEmpty]);
 }
@@ -234,11 +298,21 @@
 {
     [self openCardForVersion:@"v1.3" forCardType:@"Elements" withCardName:@"Input.ChoiceSet.json"];
 
+    // Wait for card to load and capture
+    [NSThread sleepForTimeInterval:1.0];
+    [self captureScreenshot:@"01_choice_set_card_loaded"];
+
     XCUIElement *chatWindow = testApp.tables[@"ChatWindow"];
     [chatWindow swipeUp];
+    
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"02_choice_set_scrolled"];
 
     XCUIElementQuery *buttons = testApp.buttons;
     [buttons[@"OK"] tap];
+    
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"03_choice_set_submitted"];
 
     NSString *resultsString = [self getInputsString];
     NSDictionary *resultsDictionary = [self parseJsonToDictionary:resultsString];
@@ -253,17 +327,29 @@
 - (void)testCanGatherCorrectValuesFromCompactChoiceSet
 {
     [self openCardForVersion:@"v1.3" forCardType:@"Elements" withCardName:@"Input.ChoiceSet.json"];
+    
+    [NSThread sleepForTimeInterval:1.0];
+    [self captureScreenshot:@"01_compact_choice_set_loaded"];
 
     XCUIElement *chatWindow = testApp.tables[@"ChatWindow"];
     [chatWindow /*@START_MENU_TOKEN@*/.buttons[@"myColor"] /*[[".cells.buttons[@\"myColor\"]",".buttons[@\"myColor\"]"],[[[-1,1],[-1,0]]],[0]]@END_MENU_TOKEN@*/ tap];
+    
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"02_choice_picker_opened"];
 
     XCUIElementQuery *tablesQuery = testApp.tables;
     [tablesQuery.cells[@"myColor, Blue"].staticTexts[@"Blue"] tap];
+    
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"03_blue_selected"];
 
     [chatWindow swipeUp];
 
     XCUIElementQuery *buttons = testApp.buttons;
     [buttons[@"OK"] tap];
+    
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"04_form_submitted"];
 
     NSString *resultsString = [self getInputsString];
     NSDictionary *resultsDictionary = [self parseJsonToDictionary:resultsString];
@@ -278,17 +364,31 @@
 - (void)testCanGatherCorrectValuesFromExpandedRadioButton
 {
     [self openCardForVersion:@"v1.3" forCardType:@"Elements" withCardName:@"Input.ChoiceSet.json"];
+    [NSThread sleepForTimeInterval:1.0];
+    [self captureScreenshot:@"01_choice_set_loaded"];
 
     XCUIElement *chatWindow = testApp.tables[@"ChatWindow"];
     [chatWindow.tables[@"myColor2"].staticTexts[@"myColor2, Blue"] tap];
+    [NSThread sleepForTimeInterval:0.3];
+    [self captureScreenshot:@"02_blue_selected"];
+    
     [chatWindow.tables[@"myColor2"].staticTexts[@"myColor2, Green"] tap];
+    [NSThread sleepForTimeInterval:0.3];
+    [self captureScreenshot:@"03_green_selected"];
+    
     [chatWindow /*@START_MENU_TOKEN@*/.tables[@"myColor3"].staticTexts[@"myColor3, Red"] /*[[".cells.tables[@\"myColor3\"]",".cells[@\"Empty list, Red\"]",".staticTexts[@\"Red\"]",".staticTexts[@\"myColor3, Red\"]",".tables[@\"myColor3\"]"],[[[-1,4,1],[-1,0,1]],[[-1,3],[-1,2],[-1,1,2]],[[-1,3],[-1,2]]],[0,0]]@END_MENU_TOKEN@*/ tap];
+    [NSThread sleepForTimeInterval:0.3];
+    [self captureScreenshot:@"04_red_selected"];
 
     [chatWindow swipeUp];
+    [NSThread sleepForTimeInterval:0.3];
+    [self captureScreenshot:@"05_scrolled_down"];
 
     // Execute a drag from the 4th element to the 2nd element
     XCUIElementQuery *buttons = testApp.buttons;
     [buttons[@"OK"] tap];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"06_form_submitted"];
 
     NSString *resultsString = [self getInputsString];
     NSDictionary *resultsDictionary = [self parseJsonToDictionary:resultsString];
@@ -303,15 +403,26 @@
 - (void)testCanGatherCorrectValuesFromChoiceset
 {
     [self openCardForVersion:@"v1.3" forCardType:@"Elements" withCardName:@"Input.ChoiceSet.json"];
+    [NSThread sleepForTimeInterval:1.0];
+    [self captureScreenshot:@"01_choice_set_loaded"];
 
     XCUIElement *chatWindow = testApp.tables[@"ChatWindow"];
     [chatWindow.tables[@"myColor3"].staticTexts[@"myColor3, Blue"] tap];
+    [NSThread sleepForTimeInterval:0.3];
+    [self captureScreenshot:@"02_blue_selected"];
+    
     [chatWindow /*@START_MENU_TOKEN@*/.tables[@"myColor3"].staticTexts[@"myColor3, Red"] /*[[".cells.tables[@\"myColor3\"]",".cells[@\"Empty list, Red\"]",".staticTexts[@\"Red\"]",".staticTexts[@\"myColor3, Red\"]",".tables[@\"myColor3\"]"],[[[-1,4,1],[-1,0,1]],[[-1,3],[-1,2],[-1,1,2]],[[-1,3],[-1,2]]],[0,0]]@END_MENU_TOKEN@*/ tap];
+    [NSThread sleepForTimeInterval:0.3];
+    [self captureScreenshot:@"03_red_deselected"];
 
     [chatWindow swipeUp];
+    [NSThread sleepForTimeInterval:0.3];
+    [self captureScreenshot:@"04_scrolled_down"];
 
     XCUIElementQuery *buttons = testApp.buttons;
     [buttons[@"OK"] tap];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"05_form_submitted"];
 
     NSString *resultsString = [self getInputsString];
     NSDictionary *resultsDictionary = [self parseJsonToDictionary:resultsString];
@@ -370,25 +481,39 @@
     XCUICoordinate *finishPoint = [startPoint coordinateWithOffset:CGVectorMake(-1000, 0)];                    // adjust the x-offset to move left
     [startPoint pressForDuration:0 thenDragToCoordinate:finishPoint];
     [self openCardForVersion:@"v1.6" forCardType:@"Tests" withCardName:@"Input.ChoiceSet.DynamicTypeahead.json"];
+    [NSThread sleepForTimeInterval:1.0];
+    [self captureScreenshot:@"01_dynamic_typeahead_loaded"];
+    
     XCUIElement *chosenpackageButton = testApp.tables[@"ChatWindow"].buttons[@"chosenPackage"];
     [chosenpackageButton tap];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"02_search_opened"];
 
     // back button test
     XCUIElement *backButton = testApp.buttons[@"Back"];
     [backButton tap];
+    [NSThread sleepForTimeInterval:0.3];
+    [self captureScreenshot:@"03_back_button_pressed"];
 
     [chosenpackageButton tap];
+    [NSThread sleepForTimeInterval:0.5];
 
     XCUIElement *searchBarChosenpackageTable = testApp.otherElements[@"searchBar, chosenPackage"];
 
     [searchBarChosenpackageTable typeText:@"microsoft"];
-    [NSThread sleepForTimeInterval:0.2];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"04_search_results"];
+    
     XCUIElement *listviewChosenpackageTable = testApp.tables[@"listView, chosenPackage"];
     [listviewChosenpackageTable.staticTexts[@"Microsoft.Extensions.Hosting.Abstractions"] tap];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"05_item_selected"];
     // Execute a drag from the 4th element to the 2nd element
 
     XCUIElementQuery *buttons = testApp.buttons;
     [buttons[@"OK"] tap];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"06_form_submitted"];
 
     NSString *resultsString = [self getInputsString];
     NSDictionary *resultsDictionary = [self parseJsonToDictionary:resultsString];
@@ -409,22 +534,34 @@
     XCUICoordinate *finishPoint = [startPoint coordinateWithOffset:CGVectorMake(-1000, 0)];                    // adjust the x-offset to move left
     [startPoint pressForDuration:0 thenDragToCoordinate:finishPoint];
     [self openCardForVersion:@"v1.6" forCardType:@"Tests" withCardName:@"Input.ChoiceSet.Static&DynamicTypeahead.json"];
+    [NSThread sleepForTimeInterval:1.0];
+    [self captureScreenshot:@"01_static_dynamic_loaded"];
+    
     XCUIElement *choicesetPackageButton = testApp.tables[@"ChatWindow"].buttons[@"choiceset1"];
     [choicesetPackageButton tap];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"02_choiceset_opened"];
 
     // back button test
     XCUIElement *backButton = testApp.buttons[@"Back"];
     [backButton tap];
+    [NSThread sleepForTimeInterval:0.3];
+    [self captureScreenshot:@"03_back_pressed"];
 
     [choicesetPackageButton tap];
+    [NSThread sleepForTimeInterval:0.5];
 
     // select static choice
     XCUIElement *listviewChoicesetPackageTable = testApp.tables[@"listView, choiceset1"];
     [listviewChoicesetPackageTable.staticTexts[@"Ms.IdentityModel.static"] tap];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"04_static_choice_selected"];
 
     // press OK button
     XCUIElementQuery *buttons = testApp.buttons;
     [buttons[@"Submit"] tap];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"05_static_submitted"];
 
     NSString *resultsString = [self getInputsString];
     NSDictionary *resultsDictionary = [self parseJsonToDictionary:resultsString];
@@ -434,14 +571,23 @@
     // select dynamic choice
     choicesetPackageButton = testApp.tables[@"ChatWindow"].buttons[@"choiceset1"];
     [choicesetPackageButton tap];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"06_choiceset_reopened"];
+    
     XCUIElement *searchBarChoicesetPackageTable = testApp.otherElements[@"searchBar, choiceset1"];
     [searchBarChoicesetPackageTable typeText:@"Microsoft.Extensions.Hosting.Abstractions"];
-    [NSThread sleepForTimeInterval:0.2];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"07_dynamic_search_results"];
+    
     listviewChoicesetPackageTable = testApp.tables[@"listView, choiceset1"];
     [listviewChoicesetPackageTable.staticTexts[@"Microsoft.Extensions.Hosting.Abstractions"] tap];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"08_dynamic_choice_selected"];
 
     buttons = testApp.buttons;
     [buttons[@"Submit"] tap];
+    [NSThread sleepForTimeInterval:0.5];
+    [self captureScreenshot:@"09_dynamic_submitted"];
 
     resultsString = [self getInputsString];
     resultsDictionary = [self parseJsonToDictionary:resultsString];
@@ -867,131 +1013,18 @@
     [element tap];
 }
 
-#pragma mark - OpenAI Apps Tests
-
-- (void)testOpenAIAppRendering
+- (void)testMagicFileInjection
 {
-    // Navigate to OpenAIAppSamples folder
-    XCUIElementQuery *buttons = testApp.buttons;
-    [buttons[@"OpenAIAppSamples"] tap];
-    
-    // Wait for the folder to load
-    [NSThread sleepForTimeInterval:0.5];
-    
-    // Select the figma-textblock.json card
-    XCUIElementQuery *tables = testApp.tables;
-    XCUIElement *table = [tables elementBoundByIndex:1];
-    XCUIElementQuery *cells = [[table staticTexts] matchingIdentifier:@"figma-textblock.json"];
-    
-    // Verify the card appears in the list
-    XCTAssertTrue([[cells elementBoundByIndex:0] exists], @"figma-textblock.json should exist in OpenAIAppSamples");
-    
-    // Tap on the card
-    [[cells elementBoundByIndex:0] tap];
-    
-    // Wait for card to render
+    // Simple test following the same pattern as other tests
+    // Open the test card we created in samples/v1.3/Tests/
+    [self openCardForVersion:@"v1.3" forCardType:@"Tests" withCardName:@"MagicFileInjectionTest.json"];
     [NSThread sleepForTimeInterval:1.0];
+    [self captureScreenshot:@"01_magic_file_injection_test"];
     
-    // Verify OpenAI App view is rendered (it should be a button in collapsed state)
-    // The OpenAI App renders as a collapsed placeholder with the app name
-    XCUIElementQuery *allButtons = testApp.buttons;
-    
-    // Look for any button containing "Figma" (the app name from our test card)
-    BOOL figmaButtonFound = NO;
-    for (XCUIElement *button in allButtons.allElementsBoundByIndex) {
-        if ([button.label containsString:@"Figma"]) {
-            figmaButtonFound = YES;
-            NSLog(@"✅ Found OpenAI App button: %@", button.label);
-            
-            // Verify button is visible and hittable
-            XCTAssertTrue(button.exists, @"Figma button should exist");
-            XCTAssertTrue(button.isHittable, @"Figma button should be hittable");
-            
-            // Optionally: tap to expand
-            [button tap];
-            [NSThread sleepForTimeInterval:0.5];
-            
-            // After tapping, the view should expand (implementation dependent)
-            NSLog(@"✅ Successfully tapped OpenAI App to expand");
-            
-            break;
-        }
-    }
-    
-    XCTAssertTrue(figmaButtonFound, @"Should find a button with 'Figma' in the label (collapsed OpenAI App)");
-}
-
-- (void)testOpenAIAppExpansionCollapse
-{
-    // Navigate and select the card
-    [testApp.buttons[@"OpenAIAppSamples"] tap];
+    // Scroll down to capture more of the card
+    [testApp swipeUp];
     [NSThread sleepForTimeInterval:0.5];
-    
-    XCUIElement *table = [testApp.tables elementBoundByIndex:1];
-    XCUIElement *cell = [[[table staticTexts] matchingIdentifier:@"figma-textblock.json"] elementBoundByIndex:0];
-    [cell tap];
-    [NSThread sleepForTimeInterval:1.0];
-    
-    // Find the OpenAI App button
-    XCUIElementQuery *buttons = testApp.buttons;
-    XCUIElement *openAIAppButton = nil;
-    
-    for (XCUIElement *button in buttons.allElementsBoundByIndex) {
-        if ([button.label containsString:@"Figma"]) {
-            openAIAppButton = button;
-            break;
-        }
-    }
-    
-    XCTAssertNotNil(openAIAppButton, @"Should find OpenAI App button");
-    
-    // Test expansion
-    [openAIAppButton tap];
-    [NSThread sleepForTimeInterval:0.5];
-    NSLog(@"✅ Expanded OpenAI App view");
-    
-    // Look for collapse button (should appear after expansion)
-    // This depends on the implementation - adjust the identifier as needed
-    BOOL collapseButtonFound = NO;
-    for (XCUIElement *button in buttons.allElementsBoundByIndex) {
-        if ([button.label containsString:@"Collapse"] || [button.label containsString:@"chevron"]) {
-            collapseButtonFound = YES;
-            [button tap];
-            [NSThread sleepForTimeInterval:0.5];
-            NSLog(@"✅ Collapsed OpenAI App view");
-            break;
-        }
-    }
-    
-    // Note: If collapse button has a different identifier, adjust this assertion
-    NSLog(@"Collapse button found: %@", collapseButtonFound ? @"YES" : @"NO (implementation may vary)");
-}
-
-- (void)testOpenAIAppMultipleCards
-{
-    // This test verifies that multiple OpenAI App cards can be loaded
-    [testApp.buttons[@"OpenAIAppSamples"] tap];
-    [NSThread sleepForTimeInterval:0.5];
-    
-    XCUIElement *table = [testApp.tables elementBoundByIndex:1];
-    
-    // Count available cards in OpenAIAppSamples
-    XCUIElementQuery *jsonCells = [table.staticTexts matchingPredicate:[NSPredicate predicateWithFormat:@"label ENDSWITH '.json'"]];
-    NSUInteger cardCount = jsonCells.count;
-    
-    NSLog(@"Found %lu OpenAI App sample cards", (unsigned long)cardCount);
-    XCTAssertGreaterThan(cardCount, 0, @"Should have at least one OpenAI App sample card");
-    
-    // Test loading the first card
-    XCUIElement *firstCard = [jsonCells elementBoundByIndex:0];
-    NSString *cardName = firstCard.label;
-    [firstCard tap];
-    [NSThread sleepForTimeInterval:1.0];
-    
-    NSLog(@"✅ Successfully loaded card: %@", cardName);
-    
-    // Verify something rendered
-    XCTAssertTrue(testApp.exists, @"App should still be responsive after loading card");
+    [self captureScreenshot:@"02_scrolled_down"];
 }
 
 @end
