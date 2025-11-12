@@ -20,7 +20,7 @@
 // Can be a specific file: @"OpenAIAppSamples/figma-textblock.json"
 // Or a directory (will auto-select first .json): @"OpenAIAppSamples"
 // Set to nil to use normal file browser
-static NSString *const kAutoLoadCard = @"OpenAIAppSamples";
+static NSString *const kAutoLoadCard = nil;
 
 using namespace std;
 using namespace AdaptiveCards;
@@ -58,10 +58,10 @@ bool compare(shared_ptr<BaseActionElement> const &a, shared_ptr<BaseActionElemen
 #if APPRELEASE
         // the most of cards below v1.2 don't have updated accssibility features, but these cards do serve well as visualization test during bug bash
         // so instead of removing them, excluded these cards when built for release.
-        _restrictedPaths = [NSSet setWithObjects:@"ConsolidatedElementSamples", @"v1.0", @"v1.1", @"HostConfig", @"Templates", @"Elements", @"Tests", nil];
+        _restrictedPaths = [NSSet setWithObjects:@"ConsolidatedElementSamples", @"v1.0", @"v1.1", @"HostConfig", @"Templates", @"Elements", @"Tests", @"OpenAIAppSamples", nil];
 
 #else
-        _restrictedPaths = [NSSet setWithObjects:@"ConsolidatedElementSamples", @"HostConfig", @"Templates", nil];
+        _restrictedPaths = [NSSet setWithObjects:@"ConsolidatedElementSamples", @"HostConfig", @"Templates", @"OpenAIAppSamples", nil];
 #endif
         [self updateAdaptiveViewWithNewPath:_rootPath];
     }
