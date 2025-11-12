@@ -52,4 +52,7 @@
                   withData:(NSDictionary * _Nullable)data
                 completion:(void (^_Nullable)(id _Nullable result, NSError * _Nullable error))completion;
 
+/// SwiftUI Custom Element Renderer Helper
++ (nullable id)createSwiftUICustomElementRenderer;
+
 @end

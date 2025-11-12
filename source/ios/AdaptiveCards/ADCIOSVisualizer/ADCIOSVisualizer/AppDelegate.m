@@ -7,6 +7,8 @@
 //
 
 #import "AppDelegate.h"
+#import <AdaptiveCards/ACRRegistration.h>
+#import <AdaptiveCards/ACOAdaptiveCard.h>
 
 @interface AppDelegate ()
 
@@ -17,6 +19,19 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    // Register generalized SwiftUI custom element renderer for all SwiftUI-based custom elements
+    ACRRegistration *registration = [ACRRegistration getInstance];
+    
+    // Register the same renderer for all SwiftUI custom element types
+    // The renderer will route to the appropriate factory based on the element's type
+    id swiftUIRenderer = [ACOAdaptiveCard createSwiftUICustomElementRenderer];
+    
+    [registration setCustomElementRenderer:swiftUIRenderer key:@"Citation"];
+    NSLog(@"✅ SwiftUI Custom Element renderer registered for Citation");
+    
+    // Add more custom element types here as needed
+    // [registration setCustomElementRenderer:swiftUIRenderer key:@"AnotherCustomType"];
+    
     // Override point for customization after application launch.
     return YES;
 }

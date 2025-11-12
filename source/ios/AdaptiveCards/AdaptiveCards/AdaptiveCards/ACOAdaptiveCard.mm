@@ -281,4 +281,11 @@ using namespace AdaptiveCards;
     [TSExpressionObjCBridge evaluateExpression:expression withData:data completion:completion];
 }
 
++ (id)createSwiftUICustomElementRenderer
+{
+    // Forward to the bridge to create the SwiftUI custom element renderer
+    // This avoids header visibility issues in the visualizer app
+    return [SwiftAdaptiveCardObjcBridge createSwiftUICustomElementRenderer];
+}
+
 @end

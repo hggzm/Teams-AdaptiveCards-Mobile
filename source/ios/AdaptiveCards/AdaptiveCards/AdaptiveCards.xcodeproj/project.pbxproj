@@ -406,6 +406,11 @@
 		907D60E02E9CA7F90098818B /* OpenAIAppModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907D60DA2E9CA7F90098818B /* OpenAIAppModels.swift */; };
 		907D60E12E9CA7F90098818B /* OpenAIAppHostingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907D60D92E9CA7F90098818B /* OpenAIAppHostingView.swift */; };
 		907D60E42E9CAEA10098818B /* ACOAdaptiveCard+OpenAIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907D60E22E9CAEA10098818B /* ACOAdaptiveCard+OpenAIApp.swift */; };
+		908CE7082EC4180B00FDBC8B /* CitationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 908CE7042EC4180B00FDBC8B /* CitationView.swift */; };
+		908CE7092EC4180B00FDBC8B /* CitationExamples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 908CE7022EC4180B00FDBC8B /* CitationExamples.swift */; };
+		908CE70A2EC4180B00FDBC8B /* CitationHostingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 908CE7032EC4180B00FDBC8B /* CitationHostingView.swift */; };
+		908CE70B2EC4180B00FDBC8B /* SwiftCitationElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 908CE7062EC4180B00FDBC8B /* SwiftCitationElement.swift */; };
+		908CE70C2EC4180B00FDBC8B /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 908CE7052EC4180B00FDBC8B /* README.md */; };
 		B35633222C060D7900F1C999 /* ValueChangedActionTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = B35633212C060D7900F1C999 /* ValueChangedActionTests.mm */; };
 		B35633242C060EEF00F1C999 /* ValueChangedActionValid.json in Resources */ = {isa = PBXBuildFile; fileRef = B35633232C060EEF00F1C999 /* ValueChangedActionValid.json */; };
 		B35633272C06E4FC00F1C999 /* ValueChangedActionInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = B35633262C06E4FC00F1C999 /* ValueChangedActionInvalid.json */; };
@@ -1110,6 +1115,11 @@
 		907D60DB2E9CA7F90098818B /* OpenAIAppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIAppView.swift; sourceTree = "<group>"; };
 		907D60DC2E9CA7F90098818B /* WebViewContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewContainer.swift; sourceTree = "<group>"; };
 		907D60E22E9CAEA10098818B /* ACOAdaptiveCard+OpenAIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ACOAdaptiveCard+OpenAIApp.swift"; sourceTree = "<group>"; };
+		908CE7022EC4180B00FDBC8B /* CitationExamples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CitationExamples.swift; sourceTree = "<group>"; };
+		908CE7032EC4180B00FDBC8B /* CitationHostingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CitationHostingView.swift; sourceTree = "<group>"; };
+		908CE7042EC4180B00FDBC8B /* CitationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CitationView.swift; sourceTree = "<group>"; };
+		908CE7052EC4180B00FDBC8B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		908CE7062EC4180B00FDBC8B /* SwiftCitationElement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftCitationElement.swift; sourceTree = "<group>"; };
 		9240A5BA903EB4E235296A01 /* Pods-AdaptiveCards.apprelease.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AdaptiveCards.apprelease.xcconfig"; path = "Target Support Files/Pods-AdaptiveCards/Pods-AdaptiveCards.apprelease.xcconfig"; sourceTree = "<group>"; };
 		92C9540BDB87B09349BF0018 /* Pods-AdaptiveCards-AdaptiveCardsTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AdaptiveCards-AdaptiveCardsTests.release.xcconfig"; path = "Target Support Files/Pods-AdaptiveCards-AdaptiveCardsTests/Pods-AdaptiveCards-AdaptiveCardsTests.release.xcconfig"; sourceTree = "<group>"; };
 		B35633212C060D7900F1C999 /* ValueChangedActionTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ValueChangedActionTests.mm; sourceTree = "<group>"; };
@@ -1729,6 +1739,7 @@
 		9003A4562E99F70D00722657 /* SwiftViews */ = {
 			isa = PBXGroup;
 			children = (
+				908CE7072EC4180B00FDBC8B /* Citation */,
 				907D60DD2E9CA7F90098818B /* OpenAIApp */,
 				9003A44B2E99F70D00722657 /* ChainOfThought */,
 				9003A4502E99F70D00722657 /* Streaming */,
@@ -1865,6 +1876,18 @@
 				907D60E22E9CAEA10098818B /* ACOAdaptiveCard+OpenAIApp.swift */,
 			);
 			path = Extensions;
+			sourceTree = "<group>";
+		};
+		908CE7072EC4180B00FDBC8B /* Citation */ = {
+			isa = PBXGroup;
+			children = (
+				908CE7022EC4180B00FDBC8B /* CitationExamples.swift */,
+				908CE7032EC4180B00FDBC8B /* CitationHostingView.swift */,
+				908CE7042EC4180B00FDBC8B /* CitationView.swift */,
+				908CE7052EC4180B00FDBC8B /* README.md */,
+				908CE7062EC4180B00FDBC8B /* SwiftCitationElement.swift */,
+			);
+			path = Citation;
 			sourceTree = "<group>";
 		};
 		CFF954CC29819A6B00F321C3 /* DynamicTypeahead */ = {
@@ -2844,6 +2867,7 @@
 			files = (
 				241C67252E02DE5D0007EA18 /* FluentAssets.xcassets in Resources */,
 				24E0D48B2EB9FBF70059F8F8 /* CitationAssets.xcassets in Resources */,
+				908CE70C2EC4180B00FDBC8B /* README.md in Resources */,
 				84AE295927FFA26F00D01B82 /* CMakeLists.txt in Resources */,
 				7AD18A8F2E0293DB00A35DDD /* FluentAssets.xcassets in Resources */,
 			);
@@ -3043,6 +3067,10 @@
 				6B7B1A9220B4D2AB00260731 /* MediaSource.cpp in Sources */,
 				F44873011EE2261F00FCAFAE /* Column.cpp in Sources */,
 				CFB972022941C07A008E3795 /* ChoicesData.cpp in Sources */,
+				908CE7082EC4180B00FDBC8B /* CitationView.swift in Sources */,
+				908CE7092EC4180B00FDBC8B /* CitationExamples.swift in Sources */,
+				908CE70A2EC4180B00FDBC8B /* CitationHostingView.swift in Sources */,
+				908CE70B2EC4180B00FDBC8B /* SwiftCitationElement.swift in Sources */,
 				463C3C0E2BD8F6D100A95C4E /* ACRIconRenderer.mm in Sources */,
 				46058FD12C5CCBED00966E76 /* Layout.cpp in Sources */,
 				F448730D1EE2261F00FCAFAE /* FactSet.cpp in Sources */,

@@ -12,6 +12,11 @@
 #import "ParseResult.h"
 #import "ACOAdaptiveCardParseResult.h"
 #import "ACRParseWarningPrivate.h"
+#import "ACOBaseCardElement.h"
+#import "ACOBaseCardElementPrivate.h"
+#import "ACOHostConfig.h"
+#import "ACRView.h"
+#import "ACRContentHoldingUIView.h"
 #import "UtiliOS.h"
 
 #if __has_include(<AdaptiveCards/AdaptiveCards-Swift.h>)
@@ -95,5 +100,199 @@ using namespace AdaptiveCards;
     return NO;
 }
 
+#pragma mark - SwiftUI View Rendering Helpers
+
++ (BOOL)canRenderSwiftUIViews {
+#if SWIFT_ADAPTIVE_CARDS_AVAILABLE
+    if (@available(iOS 15.0, *)) {
+        return YES;
+    }
+#endif
+    return NO;
+}
+
++ (UIView *_Nullable)renderCitationViewFromDictionary:(NSDictionary *_Nonnull)dictionary {
+#if SWIFT_ADAPTIVE_CARDS_AVAILABLE
+    if (![self canRenderSwiftUIViews]) {
+        NSLog(@"[SwiftAdaptiveCardObjcBridge] SwiftUI views not available");
+        return nil;
+    }
+    
+    if (@available(iOS 15.0, *)) {
+        // Use the CitationViewFactory from Swift
+        UIView *citationView = [CitationViewFactory createCitationViewFrom:dictionary];
+        if (citationView) {
+            NSLog(@"[SwiftAdaptiveCardObjcBridge] Successfully created citation view");
+            return citationView;
+        } else {
+            NSLog(@"[SwiftAdaptiveCardObjcBridge] Failed to create citation view from dictionary");
+        }
+    }
+#endif
+    return nil;
+}
+
++ (BOOL)isValidCitationData:(NSDictionary *_Nonnull)dictionary {
+#if SWIFT_ADAPTIVE_CARDS_AVAILABLE
+    if (![self canRenderSwiftUIViews]) {
+        return NO;
+    }
+    
+    if (@available(iOS 15.0, *)) {
+        return [CitationViewFactory isValidCitation:dictionary];
+    }
+#endif
+    return NO;
+}
+
+#pragma mark - Generalized SwiftUI Custom Element Renderer
+
++ (UIView *_Nullable)renderSwiftUICustomElement:(ACOBaseCardElement *_Nonnull)element
+                                      viewGroup:(UIView<ACRIContentHoldingView> *_Nullable)viewGroup
+                                       rootView:(ACRView *_Nullable)rootView
+                                     hostConfig:(ACOHostConfig *_Nullable)hostConfig {
+#if SWIFT_ADAPTIVE_CARDS_AVAILABLE
+    if (![self canRenderSwiftUIViews]) {
+        NSLog(@"[SwiftAdaptiveCardObjcBridge] SwiftUI views not available");
+        return nil;
+    }
+    
+    if (@available(iOS 15.0, *)) {
+        NSLog(@"[SwiftAdaptiveCardObjcBridge] Attempting to render SwiftUI custom element");
+        
+        UIView *swiftUIView = nil;
+        
+        // Try to extract custom element data from additionalProperty
+        if ([element respondsToSelector:@selector(additionalProperty)]) {
+            NSData *additionalPropertyData = [element additionalProperty];
+            if (additionalPropertyData) {
+                NSError *error = nil;
+                NSDictionary *json = [NSJSONSerialization JSONObjectWithData:additionalPropertyData
+                                                                     options:0
+                                                                       error:&error];
+                if (json && !error) {
+                    NSString *elementType = json[@"type"];
+                    NSLog(@"[SwiftAdaptiveCardObjcBridge] Found custom element type: %@", elementType);
+                    
+                    // Route to appropriate SwiftUI view factory based on type
+                    if ([elementType isEqualToString:@"Citation"]) {
+                        swiftUIView = [CitationViewFactory createCitationViewFrom:json];
+                        
+                        if (swiftUIView) {
+                            NSLog(@"[SwiftAdaptiveCardObjcBridge] Successfully created Citation view");
+                        } else {
+                            NSLog(@"[SwiftAdaptiveCardObjcBridge] Failed to create Citation view");
+                        }
+                    }
+                    // Add more custom element types here as needed
+                    // else if ([elementType isEqualToString:@"AnotherCustomType"]) {
+                    //     swiftUIView = [AnotherCustomTypeViewFactory createFrom:json];
+                    // }
+                    else {
+                        NSLog(@"[SwiftAdaptiveCardObjcBridge] Unknown custom element type: %@", elementType);
+                    }
+                }
+            }
+        }
+        
+        // If we successfully created a SwiftUI view, configure it
+        if (swiftUIView) {
+            // Set up accessibility
+            swiftUIView.isAccessibilityElement = YES;
+            swiftUIView.accessibilityTraits = UIAccessibilityTraitButton;
+            
+            // Configure sizing
+            swiftUIView.translatesAutoresizingMaskIntoConstraints = NO;
+            
+            // Set content priorities for proper layout
+            [swiftUIView setContentHuggingPriority:UILayoutPriorityRequired
+                                           forAxis:UILayoutConstraintAxisVertical];
+            [swiftUIView setContentCompressionResistancePriority:UILayoutPriorityRequired
+                                                          forAxis:UILayoutConstraintAxisVertical];
+            
+            // Prevent clipping
+            swiftUIView.clipsToBounds = NO;
+            
+            // Add to view group if provided
+            if (viewGroup && [viewGroup respondsToSelector:@selector(addArrangedSubview:)]) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                [viewGroup performSelector:@selector(addArrangedSubview:) withObject:swiftUIView];
+#pragma clang diagnostic pop
+            }
+            
+            return swiftUIView;
+        } else {
+            NSLog(@"[SwiftAdaptiveCardObjcBridge] Failed to create SwiftUI view");
+        }
+    }
+#endif
+    
+    return nil;
+}
+
++ (id)createSwiftUICustomElementRenderer
+{
+    return [[ACRSwiftUICustomElementRenderer alloc] init];
+}
+
+@end
+
+#pragma mark - Inline SwiftUI Custom Element Renderer Implementation
+
+@implementation ACRSwiftUICustomElementRenderer
+
++ (ACRCardElementType)elemType {
+    // Use ACRCustom for all custom SwiftUI elements
+    return ACRCustom;
+}
+
+- (UIView *)render:(UIView<ACRIContentHoldingView> *)viewGroup
+          rootView:(ACRView *)rootView
+            inputs:(NSMutableArray *)inputs
+   baseCardElement:(ACOBaseCardElement *)acoElem
+        hostConfig:(ACOHostConfig *)acoConfig {
+    
+    NSLog(@"[ACRSwiftUICustomElementRenderer] Rendering custom element");
+    
+    // Delegate to the SwiftAdaptiveCardObjcBridge for actual rendering
+    UIView *swiftUIView = [SwiftAdaptiveCardObjcBridge renderSwiftUICustomElement:acoElem
+                                                                        viewGroup:viewGroup
+                                                                         rootView:rootView
+                                                                       hostConfig:acoConfig];
+    
+    if (swiftUIView) {
+        NSLog(@"[ACRSwiftUICustomElementRenderer] Successfully rendered custom element");
+        return swiftUIView;
+    }
+    
+    // Fallback: Create a simple label when SwiftUI rendering fails
+    NSLog(@"[ACRSwiftUICustomElementRenderer] SwiftUI rendering failed, using fallback");
+    
+    UILabel *fallbackLabel = [[UILabel alloc] init];
+    fallbackLabel.text = @"[Custom Element]";
+    fallbackLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightMedium];
+    fallbackLabel.textColor = [UIColor systemBlueColor];
+    fallbackLabel.backgroundColor = [[UIColor systemBlueColor] colorWithAlphaComponent:0.1];
+    fallbackLabel.layer.cornerRadius = 4;
+    fallbackLabel.layer.masksToBounds = YES;
+    fallbackLabel.textAlignment = NSTextAlignmentCenter;
+    fallbackLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    
+    // Set intrinsic size constraints
+    [fallbackLabel setContentHuggingPriority:UILayoutPriorityRequired
+                                     forAxis:UILayoutConstraintAxisVertical];
+    [fallbackLabel setContentHuggingPriority:UILayoutPriorityRequired
+                                     forAxis:UILayoutConstraintAxisHorizontal];
+    
+    if (viewGroup && [viewGroup respondsToSelector:@selector(addArrangedSubview:)]) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+        [viewGroup performSelector:@selector(addArrangedSubview:) withObject:fallbackLabel];
+#pragma clang diagnostic pop
+    }
+    
+    return fallbackLabel;
+}
 
 @end
