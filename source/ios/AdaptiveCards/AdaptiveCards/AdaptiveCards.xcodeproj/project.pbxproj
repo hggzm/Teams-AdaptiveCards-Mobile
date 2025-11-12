@@ -411,6 +411,7 @@
 		908CE70A2EC4180B00FDBC8B /* CitationHostingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 908CE7032EC4180B00FDBC8B /* CitationHostingView.swift */; };
 		908CE70B2EC4180B00FDBC8B /* SwiftCitationElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 908CE7062EC4180B00FDBC8B /* SwiftCitationElement.swift */; };
 		908CE70C2EC4180B00FDBC8B /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 908CE7052EC4180B00FDBC8B /* README.md */; };
+		908CE7222EC5366100FDBC8B /* AdaptiveCardCustomElements in Frameworks */ = {isa = PBXBuildFile; productRef = 908CE7212EC5366100FDBC8B /* AdaptiveCardCustomElements */; };
 		B35633222C060D7900F1C999 /* ValueChangedActionTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = B35633212C060D7900F1C999 /* ValueChangedActionTests.mm */; };
 		B35633242C060EEF00F1C999 /* ValueChangedActionValid.json in Resources */ = {isa = PBXBuildFile; fileRef = B35633232C060EEF00F1C999 /* ValueChangedActionValid.json */; };
 		B35633272C06E4FC00F1C999 /* ValueChangedActionInvalid.json in Resources */ = {isa = PBXBuildFile; fileRef = B35633262C06E4FC00F1C999 /* ValueChangedActionInvalid.json */; };
@@ -1120,6 +1121,7 @@
 		908CE7042EC4180B00FDBC8B /* CitationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CitationView.swift; sourceTree = "<group>"; };
 		908CE7052EC4180B00FDBC8B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		908CE7062EC4180B00FDBC8B /* SwiftCitationElement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftCitationElement.swift; sourceTree = "<group>"; };
+		908CE7202EC5365600FDBC8B /* AdaptiveCardCustomElements */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = AdaptiveCardCustomElements; sourceTree = "<group>"; };
 		9240A5BA903EB4E235296A01 /* Pods-AdaptiveCards.apprelease.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AdaptiveCards.apprelease.xcconfig"; path = "Target Support Files/Pods-AdaptiveCards/Pods-AdaptiveCards.apprelease.xcconfig"; sourceTree = "<group>"; };
 		92C9540BDB87B09349BF0018 /* Pods-AdaptiveCards-AdaptiveCardsTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AdaptiveCards-AdaptiveCardsTests.release.xcconfig"; path = "Target Support Files/Pods-AdaptiveCards-AdaptiveCardsTests/Pods-AdaptiveCards-AdaptiveCardsTests.release.xcconfig"; sourceTree = "<group>"; };
 		B35633212C060D7900F1C999 /* ValueChangedActionTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ValueChangedActionTests.mm; sourceTree = "<group>"; };
@@ -1411,6 +1413,7 @@
 				6B421CC121015EDD002F401A /* CoreGraphics.framework in Frameworks */,
 				6B421CC02101503E002F401A /* QuartzCore.framework in Frameworks */,
 				6BB21219210015A7009EA1BA /* AVKit.framework in Frameworks */,
+				908CE7222EC5366100FDBC8B /* AdaptiveCardCustomElements in Frameworks */,
 				6BB2121821001596009EA1BA /* AVFoundation.framework in Frameworks */,
 				F45A071F1EF4BD67007C6503 /* UIKit.framework in Frameworks */,
 				DD278A02932F65F8BDD1EA5D /* Pods_AdaptiveCards.framework in Frameworks */,
@@ -1890,6 +1893,14 @@
 			path = Citation;
 			sourceTree = "<group>";
 		};
+		908CE7152EC5353500FDBC8B /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				908CE7202EC5365600FDBC8B /* AdaptiveCardCustomElements */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
 		CFF954CC29819A6B00F321C3 /* DynamicTypeahead */ = {
 			isa = PBXGroup;
 			children = (
@@ -1970,6 +1981,7 @@
 		F423C0AB1EE1FBA900905679 = {
 			isa = PBXGroup;
 			children = (
+				908CE7152EC5353500FDBC8B /* Packages */,
 				F423C0B71EE1FBA900905679 /* AdaptiveCards */,
 				F423C0C21EE1FBAA00905679 /* AdaptiveCardsTests */,
 				F45A07191EF4BC44007C6503 /* Frameworks */,
@@ -3800,6 +3812,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		908CE7212EC5366100FDBC8B /* AdaptiveCardCustomElements */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AdaptiveCardCustomElements;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F423C0AC1EE1FBA900905679 /* Project object */;
 }

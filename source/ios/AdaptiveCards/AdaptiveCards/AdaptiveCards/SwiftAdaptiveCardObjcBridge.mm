@@ -26,6 +26,14 @@
 #define SWIFT_ADAPTIVE_CARDS_AVAILABLE 0
 #endif
 
+// Import AdaptiveCardCustomElements package if available
+#if __has_include(<AdaptiveCardCustomElements/AdaptiveCardCustomElements-Swift.h>)
+#define ADAPTIVE_CARD_CUSTOM_ELEMENTS_AVAILABLE 1
+#import <AdaptiveCardCustomElements/AdaptiveCardCustomElements-Swift.h>
+#else
+#define ADAPTIVE_CARD_CUSTOM_ELEMENTS_AVAILABLE 0
+#endif
+
 using namespace AdaptiveCards;
 
 @implementation SwiftAdaptiveCardObjcBridge
@@ -174,7 +182,7 @@ using namespace AdaptiveCards;
                     NSString *elementType = json[@"type"];
                     NSLog(@"[SwiftAdaptiveCardObjcBridge] Found custom element type: %@", elementType);
                     
-                    // Route to appropriate SwiftUI view factory based on type
+                    // First check built-in SDK elements (like Citation)
                     if ([elementType isEqualToString:@"Citation"]) {
                         swiftUIView = [CitationViewFactory createCitationViewFrom:json];
                         
@@ -184,12 +192,23 @@ using namespace AdaptiveCards;
                             NSLog(@"[SwiftAdaptiveCardObjcBridge] Failed to create Citation view");
                         }
                     }
-                    // Add more custom element types here as needed
-                    // else if ([elementType isEqualToString:@"AnotherCustomType"]) {
-                    //     swiftUIView = [AnotherCustomTypeViewFactory createFrom:json];
-                    // }
+                    // Then check AdaptiveCardCustomElements package registry
                     else {
-                        NSLog(@"[SwiftAdaptiveCardObjcBridge] Unknown custom element type: %@", elementType);
+#if ADAPTIVE_CARD_CUSTOM_ELEMENTS_AVAILABLE
+                        if ([[CustomElementRegistry shared] supportsType:elementType]) {
+                            swiftUIView = [[CustomElementRegistry shared] createViewFrom:json];
+                            
+                            if (swiftUIView) {
+                                NSLog(@"[SwiftAdaptiveCardObjcBridge] Successfully created %@ view from package registry", elementType);
+                            } else {
+                                NSLog(@"[SwiftAdaptiveCardObjcBridge] Failed to create %@ view from package registry", elementType);
+                            }
+                        } else {
+                            NSLog(@"[SwiftAdaptiveCardObjcBridge] Unknown custom element type: %@", elementType);
+                        }
+#else
+                        NSLog(@"[SwiftAdaptiveCardObjcBridge] Unknown custom element type: %@ (package not available)", elementType);
+#endif
                     }
                 }
             }

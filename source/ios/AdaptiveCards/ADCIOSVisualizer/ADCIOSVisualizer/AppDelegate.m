@@ -26,11 +26,21 @@
     // The renderer will route to the appropriate factory based on the element's type
     id swiftUIRenderer = [ACOAdaptiveCard createSwiftUICustomElementRenderer];
     
+    // Register built-in SDK custom elements
     [registration setCustomElementRenderer:swiftUIRenderer key:@"Citation"];
     NSLog(@"✅ SwiftUI Custom Element renderer registered for Citation");
     
-    // Add more custom element types here as needed
-    // [registration setCustomElementRenderer:swiftUIRenderer key:@"AnotherCustomType"];
+    // Auto-register all elements from AdaptiveCardCustomElements package
+#if __has_include(<AdaptiveCardCustomElements/AdaptiveCardCustomElements-Swift.h>)
+    @import AdaptiveCardCustomElements;
+    NSArray<NSString *> *packageElements = [[CustomElementRegistry shared] supportedTypes];
+    for (NSString *elementType in packageElements) {
+        [registration setCustomElementRenderer:swiftUIRenderer key:elementType];
+        NSLog(@"✅ SwiftUI Custom Element renderer registered for %@ (from package)", elementType);
+    }
+#else
+    NSLog(@"ℹ️ AdaptiveCardCustomElements package not available");
+#endif
     
     // Override point for customization after application launch.
     return YES;
