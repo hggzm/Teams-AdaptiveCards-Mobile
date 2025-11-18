@@ -63,7 +63,7 @@ check_component_build_branches() {
     cd "$REPO_ROOT"
     
     # Find remote component-build-* branches
-    local build_branches=$(git branch -r | grep "origin/component-build-" | sed 's/origin\///' | sed 's/^[[:space:]]*//' | xargs)
+    local build_branches=$(git branch -r | grep "hggzm/component-build-" | sed 's/hggzm\///' | sed 's/^[[:space:]]*//' | xargs)
     
     if [[ -n "$build_branches" ]]; then
         log_and_echo "${GREEN}📋 Found component build branches:${NC}"
@@ -71,7 +71,7 @@ check_component_build_branches() {
             log_and_echo "  ${BLUE}→ $branch${NC}"
             
             # Check if branch has pending query
-            if git ls-tree -r "origin/$branch" --name-only | grep -q "queries/.*\.json$"; then
+            if git ls-tree -r "hggzm/$branch" --name-only | grep -q "queries/.*\.json$"; then
                 log_and_echo "    ${GREEN}✅ Has pending query${NC}"
                 process_component_build "$branch"
             fi
@@ -86,7 +86,7 @@ cleanup_closed_prs() {
     log_and_echo "${YELLOW}🧹 Checking for closed PRs to clean up...${NC}"
     
     # Get all component-build-* branches
-    local build_branches=$(git branch -r | grep "origin/component-build-" | sed 's/origin\///' | sed 's/^[[:space:]]*//' || true)
+    local build_branches=$(git branch -r | grep "hggzm/component-build-" | sed 's/hggzm\///' | sed 's/^[[:space:]]*//' || true)
     
     if [[ -z "$build_branches" ]]; then
         log_and_echo "${BLUE}ℹ️  No component build branches to check${NC}"
@@ -131,7 +131,7 @@ cleanup_closed_prs() {
             
             # Delete the remote branch
             log_and_echo "${RED}🗑️  Deleting remote branch: $branch${NC}"
-            git push origin --delete "$branch" 2>/dev/null || log_and_echo "${YELLOW}⚠️  Failed to delete remote branch${NC}"
+            git push hggzm --delete "$branch" 2>/dev/null || log_and_echo "${YELLOW}⚠️  Failed to delete remote branch${NC}"
             
             # Prune local references
             git fetch --prune
@@ -165,7 +165,7 @@ process_component_build() {
     }
     
     # Pull latest changes
-    git pull origin "$branch"
+    git pull hggzm "$branch"
     
     # Find query file
     local query_file=$(find queries -name "component_*.json" -type f | head -1)
@@ -206,11 +206,11 @@ process_component_build() {
         
         # Push response back to branch
         log_and_echo "${YELLOW}📤 Pushing response to branch...${NC}"
-        git add responses/
-        git add source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements/ || true
-        git add samples/ || true
+        git add -f responses/
+        git add source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements/ 2>/dev/null || true
+        git add samples/ 2>/dev/null || true
         git commit -m "🤖 Component build response for $(jq -r '.request.component_name' "$query_file")" || true
-        git push origin "$branch"
+        git push hggzm "$branch"
         
         log_and_echo "${GREEN}✅ Response pushed successfully${NC}"
     else

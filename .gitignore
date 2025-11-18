@@ -330,4 +330,5 @@ artifacts/test_outputs/*.txt
 artifacts/archived_queries/*.json
 !artifacts/archived_queries/README.md
 queries/pending/*.json
-responses/*.json
+# Response files need to be committed to trigger GitHub Actions detector workflow
+# responses/*.json
