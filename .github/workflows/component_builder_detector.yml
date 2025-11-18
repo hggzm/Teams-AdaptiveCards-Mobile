@@ -18,7 +18,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
@@ -30,7 +29,6 @@ jobs:
       id: extract
       run: |
         BRANCH_NAME="${{ github.ref_name }}"
-        # Extract component-build-ComponentName-timestamp
         QUERY_ID=$(echo "$BRANCH_NAME" | sed 's/component-build-//')
         COMPONENT_NAME=$(echo "$QUERY_ID" | sed 's/-[0-9_]*$//')
         
@@ -38,7 +36,7 @@ jobs:
         echo "component_name=$COMPONENT_NAME" >> $GITHUB_OUTPUT
         echo "✅ Component: $COMPONENT_NAME, Query: $QUERY_ID"
 
-    - name: Check for Response File
+    - name: Check if response file exists
       id: check_response
       run: |
         QUERY_ID="${{ steps.extract.outputs.query_id }}"
@@ -49,7 +47,6 @@ jobs:
           echo "response_file=$RESPONSE_FILE" >> $GITHUB_OUTPUT
           echo "✅ Found response file: $RESPONSE_FILE"
           
-          # Extract build status
           if command -v jq &> /dev/null; then
             STATUS=$(jq -r '.status // "unknown"' "$RESPONSE_FILE")
             BUILD_SUCCESS=$(jq -r '.response.compilation.success // false' "$RESPONSE_FILE")
@@ -65,7 +62,7 @@ jobs:
           exit 0
         fi
 
-      - name: Find PR Number
+    - name: Find PR Number
       if: steps.check_response.outputs.response_exists == 'true'
       id: find_pr
       run: |
@@ -79,16 +76,16 @@ jobs:
         echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
         echo "✅ Found PR #$PR_NUMBER"
       env:
-        GH_TOKEN: ${{ secrets.PAT }}    - name: Update PR Labels
+        GH_TOKEN: ${{ secrets.PAT }}
+
+    - name: Update PR Labels
       if: steps.check_response.outputs.response_exists == 'true'
       run: |
         PR_NUMBER="${{ steps.find_pr.outputs.pr_number }}"
         BUILD_SUCCESS="${{ steps.check_response.outputs.build_success }}"
         
-        # Remove awaiting-local-poller label
         gh pr edit "$PR_NUMBER" --remove-label "awaiting-local-poller" 2>/dev/null || true
         
-        # Add build status labels
         if [ "$BUILD_SUCCESS" = "true" ]; then
           gh label create "build-complete" --color "28A745" --description "Component built successfully" --force 2>/dev/null || true
           gh pr edit "$PR_NUMBER" --add-label "build-complete"
@@ -112,16 +109,16 @@ jobs:
         
         echo "🎯 Triggering screenshot test for $COMPONENT_NAME..."
         
-        # Trigger the magic file injection test workflow on this branch
         gh workflow run magic-file-injection-test.yml \
           --ref "${{ github.ref_name }}" \
           -f component_name="$COMPONENT_NAME"
         
         echo "screenshot_triggered=true" >> $GITHUB_OUTPUT
-        
         echo "✅ Screenshot test triggered"
       env:
-        GH_TOKEN: ${{ secrets.PAT }}    - name: Post Build Success Comment
+        GH_TOKEN: ${{ secrets.PAT }}
+
+    - name: Post Build Success Comment
       if: steps.check_response.outputs.response_exists == 'true' && steps.check_response.outputs.build_success == 'true'
       run: |
         PR_NUMBER="${{ steps.find_pr.outputs.pr_number }}"
@@ -129,23 +126,23 @@ jobs:
         
         gh pr comment "$PR_NUMBER" --body "## ✅ Component Build Successful
 
-**Component:** \`$COMPONENT_NAME\`
+        **Component:** \`$COMPONENT_NAME\`
 
-The component has been built successfully! 🎉
+        The component has been built successfully! 🎉
 
-### 📦 Files Created
-- ✅ \`${COMPONENT_NAME}Data.swift\` - Data model
-- ✅ \`${COMPONENT_NAME}View.swift\` - SwiftUI view
-- ✅ \`${COMPONENT_NAME}HostingView.swift\` - UIKit bridge
-- ✅ \`${COMPONENT_NAME}ElementParser.swift\` - JSON parser
-- ✅ \`CustomElementRegistry.swift\` - Updated registration
+        ### 📦 Files Created
+        - ✅ \`${COMPONENT_NAME}Data.swift\` - Data model
+        - ✅ \`${COMPONENT_NAME}View.swift\` - SwiftUI view
+        - ✅ \`${COMPONENT_NAME}HostingView.swift\` - UIKit bridge
+        - ✅ \`${COMPONENT_NAME}ElementParser.swift\` - JSON parser
+        - ✅ \`CustomElementRegistry.swift\` - Updated registration
 
-### 📸 Next Steps
-- 🎯 Screenshot test has been triggered
-- 📊 Visual validation pending
-- 🔍 Review code and screenshots when available
+        ### 📸 Next Steps
+        - 🎯 Screenshot test has been triggered
+        - 📊 Visual validation pending
+        - 🔍 Review code and screenshots when available
 
-Check the [Actions tab](${{ github.server_url }}/${{ github.repository }}/actions) for screenshot test progress."
+        Check the [Actions tab](${{ github.server_url }}/${{ github.repository }}/actions) for screenshot test progress."
         
         echo "✅ Posted build success comment"
       env:
@@ -157,25 +154,24 @@ Check the [Actions tab](${{ github.server_url }}/${{ github.repository }}/action
         PR_NUMBER="${{ steps.find_pr.outputs.pr_number }}"
         COMPONENT_NAME="${{ steps.extract.outputs.component_name }}"
         
-        # Extract error details from response
         ERRORS=$(jq -r '.response.compilation.errors[]? // empty' "${{ steps.check_response.outputs.response_file }}" | head -5)
         
         gh pr comment "$PR_NUMBER" --body "## ❌ Component Build Failed
 
-**Component:** \`$COMPONENT_NAME\`
+        **Component:** \`$COMPONENT_NAME\`
 
-The component build encountered compilation errors.
+        The component build encountered compilation errors.
 
-### 🔍 Build Errors
-\`\`\`
-${ERRORS:-No detailed error information available}
-\`\`\`
+        ### 🔍 Build Errors
+        \`\`\`
+        ${ERRORS:-No detailed error information available}
+        \`\`\`
 
-### 🔧 Next Steps
-- Review the error messages above
-- Check the response file: \`${{ steps.check_response.outputs.response_file }}\`
-- Fix compilation issues
-- Request a rebuild or update the code manually"
+        ### 🔧 Next Steps
+        - Review the error messages above
+        - Check the response file: \`${{ steps.check_response.outputs.response_file }}\`
+        - Fix compilation issues
+        - Request a rebuild or update the code manually"
         
         echo "✅ Posted build failure comment"
       env:
@@ -192,43 +188,43 @@ ${ERRORS:-No detailed error information available}
           STATUS_EMOJI="✅"
           STATUS_TEXT="Build Successful"
           NEXT_STEPS="- 📸 Screenshot test in progress
-- 🔍 Review generated code
-- ✅ Merge when ready"
+        - 🔍 Review generated code
+        - ✅ Merge when ready"
         else
           STATUS_EMOJI="❌"
           STATUS_TEXT="Build Failed"
           NEXT_STEPS="- 🔍 Review compilation errors
-- 🔧 Fix issues
-- 🔄 Request rebuild"
+        - 🔧 Fix issues
+        - 🔄 Request rebuild"
         fi
         
         cat > pr_body.md <<EOF
-## 🤖 Component Build: $COMPONENT_NAME
+        ## �� Component Build: $COMPONENT_NAME
 
-**Status:** $STATUS_EMOJI $STATUS_TEXT
+        **Status:** $STATUS_EMOJI $STATUS_TEXT
 
----
+        ---
 
-### 📋 Build Summary
+        ### 📋 Build Summary
 
-${{ steps.check_response.outputs.summary }}
+        ${{ steps.check_response.outputs.summary }}
 
-### 📦 Component Details
+        ### 📦 Component Details
 
-**Files:** 
-- \`${COMPONENT_NAME}Data.swift\`
-- \`${COMPONENT_NAME}View.swift\`
-- \`${COMPONENT_NAME}HostingView.swift\`
-- \`${COMPONENT_NAME}ElementParser.swift\`
+        **Files:** 
+        - \`${COMPONENT_NAME}Data.swift\`
+        - \`${COMPONENT_NAME}View.swift\`
+        - \`${COMPONENT_NAME}HostingView.swift\`
+        - \`${COMPONENT_NAME}ElementParser.swift\`
 
-### 📊 Next Steps
+        ### 📊 Next Steps
 
-$NEXT_STEPS
+        $NEXT_STEPS
 
----
+        ---
 
-*Response file: \`${{ steps.check_response.outputs.response_file }}\`*
-EOF
+        *Response file: \`${{ steps.check_response.outputs.response_file }}\`*
+        EOF
         
         gh pr edit "$PR_NUMBER" --body-file pr_body.md
         

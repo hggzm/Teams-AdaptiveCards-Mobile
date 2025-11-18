@@ -1,0 +1,63 @@
+name: Validate YAML Files
+
+on:
+  push:
+    branches:
+      - main
+      - feature/**
+    paths:
+      - '**.yml'
+      - '**.yaml'
+      - '.github/workflows/validate-yaml.yml'
+  pull_request:
+    paths:
+      - '**.yml'
+      - '**.yaml'
+  workflow_dispatch:
+
+jobs:
+  validate-yaml:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Validate YAML Files
+        run: |
+          echo "Validating YAML files in the repository..."
+          
+          # Find all YAML files (exclude node_modules and vendor)
+          YAML_FILES=$(find . -type f \( -name "*.yml" -o -name "*.yaml" \) | grep -v node_modules | grep -v vendor)
+          
+          if [ -z "$YAML_FILES" ]; then
+            echo "No YAML files found."
+            exit 0
+          fi
+          
+          # Validate each file
+          EXIT_CODE=0
+          for file in $YAML_FILES; do
+            echo "Validating: $file"
+            if ruby -ryaml -e "YAML.load_file('$file')" 2>&1; then
+              echo "✓ $file is valid"
+            else
+              echo "✗ $file is invalid"
+              EXIT_CODE=1
+            fi
+          done
+          
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo ""
+            echo "All YAML files are valid! ✓"
+          else
+            echo ""
+            echo "Some YAML files are invalid. Please fix the errors above."
+            exit 1
+          fi
