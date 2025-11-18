@@ -1,0 +1,239 @@
+name: Component Builder Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      component_name:
+        description: 'Component name (e.g., Rating, ProgressBar, Avatar)'
+        required: true
+        type: string
+      
+      component_description:
+        description: 'Brief description of the component'
+        required: true
+        type: string
+      
+      properties_json:
+        description: 'Component properties as JSON array (see template)'
+        required: true
+        type: string
+        default: '[{"name":"text","type":"String","required":true,"description":"Display text"}]'
+      
+      example_json:
+        description: 'Example Adaptive Card JSON for this component'
+        required: true
+        type: string
+        default: '{"type":"ComponentName","text":"Hello"}'
+      
+      processor:
+        description: 'Processor to handle this request'
+        required: true
+        type: choice
+        options:
+          - local-poller
+          - copilot
+          - manual
+        default: local-poller
+      
+      follow_up_processor:
+        description: 'Follow-up processor after completion'
+        required: true
+        type: choice
+        options:
+          - none
+          - copilot
+          - human-review
+        default: none
+
+jobs:
+  create-component-request:
+    name: Create Component Build Request
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Validate Inputs
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🔍 Validating Inputs"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Validate component name (PascalCase, alphanumeric)
+          if ! echo "${{ github.event.inputs.component_name }}" | grep -qE '^[A-Z][a-zA-Z0-9]*$'; then
+            echo "❌ Invalid component name. Must be PascalCase (e.g., Rating, ProgressBar)"
+            exit 1
+          fi
+          
+          # Validate properties JSON
+          if ! echo '${{ github.event.inputs.properties_json }}' | jq empty 2>/dev/null; then
+            echo "❌ Invalid properties JSON"
+            exit 1
+          fi
+          
+          # Validate example JSON
+          if ! echo '${{ github.event.inputs.example_json }}' | jq empty 2>/dev/null; then
+            echo "❌ Invalid example JSON"
+            exit 1
+          fi
+          
+          echo "✅ All inputs validated successfully"
+      
+      - name: Generate Query ID
+        id: query
+        run: |
+          TIMESTAMP=$(date -u +"%Y%m%d_%H%M%S")
+          QUERY_ID="component_${TIMESTAMP}_001"
+          BRANCH_NAME="component-build-${{ github.event.inputs.component_name }}-${TIMESTAMP}"
+          
+          echo "query_id=$QUERY_ID" >> $GITHUB_OUTPUT
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  📝 Generated Query Details"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Query ID: $QUERY_ID"
+          echo "Branch: $BRANCH_NAME"
+          echo "Component: ${{ github.event.inputs.component_name }}"
+          echo "Processor: ${{ github.event.inputs.processor }}"
+          echo "Follow-up: ${{ github.event.inputs.follow_up_processor }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      
+      - name: Create Query JSON
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  📦 Creating Query JSON"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          cat > queries/${{ steps.query.outputs.query_id }}.json <<EOF
+          {
+            "id": "${{ steps.query.outputs.query_id }}",
+            "type": "component_build",
+            "timestamp": "${{ steps.query.outputs.timestamp }}",
+            "request": {
+              "component_name": "${{ github.event.inputs.component_name }}",
+              "description": "${{ github.event.inputs.component_description }}",
+              "properties": ${{ github.event.inputs.properties_json }},
+              "example_json": ${{ github.event.inputs.example_json }}
+            },
+            "processing": {
+              "processor": "${{ github.event.inputs.processor }}",
+              "follow_up_processor": "${{ github.event.inputs.follow_up_processor }}",
+              "status": "pending"
+            },
+            "context": {
+              "workspace": "adaptivecards",
+              "package_path": "source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements",
+              "prompt_template_path": "AI_AGENT_COMPONENT_PROMPT_TEMPLATE.md",
+              "reference_component": "Badge",
+              "triggered_by": "${{ github.actor }}",
+              "run_id": "${{ github.run_id }}",
+              "run_number": "${{ github.run_number }}"
+            }
+          }
+          EOF
+          
+          echo "✅ Query JSON created"
+          echo ""
+          echo "📄 Query content:"
+          cat queries/${{ steps.query.outputs.query_id }}.json | jq '.'
+      
+      - name: Create Pull Request
+        id: pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            🤖 Component Build Request: ${{ github.event.inputs.component_name }}
+            
+            Query ID: ${{ steps.query.outputs.query_id }}
+            Processor: ${{ github.event.inputs.processor }}
+          branch: ${{ steps.query.outputs.branch_name }}
+          delete-branch: false
+          title: '🤖 Build Component: ${{ github.event.inputs.component_name }}'
+          body: |
+            ## 🎯 Component Build Request
+            
+            **Component Name:** `${{ github.event.inputs.component_name }}`  
+            **Query ID:** `${{ steps.query.outputs.query_id }}`  
+            **Requested By:** @${{ github.actor }}  
+            **Timestamp:** ${{ steps.query.outputs.timestamp }}
+            
+            ---
+            
+            ### 📋 Component Specification
+            
+            **Description:** ${{ github.event.inputs.component_description }}
+            
+            **Properties:**
+            ```json
+            ${{ github.event.inputs.properties_json }}
+            ```
+            
+            **Example JSON:**
+            ```json
+            ${{ github.event.inputs.example_json }}
+            ```
+            
+            ---
+            
+            ### ⚙️ Processing Configuration
+            
+            **Processor:** `${{ github.event.inputs.processor }}`  
+            **Follow-up Processor:** `${{ github.event.inputs.follow_up_processor }}`
+            
+            ---
+            
+            ### 📊 Status
+            
+            **Current Status:** ⏳ Awaiting processor: `${{ github.event.inputs.processor }}`
+            
+            ---
+            
+            ### 📝 Expected Deliverables
+            
+            When the component builder completes, this PR will contain:
+            - ✅ `${{ github.event.inputs.component_name }}Data.swift` - Data model
+            - ✅ `${{ github.event.inputs.component_name }}View.swift` - SwiftUI view
+            - ✅ `${{ github.event.inputs.component_name }}HostingView.swift` - UIKit bridge
+            - ✅ `${{ github.event.inputs.component_name }}ElementParser.swift` - JSON parser
+            - ✅ `CustomElementRegistry.swift` - Updated registration
+            - ✅ `samples/${{ github.event.inputs.component_name | lower }}-test.json` - Test card
+            - ✅ Screenshots of rendered component
+            
+            ---
+            
+            **Workflow Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          labels: |
+            component-build
+            awaiting-${{ github.event.inputs.processor }}
+      
+      - name: Report Status
+        if: always()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  ✅ Component Build Request Created"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "📦 Query ID: ${{ steps.query.outputs.query_id }}"
+          echo "🌿 Branch: ${{ steps.query.outputs.branch_name }}"
+          echo "🔗 PR Number: ${{ steps.pr.outputs.pull-request-number }}"
+          echo "🔗 PR URL: ${{ steps.pr.outputs.pull-request-url }}"
+          echo ""
+          echo "⏳ Next: Waiting for ${{ github.event.inputs.processor }} to process request"
+          echo ""
+          
+          # Add to summary
+          echo "## ✅ Component Build Request Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Component:** \`${{ github.event.inputs.component_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Query ID:** \`${{ steps.query.outputs.query_id }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ steps.query.outputs.branch_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**PR:** #${{ steps.pr.outputs.pull-request-number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ⏳ Awaiting \`${{ github.event.inputs.processor }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[View Pull Request](${{ steps.pr.outputs.pull-request-url }})" >> $GITHUB_STEP_SUMMARY

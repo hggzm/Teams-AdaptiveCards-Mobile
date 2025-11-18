@@ -318,3 +318,16 @@ _deps
 ### CMake Patch ###
 # External projects
 *-prefix/
+
+# Magic file for CI/CD adaptive card injection
+samples/InjectedCard.json
+
+build
+
+# Component Builder System
+artifacts/logs/*.log
+artifacts/test_outputs/*.txt
+artifacts/archived_queries/*.json
+!artifacts/archived_queries/README.md
+queries/pending/*.json
+responses/*.json

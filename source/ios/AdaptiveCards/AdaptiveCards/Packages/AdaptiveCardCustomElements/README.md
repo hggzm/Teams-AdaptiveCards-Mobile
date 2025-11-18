@@ -2,16 +2,26 @@
 
 A Swift package providing reusable SwiftUI custom element views for Adaptive Cards iOS SDK.
 
-## Overview
+## ✨ Features
 
-This package provides a collection of pre-built SwiftUI components that can be used as custom elements in Adaptive Cards. Each component follows a consistent pattern:
+- 🔄 **Automatic Registration** - Components are automatically discovered and registered
+- 📦 **Self-Contained** - All component logic lives in this package
+- 🎨 **SwiftUI Native** - Built with modern SwiftUI for iOS 15+
+- 🔗 **UIKit Bridge** - Seamless integration with Objective-C codebase
+- 🧪 **Testable** - Built-in support for screenshot testing
 
-- **Data Model**: A Swift struct conforming to `CustomElementData` and `Codable`
-- **SwiftUI View**: A SwiftUI view for rendering the component
-- **UIKit Bridge**: A `UIHostingView` wrapper for integration with UIKit
-- **Objective-C Bridge**: Bridge classes for Objective-C interop
+## 🏗️ Architecture
 
-## Components
+Each component follows a consistent 4-file pattern:
+
+1. **Data Model** (`*Data.swift`) - Codable struct + Obj-C bridge
+2. **SwiftUI View** (`*View.swift`) - Pure SwiftUI presentation
+3. **UIKit Bridge** (`*HostingView.swift`) - UIView wrapper + factory
+4. **Parser** (`*ElementParser.swift`) - JSON to data model converter
+
+All components are registered in `CustomElementRegistry.swift` which provides automatic discovery.
+
+## 📋 Components
 
 ### Badge
 

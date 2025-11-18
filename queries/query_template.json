@@ -1,0 +1,33 @@
+{
+  "id": "component_YYYYMMDD_HHMMSS_NNN",
+  "type": "component_build",
+  "timestamp": "YYYY-MM-DDTHH:MM:SSZ",
+  "request": {
+    "component_name": "ComponentName",
+    "description": "Brief description of what this component does",
+    "properties": [
+      {
+        "name": "propertyName",
+        "type": "String",
+        "required": true,
+        "default": null,
+        "description": "Description of this property"
+      }
+    ],
+    "example_json": {
+      "type": "ComponentName",
+      "propertyName": "example value"
+    }
+  },
+  "processing": {
+    "processor": "local-poller",
+    "follow_up_processor": "none",
+    "status": "pending"
+  },
+  "context": {
+    "workspace": "adaptivecards",
+    "package_path": "source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements",
+    "prompt_template_path": "AI_AGENT_COMPONENT_PROMPT_TEMPLATE.md",
+    "reference_component": "Badge"
+  }
+}

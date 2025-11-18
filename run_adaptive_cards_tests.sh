@@ -121,14 +121,14 @@ run_sdk_tests() {
     
     if [ -n "$test_args" ]; then
         xcodebuild test \
-            -project "$SDK_PROJECT" \
+            -workspace "$WORKSPACE" \
             -scheme "$SDK_SCHEME" \
             -destination "$DESTINATION" \
             $test_args \
             2>&1 | tee "$temp_log" | grep -E "(Testing|Test Suite|Test Case|passed|failed|error:|warning:|Executed|^$|✅|❌)"
     else
         xcodebuild test \
-            -project "$SDK_PROJECT" \
+            -workspace "$WORKSPACE" \
             -scheme "$SDK_SCHEME" \
             -destination "$DESTINATION" \
             2>&1 | tee "$temp_log" | grep -E "(Testing|Test Suite|Test Case|passed|failed|error:|warning:|Executed|^$|✅|❌)"
