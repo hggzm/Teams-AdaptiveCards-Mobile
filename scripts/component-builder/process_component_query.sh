@@ -95,7 +95,7 @@ You are building a new SwiftUI custom element for the AdaptiveCardCustomElements
 3. **${COMPONENT_NAME}HostingView.swift** in \`$SOURCES_DIR/\`
 4. **${COMPONENT_NAME}ElementParser.swift** in \`$SOURCES_DIR/\`
 5. **CustomElementRegistry.swift** - ADD registration (don't replace)
-6. **${COMPONENT_NAME,,}-test.json** in \`$SAMPLES_DIR/\`
+6. **$(echo ${COMPONENT_NAME} | tr '[:upper:]' '[:lower:]')-test.json** in \`$SAMPLES_DIR/\`
 
 ### Reference Component (Badge)
 
