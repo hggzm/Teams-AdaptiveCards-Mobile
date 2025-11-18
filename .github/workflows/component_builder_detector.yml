@@ -40,7 +40,7 @@ jobs:
       id: check_response
       run: |
         QUERY_ID="${{ steps.extract.outputs.query_id }}"
-        RESPONSE_FILE="responses/response_component_${QUERY_ID}.json"
+        RESPONSE_FILE="responses/response_${QUERY_ID}.json"
         
         if [ -f "$RESPONSE_FILE" ]; then
           echo "response_exists=true" >> $GITHUB_OUTPUT
