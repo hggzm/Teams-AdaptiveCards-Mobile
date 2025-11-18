@@ -206,7 +206,7 @@ jobs:
             - ✅ `${{ github.event.inputs.component_name }}HostingView.swift` - UIKit bridge
             - ✅ `${{ github.event.inputs.component_name }}ElementParser.swift` - JSON parser
             - ✅ `CustomElementRegistry.swift` - Updated registration
-            - ✅ `samples/${{ github.event.inputs.component_name | lower }}-test.json` - Test card
+            - ✅ `samples/[component-name]-test.json` - Test card
             - ✅ Screenshots of rendered component
             
             ---
