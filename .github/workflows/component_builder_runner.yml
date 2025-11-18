@@ -49,12 +49,16 @@ jobs:
   create-component-request:
     name: Create Component Build Request
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.PAT }}
       
       - name: Validate Inputs
         run: |
@@ -146,7 +150,7 @@ jobs:
         id: pr
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT }}
           commit-message: |
             🤖 Component Build Request: ${{ github.event.inputs.component_name }}
             

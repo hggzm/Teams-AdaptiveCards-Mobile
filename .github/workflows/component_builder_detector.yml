@@ -24,7 +24,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.PAT }}
 
     - name: Extract Component Info from Branch
       id: extract
@@ -65,7 +65,7 @@ jobs:
           exit 0
         fi
 
-    - name: Find PR Number
+      - name: Find PR Number
       if: steps.check_response.outputs.response_exists == 'true'
       id: find_pr
       run: |
@@ -79,9 +79,7 @@ jobs:
         echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
         echo "✅ Found PR #$PR_NUMBER"
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Update PR Labels
+        GH_TOKEN: ${{ secrets.PAT }}    - name: Update PR Labels
       if: steps.check_response.outputs.response_exists == 'true'
       run: |
         PR_NUMBER="${{ steps.find_pr.outputs.pr_number }}"
@@ -104,7 +102,7 @@ jobs:
         
         echo "✅ Updated labels on PR #$PR_NUMBER"
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.PAT }}
 
     - name: Trigger Screenshot Test
       if: steps.check_response.outputs.response_exists == 'true' && steps.check_response.outputs.build_success == 'true'
@@ -120,11 +118,10 @@ jobs:
           -f component_name="$COMPONENT_NAME"
         
         echo "screenshot_triggered=true" >> $GITHUB_OUTPUT
+        
         echo "✅ Screenshot test triggered"
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Post Build Success Comment
+        GH_TOKEN: ${{ secrets.PAT }}    - name: Post Build Success Comment
       if: steps.check_response.outputs.response_exists == 'true' && steps.check_response.outputs.build_success == 'true'
       run: |
         PR_NUMBER="${{ steps.find_pr.outputs.pr_number }}"
@@ -152,7 +149,7 @@ Check the [Actions tab](${{ github.server_url }}/${{ github.repository }}/action
         
         echo "✅ Posted build success comment"
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.PAT }}
 
     - name: Post Build Failure Comment
       if: steps.check_response.outputs.response_exists == 'true' && steps.check_response.outputs.build_success != 'true'
@@ -182,7 +179,7 @@ ${ERRORS:-No detailed error information available}
         
         echo "✅ Posted build failure comment"
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.PAT }}
 
     - name: Update PR Description
       if: steps.check_response.outputs.response_exists == 'true'
@@ -237,4 +234,4 @@ EOF
         
         echo "✅ Updated PR description"
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.PAT }}

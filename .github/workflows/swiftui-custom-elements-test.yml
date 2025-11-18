@@ -1,0 +1,313 @@
+name: SwiftUI Custom Elements Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      component_name:
+        description: 'Component to test (Badge, Citation, or "all")'
+        required: false
+        default: 'all'
+      custom_card_json:
+        description: 'Custom test card JSON (optional - leave empty for default)'
+        required: false
+        default: ''
+  
+  pull_request:
+    paths:
+      - 'source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements/**'
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/SwiftAdaptiveCards/**'
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/SwiftAdaptiveCardObjcBridge.mm'
+      - '.github/workflows/swiftui-custom-elements-test.yml'
+  
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements/**'
+
+jobs:
+  test-custom-elements:
+    name: Test SwiftUI Custom Elements
+    runs-on: macos-14
+    
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN || github.token }}
+          fetch-depth: 0
+      
+      - name: Show Environment Info
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🎨 SwiftUI Custom Elements Test"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Component: ${{ github.event.inputs.component_name || 'all' }}"
+          echo "Trigger: ${{ github.event_name }}"
+          echo ""
+          echo "macOS Version:"
+          sw_vers
+          echo ""
+          echo "Xcode Version:"
+          xcodebuild -version
+          echo ""
+          echo "Available Simulators:"
+          xcrun simctl list devices available | grep "iPhone"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      
+      - name: Install CocoaPods Dependencies
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  📦 Installing CocoaPods Dependencies"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          cd source/ios/AdaptiveCards
+          pod install --verbose
+          echo "✅ CocoaPods dependencies installed"
+      
+      - name: Build Swift Package
+        id: build-package
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🔨 Building AdaptiveCardCustomElements Package"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          cd source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements
+          
+          xcodebuild -scheme AdaptiveCardCustomElements \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            clean build \
+            | tee build.log
+          
+          if [ ${PIPESTATUS[0]} -eq 0 ]; then
+            echo "✅ Package build succeeded"
+            echo "build_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Package build failed"
+            echo "build_status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+      
+      - name: Select Test Card
+        id: select-card
+        run: |
+          COMPONENT="${{ github.event.inputs.component_name || 'all' }}"
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  📄 Selecting Test Card for: $COMPONENT"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # If custom JSON provided, use it
+          if [ -n "${{ github.event.inputs.custom_card_json }}" ]; then
+            echo "Using custom card JSON from input"
+            echo '${{ github.event.inputs.custom_card_json }}' > samples/v1.3/Tests/MagicFileInjectionTest.json
+            echo "test_card=custom" >> $GITHUB_OUTPUT
+          # Otherwise select based on component
+          elif [ "$COMPONENT" = "Badge" ]; then
+            echo "Using Badge test card"
+            cp samples/badge-test.json samples/v1.3/Tests/MagicFileInjectionTest.json
+            echo "test_card=badge" >> $GITHUB_OUTPUT
+          elif [ "$COMPONENT" = "Citation" ]; then
+            echo "Using Citation test card"
+            cp samples/citation-test-swiftui.json samples/v1.3/Tests/MagicFileInjectionTest.json
+            echo "test_card=citation" >> $GITHUB_OUTPUT
+          else
+            echo "Using Badge test card (default for 'all')"
+            cp samples/badge-test.json samples/v1.3/Tests/MagicFileInjectionTest.json
+            echo "test_card=badge" >> $GITHUB_OUTPUT
+          fi
+          
+          echo ""
+          echo "Test card preview (first 20 lines):"
+          head -n 20 samples/v1.3/Tests/MagicFileInjectionTest.json
+          echo ""
+          echo "✅ Test card prepared"
+      
+      - name: Setup Simulator
+        id: simulator
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🚀 Setting up iPhone 16 simulator..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Find iPhone 16 simulator
+          SIMULATOR_ID=$(xcrun simctl list devices | grep "iPhone 16 (" | grep -v "Pro" | grep -v "Plus" | head -1 | grep -oE '\([A-F0-9\-]+\)' | tr -d '()')
+          
+          if [ -z "$SIMULATOR_ID" ]; then
+            echo "❌ iPhone 16 simulator not found"
+            exit 1
+          fi
+          
+          echo "Simulator ID: $SIMULATOR_ID"
+          echo "simulator_id=$SIMULATOR_ID" >> $GITHUB_OUTPUT
+          
+          # Boot the simulator
+          xcrun simctl boot "$SIMULATOR_ID" || true
+          
+          # Wait for simulator to be ready
+          echo "Waiting for simulator to fully boot..."
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          
+          echo "✅ Simulator ready"
+      
+      - name: Run Magic File Injection Test
+        id: run-test
+        continue-on-error: true
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🧪 Running Magic File Injection Test"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Make script executable
+          chmod +x ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh
+          
+          # Run test
+          bash ./scripts/test-utils/run_adaptive_cards_tests_with_screenshots.sh visualizer testMagicFileInjection
+        timeout-minutes: 20
+        env:
+          FASTLANE_SKIP_UPDATE_CHECK: true
+          FASTLANE_DISABLE_COLORS: true
+      
+      - name: Collect Test Results
+        if: always()
+        id: test-results
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  📊 Collecting Test Results"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Find latest screenshot directory
+          LATEST_DIR=$(ls -td screenshots/*/ 2>/dev/null | head -1)
+          
+          if [ -z "$LATEST_DIR" ]; then
+            echo "⚠️ No screenshot directory found"
+            echo "test_status=unknown" >> $GITHUB_OUTPUT
+            echo "screenshot_count=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "Screenshot directory: $LATEST_DIR"
+          
+          # Count screenshots
+          XCTEST_COUNT=$(ls "$LATEST_DIR"visualizer/xctest_*.png 2>/dev/null | wc -l | xargs)
+          AUTO_COUNT=$(ls "$LATEST_DIR"visualizer/auto_*.png 2>/dev/null | wc -l | xargs)
+          TOTAL_COUNT=$((XCTEST_COUNT + AUTO_COUNT))
+          
+          echo "XCTest screenshots: $XCTEST_COUNT"
+          echo "Auto screenshots: $AUTO_COUNT"
+          echo "Total screenshots: $TOTAL_COUNT"
+          
+          # Determine test status
+          if [ "${{ steps.run-test.outcome }}" == "success" ]; then
+            TEST_STATUS="✅ Passed"
+            echo "test_status=passed" >> $GITHUB_OUTPUT
+          else
+            TEST_STATUS="❌ Failed"
+            echo "test_status=failed" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "screenshot_count=$TOTAL_COUNT" >> $GITHUB_OUTPUT
+          echo "xctest_count=$XCTEST_COUNT" >> $GITHUB_OUTPUT
+          echo "auto_count=$AUTO_COUNT" >> $GITHUB_OUTPUT
+          echo "screenshot_dir=$LATEST_DIR" >> $GITHUB_OUTPUT
+          
+          # Create summary
+          echo "## 🎨 SwiftUI Custom Elements Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Component:** ${{ github.event.inputs.component_name || 'all' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Card:** ${{ steps.select-card.outputs.test_card }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** $TEST_STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "**Package Build:** ${{ steps.build-package.outputs.build_status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📸 Screenshots" >> $GITHUB_STEP_SUMMARY
+          echo "- XCTest Screenshots: $XCTEST_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- Auto Screenshots: $AUTO_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total:** $TOTAL_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 Download artifacts below to view the screenshots" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swiftui-custom-elements-screenshots-${{ github.run_number }}
+          path: |
+            screenshots/**/visualizer/*.png
+            !screenshots/**/TestResults.xcresult/**
+          if-no-files-found: warn
+          retention-days: 30
+          compression-level: 6
+      
+      - name: Upload Test Results Bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swiftui-custom-elements-test-results-${{ github.run_number }}
+          path: screenshots/**/TestResults.xcresult
+          if-no-files-found: warn
+          retention-days: 14
+      
+      - name: Upload Package Build Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-build-log-${{ github.run_number }}
+          path: source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements/build.log
+          if-no-files-found: ignore
+          retention-days: 7
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_TOKEN || github.token }}
+          script: |
+            const testStatus = '${{ steps.test-results.outputs.test_status }}';
+            const screenshotCount = '${{ steps.test-results.outputs.screenshot_count }}';
+            const component = '${{ github.event.inputs.component_name || 'all' }}';
+            const buildStatus = '${{ steps.build-package.outputs.build_status }}';
+            
+            const statusEmoji = testStatus === 'passed' ? '✅' : '❌';
+            const buildEmoji = buildStatus === 'success' ? '✅' : '❌';
+            
+            const body = `## ${statusEmoji} SwiftUI Custom Elements Test Results
+            
+            **Component:** ${component}  
+            **Package Build:** ${buildEmoji} ${buildStatus}  
+            **Test Status:** ${statusEmoji} ${testStatus}  
+            **Screenshots:** ${screenshotCount} captured
+            
+            ### 📦 Artifacts
+            - Screenshots: \`swiftui-custom-elements-screenshots-${{ github.run_number }}\`
+            - Test Results: \`swiftui-custom-elements-test-results-${{ github.run_number }}\`
+            
+            [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+      
+      - name: Final Status
+        if: always()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  📊 Final Test Status"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Component: ${{ github.event.inputs.component_name || 'all' }}"
+          echo "Package Build: ${{ steps.build-package.outputs.build_status }}"
+          echo "Test Status: ${{ steps.test-results.outputs.test_status }}"
+          echo "Screenshots: ${{ steps.test-results.outputs.screenshot_count }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          if [ "${{ steps.test-results.outputs.test_status }}" != "passed" ]; then
+            echo "❌ Tests failed!"
+            exit 1
+          fi
+          
+          echo "✅ All tests passed!"
