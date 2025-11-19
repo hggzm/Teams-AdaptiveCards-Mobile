@@ -1,0 +1,25 @@
+{
+  "id": "component_20251119_052829_001",
+  "type": "component_build",
+  "timestamp": "2025-11-19T05:28:29Z",
+  "request": {
+    "component_name": "ProgressBar",
+    "description": "A horizontal progress bar that shows completion percentage with optional label",
+    "properties": [{"name":"progress","type":"Double","required":true,"description":"Progress value from 0.0 to 1.0"},{"name":"label","type":"String","required":false,"description":"Optional label text"}],
+    "example_json": {"type":"ProgressBar","progress":0.75,"label":"75% Complete"}
+  },
+  "processing": {
+    "processor": "local-poller",
+    "follow_up_processor": "none",
+    "status": "pending"
+  },
+  "context": {
+    "workspace": "adaptivecards",
+    "package_path": "source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements",
+    "prompt_template_path": "AI_AGENT_COMPONENT_PROMPT_TEMPLATE.md",
+    "reference_component": "Badge",
+    "triggered_by": "hggzm",
+    "run_id": "19490886293",
+    "run_number": "29"
+  }
+}
