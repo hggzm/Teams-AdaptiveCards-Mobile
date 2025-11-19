@@ -1,0 +1,36 @@
+{
+  "id": "component_20251119_173629_001",
+  "query_id": "component_20251119_173629_001",
+  "timestamp": "2025-11-19T17:55:58Z",
+  "status": "success",
+  "response": {
+    "summary": "Component 'Rating' built successfully",
+    "component_name": "Rating",
+    "files_created": [
+  ""
+],
+    "files_modified": [
+  ""
+],
+    "test_card_created": "",
+    "compilation": {
+      "success": true,
+      "errors": [],
+      "build_time_seconds": 306
+    },
+    "agent_work_log": [
+      "Started component build process",
+      "Created agent context file",
+      "Sent prompt to GitHub Copilot via HTTP proxy",
+      "Monitored for file creation",
+      "Validated component build"
+    ]
+  },
+  "processing": {
+    "started_at": "2025-11-19T17:50:52Z",
+    "completed_at": "2025-11-19T17:55:58Z",
+    "duration_seconds": 306,
+    "processed_by": "local_poller_v1",
+    "agent": "github_copilot_http"
+  }
+}
