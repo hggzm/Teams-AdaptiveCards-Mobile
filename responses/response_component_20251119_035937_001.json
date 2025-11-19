@@ -1,0 +1,27 @@
+{
+  "id": "component_20251119_035937_001",
+  "query_id": "component_20251119_035937_001",
+  "timestamp": "2025-11-19T04:02:07Z",
+  "status": "in_progress",
+  "response": {
+    "summary": "Building component: StatusIndicator",
+    "component_name": "StatusIndicator",
+    "files_created": [],
+    "files_modified": [],
+    "test_card_created": "",
+    "compilation": {
+      "success": false,
+      "errors": [],
+      "warnings": 0,
+      "build_time_seconds": 0
+    },
+    "agent_work_log": [
+      "Started component build process"
+    ]
+  },
+  "processing": {
+    "started_at": "2025-11-19T04:02:07Z",
+    "processed_by": "local_poller_v1",
+    "agent": "github_copilot"
+  }
+}
