@@ -1,0 +1,35 @@
+{
+  "id": "component_20251119_052829_001",
+  "query_id": "ProgressBar-20251119_052829",
+  "type": "component_build_response",
+  "timestamp": "2025-11-19T05:35:00Z",
+  "status": "success",
+  "response": {
+    "summary": "ProgressBar component created successfully using AI agent via GitHub Copilot",
+    "compilation": {
+      "success": true,
+      "build_time": "5s",
+      "warnings": 2,
+      "errors": 0,
+      "warning_details": [
+        "type property decode warning (expected - same as Badge)"
+      ]
+    },
+    "files_created": [
+      "source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements/Sources/AdaptiveCardCustomElements/ProgressBarData.swift",
+      "source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements/Sources/AdaptiveCardCustomElements/ProgressBarView.swift",
+      "source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements/Sources/AdaptiveCardCustomElements/ProgressBarHostingView.swift",
+      "source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements/Sources/AdaptiveCardCustomElements/ProgressBarElementParser.swift"
+    ],
+    "files_modified": [
+      "AdaptiveCardCustomElements/Sources/AdaptiveCardCustomElements/CustomElementRegistry.swift"
+    ],
+    "test_card": "samples/progressbar-test.json"
+  },
+  "metadata": {
+    "component_name": "ProgressBar",
+    "processor": "github-copilot-agent",
+    "build_validated": true,
+    "commit_sha": "f0a26433"
+  }
+}
