@@ -65,21 +65,36 @@ jobs:
     - name: Find PR Number
       if: steps.check_response.outputs.response_exists == 'true'
       id: find_pr
+      continue-on-error: true
       run: |
-        PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number')
+        # Search for PR by branch name (including closed PRs)
+        PR_INFO=$(gh pr list --head "${{ github.ref_name }}" --state all --json number,state --jq '.[0]')
         
-        if [ -z "$PR_NUMBER" ]; then
-          echo "❌ No PR found for branch ${{ github.ref_name }}"
-          exit 1
+        if [ -z "$PR_INFO" ] || [ "$PR_INFO" = "null" ]; then
+          echo "⚠️ No PR found for branch ${{ github.ref_name }}"
+          echo "pr_found=false" >> $GITHUB_OUTPUT
+          exit 0
         fi
         
+        PR_NUMBER=$(echo "$PR_INFO" | jq -r '.number')
+        PR_STATE=$(echo "$PR_INFO" | jq -r '.state')
+        
         echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-        echo "✅ Found PR #$PR_NUMBER"
+        echo "pr_state=$PR_STATE" >> $GITHUB_OUTPUT
+        echo "pr_found=true" >> $GITHUB_OUTPUT
+        
+        if [ "$PR_STATE" = "CLOSED" ]; then
+          echo "⚠️ Found PR #$PR_NUMBER but it is CLOSED"
+          echo "pr_is_open=false" >> $GITHUB_OUTPUT
+        else
+          echo "✅ Found open PR #$PR_NUMBER"
+          echo "pr_is_open=true" >> $GITHUB_OUTPUT
+        fi
       env:
         GH_TOKEN: ${{ secrets.PAT }}
 
     - name: Update PR Labels
-      if: steps.check_response.outputs.response_exists == 'true'
+      if: steps.check_response.outputs.response_exists == 'true' && steps.find_pr.outputs.pr_found == 'true' && steps.find_pr.outputs.pr_is_open == 'true'
       run: |
         PR_NUMBER="${{ steps.find_pr.outputs.pr_number }}"
         BUILD_SUCCESS="${{ steps.check_response.outputs.build_success }}"
@@ -106,20 +121,28 @@ jobs:
       id: screenshot_test
       run: |
         COMPONENT_NAME="${{ steps.extract.outputs.component_name }}"
+        PR_NUMBER="${{ steps.find_pr.outputs.pr_number }}"
         
         echo "🎯 Triggering screenshot test for $COMPONENT_NAME..."
         
+        # Pass both component_name and pr_number to screenshot workflow
         gh workflow run magic-file-injection-test.yml \
           --ref "${{ github.ref_name }}" \
-          -f component_name="$COMPONENT_NAME"
+          -f component_name="$COMPONENT_NAME" \
+          -f pr_number="$PR_NUMBER"
         
         echo "screenshot_triggered=true" >> $GITHUB_OUTPUT
-        echo "✅ Screenshot test triggered"
+        
+        if [ "${{ steps.find_pr.outputs.pr_found }}" = "true" ]; then
+          echo "✅ Screenshot test triggered (will post to PR #$PR_NUMBER)"
+        else
+          echo "✅ Screenshot test triggered (no PR to update)"
+        fi
       env:
         GH_TOKEN: ${{ secrets.PAT }}
 
     - name: Post Build Success Comment
-      if: steps.check_response.outputs.response_exists == 'true' && steps.check_response.outputs.build_success == 'true'
+      if: steps.check_response.outputs.response_exists == 'true' && steps.check_response.outputs.build_success == 'true' && steps.find_pr.outputs.pr_found == 'true' && steps.find_pr.outputs.pr_is_open == 'true'
       run: |
         PR_NUMBER="${{ steps.find_pr.outputs.pr_number }}"
         COMPONENT_NAME="${{ steps.extract.outputs.component_name }}"
@@ -149,7 +172,7 @@ jobs:
         GH_TOKEN: ${{ secrets.PAT }}
 
     - name: Post Build Failure Comment
-      if: steps.check_response.outputs.response_exists == 'true' && steps.check_response.outputs.build_success != 'true'
+      if: steps.check_response.outputs.response_exists == 'true' && steps.check_response.outputs.build_success != 'true' && steps.find_pr.outputs.pr_found == 'true' && steps.find_pr.outputs.pr_is_open == 'true'
       run: |
         PR_NUMBER="${{ steps.find_pr.outputs.pr_number }}"
         COMPONENT_NAME="${{ steps.extract.outputs.component_name }}"
@@ -178,7 +201,7 @@ jobs:
         GH_TOKEN: ${{ secrets.PAT }}
 
     - name: Update PR Description
-      if: steps.check_response.outputs.response_exists == 'true'
+      if: steps.check_response.outputs.response_exists == 'true' && steps.find_pr.outputs.pr_found == 'true' && steps.find_pr.outputs.pr_is_open == 'true'
       run: |
         PR_NUMBER="${{ steps.find_pr.outputs.pr_number }}"
         COMPONENT_NAME="${{ steps.extract.outputs.component_name }}"

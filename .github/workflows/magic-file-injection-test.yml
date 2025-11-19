@@ -7,11 +7,22 @@ on:
         description: 'Custom Adaptive Card JSON to inject and test (leave empty for default test card)'
         required: false
         default: ''
+      component_name:
+        description: 'Component name to test (will use samples/{component_name_lowercase}-test.json)'
+        required: false
+        default: ''
+      pr_number:
+        description: 'PR number to post results to'
+        required: false
+        default: ''
 
 jobs:
   magic-file-test:
     name: Run Magic File Injection Test
     runs-on: macos-14
+    permissions:
+      contents: read
+      pull-requests: write
     
     timeout-minutes: 30
     
@@ -74,16 +85,57 @@ jobs:
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-      - name: Show Test Card Info
-        if: github.event.inputs.magic_file_json == ''
+      - name: Inject Component Test JSON
+        if: github.event.inputs.magic_file_json == '' && github.event.inputs.component_name != ''
+        id: inject_component
         run: |
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  🎯 Injecting Component Test JSON"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          COMPONENT_NAME="${{ github.event.inputs.component_name }}"
+          COMPONENT_NAME_LOWER=$(echo "$COMPONENT_NAME" | tr '[:upper:]' '[:lower:]')
+          TEST_JSON="samples/${COMPONENT_NAME_LOWER}-test.json"
+          
+          echo "Component: $COMPONENT_NAME"
+          echo "Test JSON path: $TEST_JSON"
+          
+          if [ ! -f "$TEST_JSON" ]; then
+            echo "⚠️ Test JSON not found: $TEST_JSON"
+            echo "Using default test card instead"
+            echo "component_json_found=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Found component test JSON: $TEST_JSON"
+            
+            # Backup original file
+            cp samples/v1.3/Tests/MagicFileInjectionTest.json samples/v1.3/Tests/MagicFileInjectionTest.json.backup
+            
+            # Copy component test JSON to magic file location
+            cp "$TEST_JSON" samples/v1.3/Tests/MagicFileInjectionTest.json
+            
+            echo "✅ Injected $TEST_JSON into MagicFileInjectionTest.json"
+            echo "component_json_found=true" >> $GITHUB_OUTPUT
+            echo "test_json_path=$TEST_JSON" >> $GITHUB_OUTPUT
+            
+            echo ""
+            echo "File size: $(wc -c < samples/v1.3/Tests/MagicFileInjectionTest.json) bytes"
+            echo ""
+            echo "Preview (first 20 lines):"
+            head -n 20 samples/v1.3/Tests/MagicFileInjectionTest.json
+          fi
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Show Test Card Info
+        if: github.event.inputs.magic_file_json == '' && github.event.inputs.component_name == ''
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "  📄 Using Default Test Card"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Default card content:"
           cat samples/v1.3/Tests/MagicFileInjectionTest.json
           echo ""
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: Setup Simulator
         id: simulator
@@ -130,11 +182,11 @@ jobs:
           FASTLANE_DISABLE_COLORS: true
       
       - name: Restore Original Magic File
-        if: always() && github.event.inputs.magic_file_json != ''
+        if: always()
         run: |
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "  🔄 Restoring Original Magic File"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           if [ -f samples/v1.3/Tests/MagicFileInjectionTest.json.backup ]; then
             mv samples/v1.3/Tests/MagicFileInjectionTest.json.backup samples/v1.3/Tests/MagicFileInjectionTest.json
             echo "✅ Restored original MagicFileInjectionTest.json"
@@ -222,3 +274,71 @@ jobs:
           path: screenshots/**/TestResults.xcresult
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Post Screenshot Results to PR
+        if: always() && github.event.inputs.pr_number != ''
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  💬 Posting Screenshot Results to PR"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          PR_NUMBER="${{ github.event.inputs.pr_number }}"
+          TEST_STATUS="${{ steps.test-results.outputs.test_status }}"
+          SCREENSHOT_COUNT="${{ steps.test-results.outputs.screenshot_count }}"
+          XCTEST_COUNT="${{ steps.test-results.outputs.xctest_count }}"
+          AUTO_COUNT="${{ steps.test-results.outputs.auto_count }}"
+          COMPONENT_NAME="${{ github.event.inputs.component_name }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          # Determine status emoji and text
+          if [ "$TEST_STATUS" = "passed" ]; then
+            STATUS_EMOJI="✅"
+            STATUS_TEXT="Passed"
+          elif [ "$TEST_STATUS" = "failed" ]; then
+            STATUS_EMOJI="❌"
+            STATUS_TEXT="Failed"
+          else
+            STATUS_EMOJI="⚠️"
+            STATUS_TEXT="Unknown"
+          fi
+          
+          # Determine card source
+          if [ -n "$COMPONENT_NAME" ]; then
+            CARD_SOURCE="🎯 Component test card: \`samples/$(echo $COMPONENT_NAME | tr '[:upper:]' '[:lower:]')-test.json\`"
+          elif [ "${{ github.event.inputs.magic_file_json }}" != "" ]; then
+            CARD_SOURCE="🎯 Custom JSON via workflow input"
+          else
+            CARD_SOURCE="📄 Default test card"
+          fi
+          
+          # Create PR comment
+          cat > comment.md <<EOF
+        ## 📸 Screenshot Test Results
+        
+        **Component:** \`${COMPONENT_NAME:-Default}\`  
+        **Status:** $STATUS_EMOJI $STATUS_TEXT  
+        **Card Source:** $CARD_SOURCE
+        
+        ### 📊 Test Statistics
+        - **Total Screenshots:** $SCREENSHOT_COUNT
+        - **XCTest Screenshots:** $XCTEST_COUNT
+        - **Auto Screenshots:** $AUTO_COUNT
+        
+        ### 📎 Artifacts
+        - 📷 [Download Screenshots](${RUN_URL}#artifacts)
+        - 📦 [View Test Results Bundle](${RUN_URL}#artifacts)
+        
+        ### 🔍 What Was Tested
+        - Initial card load (after 1.0s render time)
+        - Card after scrolling down (after 0.5s)
+        
+        ---
+        
+        [View Full Test Run]($RUN_URL)
+        EOF
+          
+          gh pr comment "$PR_NUMBER" --body-file comment.md
+          
+          echo "✅ Posted screenshot results to PR #$PR_NUMBER"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
