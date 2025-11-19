@@ -11,7 +11,13 @@ fi
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-PACKAGE_DIR="$REPO_ROOT/source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements"
+
+# Try both possible package locations (root and nested)
+if [[ -d "$REPO_ROOT/AdaptiveCardCustomElements" ]]; then
+    PACKAGE_DIR="$REPO_ROOT/AdaptiveCardCustomElements"
+else
+    PACKAGE_DIR="$REPO_ROOT/source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements"
+fi
 
 # Colors
 GREEN='\033[0;32m'
@@ -28,6 +34,12 @@ echo ""
 cd "$PACKAGE_DIR"
 
 START_TIME=$(date +%s)
+
+echo -e "${YELLOW}🧹 Cleaning build artifacts...${NC}"
+# Clean to avoid stale cache issues (clang-stat-cache, etc.)
+xcodebuild clean -scheme AdaptiveCardCustomElements \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  > /dev/null 2>&1
 
 echo -e "${YELLOW}🔨 Building AdaptiveCardCustomElements package...${NC}"
 echo ""
