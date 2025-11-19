@@ -157,6 +157,7 @@ jobs:
             Query ID: ${{ steps.query.outputs.query_id }}
             Processor: ${{ github.event.inputs.processor }}
           branch: ${{ steps.query.outputs.branch_name }}
+          base: ${{ github.ref_name }}
           delete-branch: false
           title: '🤖 Build Component: ${{ github.event.inputs.component_name }}'
           body: |

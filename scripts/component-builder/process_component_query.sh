@@ -398,6 +398,46 @@ echo -e "${GREEN}📁 Files created: ${#CREATED_FILES[@]}${NC}"
 echo -e "${GREEN}📝 Files modified: ${#MODIFIED_FILES[@]}${NC}"
 echo ""
 
+# Commit and push response file to trigger detector workflow
+echo ""
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BLUE}  Pushing Response File${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+cd "$REPO_ROOT"
+
+# Stage response file
+git add -f "$RESPONSE_FILE"
+
+# Commit response file
+RESPONSE_COMMIT_MSG="Add response file for ${COMPONENT_NAME} component
+
+Build status: $([ "$BUILD_SUCCESS" = true ] && echo "✅ SUCCESS" || echo "❌ FAILED")
+Duration: ${DURATION}s
+Files created: ${#CREATED_FILES[@]}
+Files modified: ${#MODIFIED_FILES[@]}
+
+This will trigger the detector workflow to update the PR and run screenshot tests."
+
+git commit -m "$RESPONSE_COMMIT_MSG"
+
+# Push to remote
+REMOTE="hggzm"
+BRANCH=$(git branch --show-current)
+
+echo -e "${BLUE}📤 Pushing response to $REMOTE/$BRANCH...${NC}"
+
+if git push "$REMOTE" "$BRANCH"; then
+    echo -e "${GREEN}✅ Response file pushed successfully${NC}"
+    echo -e "${GREEN}🔔 Detector workflow should trigger shortly${NC}"
+else
+    echo -e "${RED}❌ Failed to push response file${NC}"
+    exit 1
+fi
+
+echo ""
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
 # Exit with appropriate code
 if [ "$BUILD_SUCCESS" = true ]; then
     exit 0
