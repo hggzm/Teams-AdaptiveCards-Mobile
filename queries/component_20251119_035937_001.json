@@ -1,0 +1,25 @@
+{
+  "id": "component_20251119_035937_001",
+  "type": "component_build",
+  "timestamp": "2025-11-19T03:59:37Z",
+  "request": {
+    "component_name": "StatusIndicator",
+    "description": "A simple status indicator with color and optional icon",
+    "properties": [{"name":"status","type":"string","description":"Status text"},{"name":"color","type":"string","description":"Indicator color"}],
+    "example_json": {"type":"StatusIndicator","status":"Active","color":"green"}
+  },
+  "processing": {
+    "processor": "local-poller",
+    "follow_up_processor": "none",
+    "status": "pending"
+  },
+  "context": {
+    "workspace": "adaptivecards",
+    "package_path": "source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements",
+    "prompt_template_path": "AI_AGENT_COMPONENT_PROMPT_TEMPLATE.md",
+    "reference_component": "Badge",
+    "triggered_by": "hggzm",
+    "run_id": "19489281799",
+    "run_number": "28"
+  }
+}
