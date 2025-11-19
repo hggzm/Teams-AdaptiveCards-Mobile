@@ -1,0 +1,48 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "ProgressBar Component Test",
+      "weight": "bolder",
+      "size": "large"
+    },
+    {
+      "type": "TextBlock",
+      "text": "Testing various progress states with labels",
+      "wrap": true,
+      "spacing": "small"
+    },
+    {
+      "type": "ProgressBar",
+      "progress": 0.25,
+      "label": "25% Complete"
+    },
+    {
+      "type": "ProgressBar",
+      "progress": 0.5,
+      "label": "50% Complete"
+    },
+    {
+      "type": "ProgressBar",
+      "progress": 0.75,
+      "label": "75% Complete"
+    },
+    {
+      "type": "ProgressBar",
+      "progress": 1.0,
+      "label": "100% Complete"
+    },
+    {
+      "type": "TextBlock",
+      "text": "Progress bar without label",
+      "spacing": "medium"
+    },
+    {
+      "type": "ProgressBar",
+      "progress": 0.6
+    }
+  ]
+}
