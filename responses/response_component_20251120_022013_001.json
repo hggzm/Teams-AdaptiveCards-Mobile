@@ -1,0 +1,41 @@
+{
+  "id": "component_20251120_022013_001",
+  "query_id": "component_20251120_022013_001",
+  "timestamp": "2025-11-20T02:33:02Z",
+  "status": "failed",
+  "response": {
+    "summary": "Component build failed - see build log for details",
+    "component_name": "Rating",
+    "files_created": [
+  "RatingData.swift",
+  "RatingView.swift",
+  "RatingHostingView.swift",
+  "RatingElementParser.swift"
+],
+    "files_modified": [
+  ""
+],
+    "test_card_created": "rating-test.json",
+    "compilation": {
+      "success": false,
+      "errors": [
+  "\u001b[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m\n\u001b[0;34m  Building Component: Rating\u001b[0m\n\u001b[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m\n\n\u001b[1;33m🧹 Cleaning build artifacts...\u001b[0m\n\u001b[1;33m🔨 Building AdaptiveCardCustomElements package...\u001b[0m\n\n\n\u001b[0;31m❌ Build failed!\u001b[0m\n\u001b[0;31m⏱️  Build time: 1s\u001b[0m\n\n\u001b[0;31m🔍 Compilation errors:\u001b[0m\nxcodebuild: error: The directory /Users/hugogonzalez/Documents/code/work/microsoft/AdaptiveCards-Mobile/AdaptiveCardCustomElements does not contain an Xcode project, workspace or package.\n\n\u001b[1;33m📄 Full build output saved to: /tmp/build_error_Rating.log\u001b[0m"
+],
+      "build_time_seconds": 305
+    },
+    "agent_work_log": [
+      "Started component build process",
+      "Created agent context file",
+      "Sent prompt to GitHub Copilot via HTTP proxy",
+      "Monitored for file creation",
+      "Validated component build"
+    ]
+  },
+  "processing": {
+    "started_at": "2025-11-20T02:27:57Z",
+    "completed_at": "2025-11-20T02:33:02Z",
+    "duration_seconds": 305,
+    "processed_by": "local_poller_v1",
+    "agent": "github_copilot_http"
+  }
+}
