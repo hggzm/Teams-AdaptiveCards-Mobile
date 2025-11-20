@@ -47,19 +47,8 @@ pull_changes() {
     cd "$REPO_ROOT"
     log_and_echo "${YELLOW}🔄 Fetching all branches...${NC}"
     
-    # Fetch all branches including new ones, prune deleted remote branches
-    git fetch --all --prune 2>&1 | grep -v "^From" || true
-    
-    # Clean up any stale tracking branches
-    local current_branch=$(git branch --show-current)
-    for branch in $(git branch --list "component-build-*" | sed 's/^[* ]*//' || true); do
-        if ! git ls-remote --heads hggzm "$branch" | grep -q "$branch"; then
-            log_and_echo "${YELLOW}🧹 Removing stale local branch: $branch${NC}"
-            if [[ "$branch" != "$current_branch" ]]; then
-                git branch -D "$branch" 2>/dev/null || true
-            fi
-        fi
-    done
+    # Fetch all branches including new ones
+    git fetch --all --prune
     
     if git pull origin $(git branch --show-current) 2>&1 | grep -q "Already up to date"; then
         return 1  # No changes
@@ -73,8 +62,11 @@ pull_changes() {
 check_component_build_branches() {
     cd "$REPO_ROOT"
     
-    # Find remote component-build-* branches
-    local build_branches=$(git branch -r | grep "hggzm/component-build-" | sed 's/hggzm\///' | sed 's/^[[:space:]]*//' | xargs)
+    # Fetch latest to ensure we have current branch list
+    git fetch hggzm --prune > /dev/null 2>&1
+    
+    # Find remote component-build-* branches that actually exist
+    local build_branches=$(git ls-remote --heads hggzm 'refs/heads/component-build-*' | awk '{print $2}' | sed 's|refs/heads/||' | xargs)
     
     if [[ -n "$build_branches" ]]; then
         log_and_echo "${GREEN}📋 Found component build branches:${NC}"
@@ -82,7 +74,7 @@ check_component_build_branches() {
             log_and_echo "  ${BLUE}→ $branch${NC}"
             
             # Check if branch has pending query
-            if git ls-tree -r "hggzm/$branch" --name-only | grep -q "queries/.*\.json$"; then
+            if git ls-tree -r "hggzm/$branch" --name-only 2>/dev/null | grep -q "queries/.*\.json$"; then
                 log_and_echo "    ${GREEN}✅ Has pending query${NC}"
                 process_component_build "$branch"
             fi
@@ -175,7 +167,7 @@ process_component_build() {
         # Clean up local branch if it exists
         if git show-ref --verify --quiet "refs/heads/$branch"; then
             log_and_echo "${YELLOW}🧹 Cleaning up local branch${NC}"
-            git checkout main 2>/dev/null || git checkout feature/dynamic_swiftui_builder 2>/dev/null || true
+            git checkout feature/dynamic_swiftui_builder 2>/dev/null || git checkout main 2>/dev/null || true
             git branch -D "$branch" 2>/dev/null || true
         fi
         
@@ -273,9 +265,9 @@ while true; do
     # Check for new branches with queries
     check_component_build_branches
     
-    # Return to main/feature branch
+    # Return to feature branch
     cd "$REPO_ROOT"
-    git checkout main 2>/dev/null || git checkout feature/dynamic_swiftui_builder 2>/dev/null || true
+    git checkout feature/dynamic_swiftui_builder 2>/dev/null || git checkout main 2>/dev/null || true
     
     log_and_echo "${BLUE}⏱️  Waiting ${POLL_INTERVAL}s before next poll...${NC}"
     sleep "$POLL_INTERVAL"
