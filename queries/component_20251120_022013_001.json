@@ -1,0 +1,25 @@
+{
+  "id": "component_20251120_022013_001",
+  "type": "component_build",
+  "timestamp": "2025-11-20T02:20:13Z",
+  "request": {
+    "component_name": "Rating",
+    "description": "A star rating component that displays and allows selection of ratings from 1-5 stars",
+    "properties": [{"name":"rating","type":"Int","required":true,"description":"Current rating value (1-5)"},{"name":"maxRating","type":"Int","required":false,"description":"Maximum rating (default 5)"},{"name":"allowsHalfStars","type":"Bool","required":false,"description":"Whether to allow half star ratings"}],
+    "example_json": {"type":"Rating","rating":4,"maxRating":5,"allowsHalfStars":false}
+  },
+  "processing": {
+    "processor": "local-poller",
+    "follow_up_processor": "none",
+    "status": "pending"
+  },
+  "context": {
+    "workspace": "adaptivecards",
+    "package_path": "source/ios/AdaptiveCards/AdaptiveCards/Packages/AdaptiveCardCustomElements",
+    "prompt_template_path": "AI_AGENT_COMPONENT_PROMPT_TEMPLATE.md",
+    "reference_component": "Badge",
+    "triggered_by": "hggzm",
+    "run_id": "19523207038",
+    "run_number": "31"
+  }
+}
