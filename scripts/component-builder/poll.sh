@@ -47,8 +47,19 @@ pull_changes() {
     cd "$REPO_ROOT"
     log_and_echo "${YELLOW}🔄 Fetching all branches...${NC}"
     
-    # Fetch all branches including new ones
-    git fetch --all --prune
+    # Fetch all branches including new ones, prune deleted remote branches
+    git fetch --all --prune 2>&1 | grep -v "^From" || true
+    
+    # Clean up any stale tracking branches
+    local current_branch=$(git branch --show-current)
+    for branch in $(git branch --list "component-build-*" | sed 's/^[* ]*//' || true); do
+        if ! git ls-remote --heads hggzm "$branch" | grep -q "$branch"; then
+            log_and_echo "${YELLOW}🧹 Removing stale local branch: $branch${NC}"
+            if [[ "$branch" != "$current_branch" ]]; then
+                git branch -D "$branch" 2>/dev/null || true
+            fi
+        fi
+    done
     
     if git pull origin $(git branch --show-current) 2>&1 | grep -q "Already up to date"; then
         return 1  # No changes
@@ -157,15 +168,41 @@ process_component_build() {
     log_and_echo "${BLUE}  Processing Branch: $branch${NC}"
     log_and_echo "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     
-    # Checkout the branch
-    log_and_echo "${YELLOW}🔀 Checking out branch: $branch${NC}"
-    git checkout "$branch" || {
-        log_and_echo "${RED}❌ Failed to checkout branch${NC}"
+    # Verify remote branch still exists
+    if ! git ls-remote --heads hggzm "$branch" | grep -q "$branch"; then
+        log_and_echo "${RED}❌ Remote branch no longer exists (likely PR was closed/deleted)${NC}"
+        
+        # Clean up local branch if it exists
+        if git show-ref --verify --quiet "refs/heads/$branch"; then
+            log_and_echo "${YELLOW}🧹 Cleaning up local branch${NC}"
+            git checkout main 2>/dev/null || git checkout feature/dynamic_swiftui_builder 2>/dev/null || true
+            git branch -D "$branch" 2>/dev/null || true
+        fi
+        
         return 1
-    }
+    fi
+    
+    # Checkout the branch (create tracking branch if needed)
+    log_and_echo "${YELLOW}🔀 Checking out branch: $branch${NC}"
+    
+    if git show-ref --verify --quiet "refs/heads/$branch"; then
+        # Local branch exists, just checkout
+        git checkout "$branch" || {
+            log_and_echo "${RED}❌ Failed to checkout existing branch${NC}"
+            return 1
+        }
+    else
+        # Create new tracking branch
+        git checkout -b "$branch" "hggzm/$branch" || {
+            log_and_echo "${RED}❌ Failed to create tracking branch${NC}"
+            return 1
+        }
+    fi
     
     # Pull latest changes
-    git pull hggzm "$branch"
+    git pull hggzm "$branch" || {
+        log_and_echo "${YELLOW}⚠️  Pull failed, continuing with current state${NC}"
+    }
     
     # Find query file
     local query_file=$(find queries -name "component_*.json" -type f | head -1)
