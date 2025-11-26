@@ -6,7 +6,7 @@
 //
 
 #import "TSExpressionObjCBridge.h"
-#import <AdaptiveCards/AdaptiveCards-Swift.h>
+@import SwiftAdaptiveCards;
 
 @implementation TSExpressionObjCBridge
 

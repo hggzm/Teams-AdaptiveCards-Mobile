@@ -7,6 +7,7 @@
 //
 
 #import "SwiftAdaptiveCardObjcBridge.h"
+#import "SwiftAdaptiveCardsWrapper.h"
 
 #import "SharedAdaptiveCard.h"
 #import "ParseResult.h"
@@ -14,12 +15,7 @@
 #import "ACRParseWarningPrivate.h"
 #import "UtiliOS.h"
 
-#if __has_include(<AdaptiveCards/AdaptiveCards-Swift.h>)
 #define SWIFT_ADAPTIVE_CARDS_AVAILABLE 1
-#import <AdaptiveCards/AdaptiveCards-Swift.h>
-#else
-#define SWIFT_ADAPTIVE_CARDS_AVAILABLE 0
-#endif
 
 using namespace AdaptiveCards;
 
@@ -35,9 +31,9 @@ using namespace AdaptiveCards;
 + (NSMutableArray * _Nullable)getWarningsFromParseResult:(id _Nullable)parseResult useSwift:(BOOL)useSwift {
     NSMutableArray *acrParseWarnings = [[NSMutableArray alloc] init];
     if (useSwift && [self canUseSwift]) {
-        // Swift implementation
+        // Swift implementation - use wrapper
        SwiftAdaptiveCardParseResult *swiftResult = (SwiftAdaptiveCardParseResult *)parseResult;
-       NSArray *swiftWarnings = [swiftResult warnings];
+       NSArray *swiftWarnings = [SwiftAdaptiveCardsWrapper getWarningsFromSwiftResult:swiftResult];
        if (swiftWarnings) {
            acrParseWarnings = [NSMutableArray arrayWithArray:swiftWarnings];
        }
@@ -61,7 +57,7 @@ using namespace AdaptiveCards;
 + (BOOL)isSwiftParserEnabled {
     if ([self canUseSwift]) {
 #if SWIFT_ADAPTIVE_CARDS_AVAILABLE
-        return [SwiftAdaptiveCardParser isSwiftParserEnabled];
+        return [SwiftAdaptiveCardsWrapper isSwiftParserEnabled];
 #endif
     }
     return NO;
@@ -70,7 +66,7 @@ using namespace AdaptiveCards;
 + (void)setSwiftParserEnabled:(BOOL)enabled {
     if ([self canUseSwift]) {
 #if SWIFT_ADAPTIVE_CARDS_AVAILABLE
-        [SwiftAdaptiveCardParser setSwiftParserEnabled:enabled];
+        [SwiftAdaptiveCardsWrapper setSwiftParserEnabled:enabled];
 #endif
     }
 }
@@ -78,7 +74,7 @@ using namespace AdaptiveCards;
 + (SwiftAdaptiveCardParseResult * _Nonnull)parseWithPayload:(NSString *_Nonnull)payload {
 #if SWIFT_ADAPTIVE_CARDS_AVAILABLE
     if ([self canUseSwift]) {
-        return [SwiftAdaptiveCardParser parseWithPayload:payload];
+        return [SwiftAdaptiveCardsWrapper parseWithPayload:payload];
     }
 #endif
     // If Swift is not available, we need to return something
@@ -89,8 +85,7 @@ using namespace AdaptiveCards;
 
 + (BOOL)isParseResultSuccessful:(SwiftAdaptiveCardParseResult *_Nonnull)result {
 #if SWIFT_ADAPTIVE_CARDS_AVAILABLE
-    // Check if there are any errors
-    return (result.errors == nil || result.errors.count == 0);
+    return [SwiftAdaptiveCardsWrapper isParseResultSuccessful:result];
 #endif
     return NO;
 }
