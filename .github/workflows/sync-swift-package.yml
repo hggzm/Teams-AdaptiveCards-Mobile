@@ -7,9 +7,11 @@ on:
   push:
     branches:
       - main
+      - 'spm/test-workflow-only'  # Test branch
     paths:
       - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/SwiftAdaptiveCards/**/*.swift'
       - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCardsTests/SwiftAdaptiveCardsTests/**/*.swift'
+      - '.github/workflows/sync-swift-package.yml'  # Trigger on workflow changes
 
 permissions:
   contents: write
@@ -24,7 +26,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.ref }}  # Use triggering branch
           fetch-depth: 0  # Full history
       
       - name: Setup Ruby
