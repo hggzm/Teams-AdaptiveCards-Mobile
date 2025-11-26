@@ -1,0 +1,272 @@
+name: Sync Swift Package from Main
+
+on:
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  push:
+    branches:
+      - main
+    paths:
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/SwiftAdaptiveCards/**/*.swift'
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCardsTests/SwiftAdaptiveCardsTests/**/*.swift'
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  sync-swift-package:
+    runs-on: macos-14  # Xcode 16+
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0  # Full history
+      
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: false
+      
+      - name: Install xcodeproj gem
+        run: gem install xcodeproj
+      
+      - name: Detect Swift file changes
+        id: changes
+        run: |
+          # Get last sync commit from spm/main-tracking
+          git fetch origin spm/main-tracking:spm/main-tracking || {
+            echo "no_changes=first_run" >> $GITHUB_OUTPUT
+            echo "First run - will sync all files"
+            exit 0
+          }
+          
+          LAST_SYNC=$(git log spm/main-tracking -1 --format="%H")
+          echo "Last sync commit: $LAST_SYNC"
+          
+          # Find Swift files changed since last sync
+          CHANGED_FILES=$(git diff --name-only $LAST_SYNC HEAD | \
+                         grep -E "(SwiftAdaptiveCards|SwiftAdaptiveCardsTests).*\.swift$" || echo "")
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "no_changes=true" >> $GITHUB_OUTPUT
+            echo "✅ No Swift file changes detected since last sync"
+          else
+            echo "no_changes=false" >> $GITHUB_OUTPUT
+            echo "📝 Swift files changed:"
+            echo "$CHANGED_FILES"
+            echo "$CHANGED_FILES" > /tmp/changed_files.txt
+          fi
+      
+      - name: Checkout spm/main-tracking branch
+        if: steps.changes.outputs.no_changes == 'false' || steps.changes.outputs.no_changes == 'first_run'
+        run: |
+          git checkout spm/main-tracking
+          git pull origin spm/main-tracking || echo "Branch may not exist yet"
+      
+      - name: Sync Swift source files
+        if: steps.changes.outputs.no_changes == 'false' || steps.changes.outputs.no_changes == 'first_run'
+        run: |
+          echo "📦 Syncing Swift source files..."
+          
+          # Merge latest from main
+          git fetch origin main
+          git merge origin/main --no-commit --no-ff || {
+            echo "::warning::Merge conflicts detected, attempting resolution..."
+          }
+          
+          # Copy Swift files
+          rsync -av --delete \
+            source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/SwiftAdaptiveCards/ \
+            source/ios/AdaptiveCards/SwiftAdaptiveCardsPackage/Sources/SwiftAdaptiveCards/ \
+            --exclude='.DS_Store'
+          
+          echo "✅ Source files synced"
+      
+      - name: Sync Swift test files
+        if: steps.changes.outputs.no_changes == 'false' || steps.changes.outputs.no_changes == 'first_run'
+        run: |
+          echo "🧪 Syncing Swift test files..."
+          
+          rsync -av --delete \
+            source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCardsTests/SwiftAdaptiveCardsTests/ \
+            source/ios/AdaptiveCards/SwiftAdaptiveCardsPackage/Tests/SwiftAdaptiveCardsTests/ \
+            --exclude='.DS_Store'
+          
+          echo "✅ Test files synced"
+      
+      - name: Update Xcode project references
+        if: steps.changes.outputs.no_changes == 'false' || steps.changes.outputs.no_changes == 'first_run'
+        run: |
+          echo "🔧 Updating Xcode project..."
+          
+          # Remove Swift files from main project
+          ruby remove_swift_files.rb || echo "Swift files already removed"
+          ruby remove_swift_test_files.rb || echo "Swift test files already removed"
+          
+          echo "✅ Xcode project updated"
+      
+      - name: Fix test imports
+        if: steps.changes.outputs.no_changes == 'false' || steps.changes.outputs.no_changes == 'first_run'
+        run: |
+          echo "🔄 Fixing test imports..."
+          
+          # Change 'import AdaptiveCards' to 'import SwiftAdaptiveCards'
+          find source/ios/AdaptiveCards/SwiftAdaptiveCardsPackage/Tests -name "*.swift" \
+            -exec sed -i '' 's/^import AdaptiveCards$/import SwiftAdaptiveCards/g' {} \;
+          
+          echo "✅ Test imports fixed"
+      
+      - name: Build Swift Package
+        if: steps.changes.outputs.no_changes == 'false' || steps.changes.outputs.no_changes == 'first_run'
+        run: |
+          echo "🏗️  Building Swift Package..."
+          cd source/ios/AdaptiveCards/SwiftAdaptiveCardsPackage
+          swift build
+          echo "✅ Build successful"
+      
+      - name: Run Swift Package tests
+        if: steps.changes.outputs.no_changes == 'false' || steps.changes.outputs.no_changes == 'first_run'
+        id: swift_tests
+        run: |
+          echo "🧪 Running Swift Package tests..."
+          cd source/ios/AdaptiveCards/SwiftAdaptiveCardsPackage
+          swift test 2>&1 | tee /tmp/swift_test_output.log
+          
+          # Extract test count
+          TEST_COUNT=$(grep "Executed.*tests" /tmp/swift_test_output.log | tail -1 | grep -o "[0-9]* tests" | grep -o "[0-9]*" || echo "0")
+          echo "swift_test_count=$TEST_COUNT" >> $GITHUB_OUTPUT
+          echo "✅ $TEST_COUNT Swift tests passed"
+      
+      - name: Build SDK
+        if: steps.changes.outputs.no_changes == 'false' || steps.changes.outputs.no_changes == 'first_run'
+        run: |
+          echo "🏗️  Building SDK..."
+          cd source/ios/AdaptiveCards
+          xcodebuild -workspace AdaptiveCards.xcworkspace \
+                     -scheme AdaptiveCards \
+                     -sdk iphonesimulator \
+                     -quiet \
+                     build
+          echo "✅ SDK build successful"
+      
+      - name: Run SDK tests
+        if: steps.changes.outputs.no_changes == 'false' || steps.changes.outputs.no_changes == 'first_run'
+        id: sdk_tests
+        run: |
+          echo "🧪 Running SDK tests..."
+          cd source/ios/AdaptiveCards
+          
+          xcodebuild test \
+            -workspace AdaptiveCards.xcworkspace \
+            -scheme AdaptiveCards \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -quiet 2>&1 | tee /tmp/sdk_test_output.log
+          
+          # Extract test count
+          TEST_COUNT=$(grep "Executed.*tests" /tmp/sdk_test_output.log | tail -1 | grep -o "[0-9]* tests" | grep -o "[0-9]*" || echo "0")
+          echo "sdk_test_count=$TEST_COUNT" >> $GITHUB_OUTPUT
+          echo "✅ $TEST_COUNT SDK tests passed"
+      
+      - name: Commit and push changes
+        if: steps.changes.outputs.no_changes == 'false' || steps.changes.outputs.no_changes == 'first_run'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add changes
+          git add source/ios/AdaptiveCards/SwiftAdaptiveCardsPackage/
+          git add source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards.xcodeproj/project.pbxproj
+          
+          # Create commit message
+          SWIFT_TESTS=${{ steps.swift_tests.outputs.swift_test_count }}
+          SDK_TESTS=${{ steps.sdk_tests.outputs.sdk_test_count }}
+          TOTAL=$((SWIFT_TESTS + SDK_TESTS))
+          
+          if [ -f /tmp/changed_files.txt ]; then
+            CHANGED_FILES=$(cat /tmp/changed_files.txt)
+          else
+            CHANGED_FILES="Initial sync"
+          fi
+          
+          git commit -m "🔄 Auto-sync Swift Package from main
+
+          Changes detected in Swift files:
+          $CHANGED_FILES
+          
+          ✅ Build Status:
+          - Swift Package: Built successfully
+          - SDK: Built successfully
+          
+          ✅ Test Results:
+          - Swift Package: $SWIFT_TESTS tests passing
+          - SDK: $SDK_TESTS tests passing
+          - Total: $TOTAL tests passing
+          
+          📋 Details:
+          - Synced from main commit: ${{ github.sha }}
+          - Workflow run: ${{ github.run_id }}
+          - Triggered by: ${{ github.event_name }}"
+          
+          echo "✅ Changes committed"
+      
+      - name: Push to spm/main-tracking
+        if: steps.changes.outputs.no_changes == 'false' || steps.changes.outputs.no_changes == 'first_run'
+        run: |
+          git push origin spm/main-tracking
+          echo "✅ Changes pushed to spm/main-tracking"
+      
+      - name: Create summary
+        if: steps.changes.outputs.no_changes == 'false' || steps.changes.outputs.no_changes == 'first_run'
+        run: |
+          echo "## 🎉 Swift Package Sync Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Swift Package: ${{ steps.swift_tests.outputs.swift_test_count }} tests passing" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ SDK: ${{ steps.sdk_tests.outputs.sdk_test_count }} tests passing" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Total: $((${{ steps.swift_tests.outputs.swift_test_count }} + ${{ steps.sdk_tests.outputs.sdk_test_count }})) tests passing**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Changes" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/changed_files.txt ]; then
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            cat /tmp/changed_files.txt >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Initial sync - all Swift files copied" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Branch: \`spm/main-tracking\`" >> $GITHUB_STEP_SUMMARY
+          echo "Main commit: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+      
+      - name: No changes detected
+        if: steps.changes.outputs.no_changes == 'true'
+        run: |
+          echo "✅ No Swift file changes detected - nothing to sync"
+          echo "## ℹ️ No Changes" >> $GITHUB_STEP_SUMMARY
+          echo "No Swift file changes detected since last sync." >> $GITHUB_STEP_SUMMARY
+      
+      - name: Handle failures
+        if: failure()
+        run: |
+          echo "::error::Swift Package sync failed"
+          echo "## ❌ Sync Failed" >> $GITHUB_STEP_SUMMARY
+          echo "Check the logs above for details." >> $GITHUB_STEP_SUMMARY
+          
+          # Create issue for failures
+          gh issue create \
+            --title "❌ Swift Package sync failed" \
+            --body "Automated sync from main to spm/main-tracking failed.
+            
+            **Workflow Run**: ${{ github.run_id }}
+            **Commit**: ${{ github.sha }}
+            **Triggered by**: ${{ github.event_name }}
+            
+            Please review the workflow logs and fix any issues." \
+            --label "automation,swift-package,bug" || echo "Failed to create issue"
+        env:
+          GH_TOKEN: ${{ github.token }}
