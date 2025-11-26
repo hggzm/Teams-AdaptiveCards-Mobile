@@ -9,7 +9,6 @@ import Foundation
 
 // MARK: - Cache Management Protocol
 
-@available(iOS 13.0, macOS 10.15, *)
 public protocol CacheManaging: Actor {
     func callFunction(declaration: FunctionDeclaration, params: [EvaluationResult]?) async -> EvaluationResult
     func configureCaching(for functionName: String, configuration: CacheConfiguration)
@@ -21,7 +20,6 @@ public protocol CacheManaging: Actor {
 
 // MARK: - CachedFunctionCall Actor
 
-@available(iOS 13.0, macOS 10.15, *)
 internal actor CachedFunctionCall {
     private let declaration: FunctionDeclaration
     private let params: [EvaluationResult]?
@@ -88,7 +86,6 @@ internal actor CachedFunctionCall {
 
 // MARK: - FunctionCallCache Actor
 
-@available(iOS 13.0, macOS 10.15, *)
 public actor FunctionCallCache {
     private var callCache: [String: CachedFunctionCall] = [:]
     private var executingKeys: Set<String> = []
@@ -210,7 +207,6 @@ public actor FunctionCallCache {
 
 // MARK: - Thread-Safe Cache Manager implementing CacheManaging
 
-@available(iOS 13.0, macOS 10.15, *)
 public actor CacheManager: CacheManaging {
     private let functionCache = FunctionCallCache()
     private var cacheConfigurations: [String: CacheConfiguration] = [:]

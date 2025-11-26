@@ -41,13 +41,14 @@ import Foundation
     /// Instance method for evaluating expressions
     @objc public func evaluateExpression(_ expressionString: String, withData data: NSDictionary? = nil, completion: @escaping (NSObject?, NSError?) -> Void) {
         
-        Task {
-            do {
-                let expr = try engine.createExpression(expressionString, allowAssignment: false)
-                let context: EvaluationContext?
-                
-                if let data = data {
-                    context = await engine.createContext(with: data as? [String: Any])
+        if #available(iOS 13.0, macOS 10.15, *) {
+            Task {
+                do {
+                    let expr = try engine.createExpression(expressionString, allowAssignment: false)
+                    let context: EvaluationContext?
+                    
+                    if let data = data {
+                        context = await engine.createContext(with: data as? [String: Any])
                 } else {
                     context = await engine.createDefaultContext(with: nil)
                 }
@@ -80,6 +81,10 @@ import Foundation
                 let nsError = NSError(domain: "ObjCExpressionEvaluator", code: -1, userInfo: [NSLocalizedDescriptionKey: String(describing: error)])
                 completion(nil, nsError)
             }
+        }
+        } else {
+            let error = NSError(domain: "ObjCExpressionEvaluator", code: -2, userInfo: [NSLocalizedDescriptionKey: "Expression evaluation requires iOS 13.0 or later"])
+            completion(nil, error)
         }
     }
 }
