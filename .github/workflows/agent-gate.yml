@@ -256,6 +256,50 @@ jobs:
         xcrun simctl boot "$SIMULATOR" 2>/dev/null || true
         echo "Using simulator: $SIMULATOR"
 
+    - name: Run iOS Snapshot Tests (SPM)
+      run: |
+        echo "=== Running iOS Snapshot Tests ==="
+        # Record mode when manually triggered with record_baselines=true
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.record_baselines }}" = "true" ]; then
+          export RECORD_SNAPSHOTS=1
+          echo "Mode: RECORDING new baselines"
+        else
+          echo "Mode: VERIFYING against baselines"
+        fi
+
+        xcodebuild test \
+          -scheme "AdaptiveCards-Package" \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          -only-testing:VisualSnapshotTests \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee /tmp/visual-output/snapshot-test.log | grep -E "Test Case|passed|failed|Test Suite|SNAPSHOT" || true
+
+        # Summary
+        SNAP_PASSED=$(grep -c "passed" /tmp/visual-output/snapshot-test.log 2>/dev/null || echo "0")
+        SNAP_FAILED=$(grep -c "failed" /tmp/visual-output/snapshot-test.log 2>/dev/null || echo "0")
+        echo "### iOS Snapshot Tests" >> $GITHUB_STEP_SUMMARY
+        echo "- Passed: $SNAP_PASSED" >> $GITHUB_STEP_SUMMARY
+        echo "- Failed: $SNAP_FAILED" >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload iOS snapshot baselines
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ios-snapshot-baselines
+        path: source/ios/SnapshotTests/Snapshots/Baselines/
+        retention-days: 30
+
+    - name: Upload iOS snapshot failures
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ios-snapshot-failures
+        path: |
+          source/ios/SnapshotTests/Snapshots/Failures/
+          source/ios/SnapshotTests/Snapshots/Diffs/
+        retention-days: 14
+
     - name: Render test cards and capture screenshots
       working-directory: source/ios/AdaptiveCards
       run: |

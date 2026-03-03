@@ -179,10 +179,71 @@ gh workflow run agent-gate.yml \
   -f record_baselines=true
 ```
 
-### iOS (Visualizer Snapshots)
+### iOS (Custom Snapshot Framework)
 
-The iOS visual regression job builds ADCIOSVisualizer, runs its tests, and
-produces xcresult bundles for analysis.
+The `VisualSnapshotTests` SPM test target uses a custom `SnapshotTestCase`
+ported from AdaptiveCards-Mobile. Zero external dependencies.
+
+#### Commands
+
+```bash
+# Find a simulator:
+SIMULATOR=$(xcrun simctl list devices available | grep iPhone | head -1 | grep -oE '[A-F0-9-]{36}')
+xcrun simctl boot "$SIMULATOR" 2>/dev/null || true
+
+# Record new baselines:
+RECORD_SNAPSHOTS=1 xcodebuild test \
+  -scheme "AdaptiveCards-Package" \
+  -sdk iphonesimulator \
+  -destination "platform=iOS Simulator,id=$SIMULATOR" \
+  -only-testing:VisualSnapshotTests
+
+# Verify against baselines:
+xcodebuild test \
+  -scheme "AdaptiveCards-Package" \
+  -sdk iphonesimulator \
+  -destination "platform=iOS Simulator,id=$SIMULATOR" \
+  -only-testing:VisualSnapshotTests
+```
+
+Or use the helper script:
+```bash
+source/ios/SnapshotTests/run_snapshot_tests.sh record   # Record baselines
+source/ios/SnapshotTests/run_snapshot_tests.sh verify   # Verify
+source/ios/SnapshotTests/run_snapshot_tests.sh clean    # Delete artifacts
+```
+
+#### How it works
+
+1. Creates UIViews programmatically with accessibility properties
+2. Embeds in a UIWindow for proper trait propagation (interface style, size category)
+3. Renders via `UIGraphicsImageRenderer` + layer.render
+4. Compares PNG baselines pixel-by-pixel (multi-strategy: padding, downsampled, crop)
+5. Generates red-highlighted diff images on failure
+6. Tolerance: 1% pixel difference (channel threshold: 7/255)
+
+#### Test coverage
+
+| Test Class | Tests | What it covers |
+|-----------|-------|----------------|
+| `AccessibilitySnapshotTests` | 14 | Image role (light/dark + no alt text), link role, error messages, dropdown count, radio groups, showcard toggle (expanded/collapsed), progress bars (determinate/indeterminate/zero/full) |
+| `CardLayoutSnapshotTests` | 4 | Activity update card, input form with error, poll results, showcard interaction |
+
+#### Re-recording baselines
+
+After intentional visual changes:
+```bash
+source/ios/SnapshotTests/run_snapshot_tests.sh record
+git add source/ios/SnapshotTests/Snapshots/Baselines/
+git commit -m "chore: update iOS visual baselines"
+```
+
+Or via CI manual trigger (sets `RECORD_SNAPSHOTS=1`).
+
+### iOS (Legacy Visualizer)
+
+The ADCIOSVisualizer app is also built and tested via xcodebuild.
+Produces xcresult bundles uploaded as artifacts.
 
 ---
 
@@ -215,6 +276,8 @@ produces xcresult bundles for analysis.
 | `android-paparazzi-baselines` | Paparazzi PNG baselines |
 | `android-paparazzi-failures` | Visual diff images (on failure) |
 | `android-visual-test-reports` | JUnit XML from snapshot tests |
+| `ios-snapshot-baselines` | iOS snapshot PNG baselines |
+| `ios-snapshot-failures` | iOS visual diff images (on failure) |
 
 ---
 
@@ -249,5 +312,6 @@ git push origin proxy/integration
 | `docs/PROXY_PR_LOG.md` | PR tracking log |
 | `docs/PROXY_BRANCH_TRACKER.md` | Branch tracker |
 | `source/android/snapshottests/` | Paparazzi visual regression |
+| `source/ios/SnapshotTests/` | iOS snapshot tests (custom framework) |
 | `source/android/adaptivecards/` | Main Android library |
 | `source/shared/cpp/ObjectModel/` | Shared C++ model |

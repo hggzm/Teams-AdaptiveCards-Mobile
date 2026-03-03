@@ -49,9 +49,19 @@ The `agent-gate.yml` workflow runs **8 parallel jobs** + a **gate verdict** aggr
 | `AccessibilitySnapshotTests` | 14 | Image role, link role, error messages, radio groups, showcard toggle, progress bars |
 | `CardLayoutSnapshotTests` | 4 | Activity update, input form, poll results, expense report card layouts |
 
-### iOS
-- Uses ADCIOSVisualizer app with xcodebuild
-- xcresult bundles uploaded as artifacts
+### iOS (Custom Snapshot Framework)
+- **Module:** `source/ios/SnapshotTests`
+- **Framework:** Custom `SnapshotTestCase` (ported from AdaptiveCards-Mobile, zero external deps)
+- **Record baselines:** `RECORD_SNAPSHOTS=1 xcodebuild test -scheme AdaptiveCards-Package ...`
+- **Verify snapshots:** `xcodebuild test -scheme AdaptiveCards-Package -only-testing:VisualSnapshotTests ...`
+- **Baselines stored:** `source/ios/SnapshotTests/Snapshots/Baselines/`
+- **Diff images:** `source/ios/SnapshotTests/Snapshots/Diffs/` (red-highlighted pixel diffs)
+- Also runs ADCIOSVisualizer tests via xcodebuild (xcresult bundles)
+
+| Test Class | Tests | Coverage |
+|-----------|-------|----------|
+| `AccessibilitySnapshotTests` | 14 | Image role, link role, error messages, radio groups, showcard toggle, progress bars |
+| `CardLayoutSnapshotTests` | 4 | Activity update, input form, poll results, showcard interaction layouts |
 
 ## Accessibility Fix PRs
 
@@ -79,6 +89,9 @@ All 8 fork accessibility issues (#15-#22) have been addressed and closed.
 - CMake builds `adaptivecards-native-lib` from `source/shared/cpp/ObjectModel/*.cpp`
 - **Modules:** `adaptivecards`, `snapshottests` (Paparazzi), `uitestapp`, `mobile`, `mobilechatapp`
 
+### iOS (SPM)
+- **Package.swift:** ObjectModel (C++17) + AdaptiveCards (ObjC/Swift) + AdaptiveCardsTest + **VisualSnapshotTests**
+
 ## Dashboard Tracking
 
 | Job ID | Executor | Interval |
@@ -99,6 +112,7 @@ upstream  https://github.com/microsoft/Teams-AdaptiveCards-Mobile.git
 |------|-------------|
 | `.github/workflows/agent-gate.yml` | Agent validation gate workflow |
 | `source/android/snapshottests/` | Paparazzi snapshot test module |
+| `source/ios/SnapshotTests/` | iOS snapshot test module (custom framework) |
 | `source/android/adaptivecards/` | Main Android library |
 | `source/shared/cpp/ObjectModel/` | Shared C++ object model |
 | `source/ios/AdaptiveCards/` | iOS workspace |
