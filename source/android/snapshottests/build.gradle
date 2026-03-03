@@ -9,13 +9,13 @@
 // Verify snapshots:  ./gradlew :snapshottests:verifyPaparazziDebug
 //
 
-apply from: '../constants.gradle'
-
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
     id 'app.cash.paparazzi'
 }
+
+apply from: '../constants.gradle'
 
 android {
     namespace = "io.adaptivecards.snapshottests"
