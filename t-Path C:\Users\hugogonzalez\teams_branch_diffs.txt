@@ -1,0 +1,31 @@
+[1mdiff --git a/source/android/adaptivecards/src/main/java/io/adaptivecards/renderer/readonly/ImageRenderer.java b/source/android/adaptivecards/src/main/java/io/adaptivecards/renderer/readonly/ImageRenderer.java[m
+[1mindex 85717051..3e8068b0 100644[m
+[1m--- a/source/android/adaptivecards/src/main/java/io/adaptivecards/renderer/readonly/ImageRenderer.java[m
+[1m+++ b/source/android/adaptivecards/src/main/java/io/adaptivecards/renderer/readonly/ImageRenderer.java[m
+[36m@@ -22,6 +22,10 @@[m [mimport androidx.constraintlayout.widget.ConstraintLayout;[m
+ import androidx.constraintlayout.widget.ConstraintSet;[m
+ import androidx.fragment.app.FragmentManager;[m
+ [m
+[32m+[m[32mimport androidx.core.view.ViewCompat;[m
+[32m+[m[32mimport androidx.core.view.accessibility.AccessibilityNodeInfoCompat;[m
+[32m+[m[32mimport androidx.core.view.AccessibilityDelegateCompat;[m
+[32m+[m
+ import io.adaptivecards.R;[m
+ import io.adaptivecards.objectmodel.BaseCardElement;[m
+ import io.adaptivecards.objectmodel.HeightType;[m
+[36m@@ -331,6 +335,15 @@[m [mpublic class ImageRenderer extends BaseCardElementRenderer[m
+         ImageView imageView = new ImageView(context);[m
+         imageView.setContentDescription(image.GetAltText());[m
+ [m
+[32m+[m[32m        // Fix: Set Image role for TalkBack (#490, #375)[m
+[32m+[m[32m        ViewCompat.setAccessibilityDelegate(imageView, new AccessibilityDelegateCompat() {[m
+[32m+[m[32m            @Override[m
+[32m+[m[32m            public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfoCompat info) {[m
+[32m+[m[32m                super.onInitializeAccessibilityNodeInfo(host, info);[m
+[32m+[m[32m                info.setRoleDescription("Image");[m
+[32m+[m[32m            }[m
+[32m+[m[32m        });[m
+[32m+[m
+         int backgroundColor = getBackgroundColorFromHexCode(image.GetBackgroundColor());[m
+ [m
+         if(image.GetImageStyle() != ImageStyle.Person)[m

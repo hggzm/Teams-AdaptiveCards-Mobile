@@ -274,6 +274,13 @@ jobs:
 
         # Use standalone Package.swift in SnapshotTests dir to avoid mixed-language issue
         cd source/ios/SnapshotTests
+        # Ensure Snapshots dir exists for recording
+        mkdir -p Snapshots/Baselines Snapshots/Failures Snapshots/Diffs
+        
+        # List available schemes for debugging
+        echo "Available schemes:"
+        xcodebuild -list 2>&1 | head -20 || true
+        
         xcodebuild test \
           -scheme "VisualSnapshotTests" \
           -sdk iphonesimulator \

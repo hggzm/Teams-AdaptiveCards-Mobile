@@ -9,7 +9,6 @@ let package = Package(
             name: "VisualSnapshotTests",
             path: ".",
             exclude: [
-                "Snapshots",
                 "run_snapshot_tests.sh",
                 "Package.swift"
             ],
