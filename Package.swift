@@ -73,25 +73,6 @@ let package = Package(
                 LinkerSetting.linkedFramework("CoreGraphics"),
                 LinkerSetting.linkedFramework("QuartzCore")
             ]
-        ),
-        .testTarget(
-            name: "VisualSnapshotTests",
-            dependencies: [],
-            path: "source/ios/SnapshotTests",
-            exclude: [
-                "Snapshots",
-                "run_snapshot_tests.sh"
-            ],
-            sources: [
-                "SnapshotTesting/SnapshotTestCase.swift",
-                "Tests/AccessibilitySnapshotTests.swift",
-                "Tests/CardLayoutSnapshotTests.swift"
-            ],
-            linkerSettings: [
-                LinkerSetting.linkedFramework("UIKit"),
-                LinkerSetting.linkedFramework("CoreGraphics"),
-                LinkerSetting.linkedFramework("QuartzCore")
-            ]
         )
     ],
     cxxLanguageStandard: CXXLanguageStandard.cxx17

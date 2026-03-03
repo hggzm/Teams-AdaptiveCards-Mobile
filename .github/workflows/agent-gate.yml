@@ -272,17 +272,19 @@ jobs:
           echo "Mode: VERIFYING against baselines"
         fi
 
+        # Use standalone Package.swift in SnapshotTests dir to avoid mixed-language issue
+        cd source/ios/SnapshotTests
         xcodebuild test \
-          -scheme "AdaptiveCards-Package" \
+          -scheme "VisualSnapshotTests" \
           -sdk iphonesimulator \
           -destination "platform=iOS Simulator,id=$SIM_UDID" \
-          -only-testing:VisualSnapshotTests \
           CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
           2>&1 | tee /tmp/visual-output/snapshot-test.log || true
         SNAP_EXIT=${PIPESTATUS[0]}
         echo "xcodebuild exit code: $SNAP_EXIT"
         echo "--- Test output summary ---"
         grep -E "Test Case|passed|failed|Test Suite|SNAPSHOT|error:" /tmp/visual-output/snapshot-test.log || echo "(no matching output)"
+        cd ${{ github.workspace }}
 
         # Summary
         SNAP_PASSED=$(grep -c "passed" /tmp/visual-output/snapshot-test.log 2>/dev/null || echo "0")
