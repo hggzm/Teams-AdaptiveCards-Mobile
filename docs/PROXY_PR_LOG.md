@@ -78,3 +78,63 @@ When merged upstream:
 ```markdown
 | <#> | ... | ... | ... | ... | merged | [#NN](url) | [#NNN](url) |
 ```
+
+## Batch 2b — iOS Accessibility Fixes (PRs #525-#531)
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 14 | #166/#165 | proxy/fix-showcard-focus-166 | clean/fix-showcard-focus-166 | [#525](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/525) | Post VoiceOver notification on ShowCard expand/collapse |
+| 15 | #34 | proxy/fix-togglevisibility-focus-34 | clean/fix-togglevisibility-focus-34 | [#526](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/526) | Post VoiceOver notification after ToggleVisibility |
+| 16 | #493 | proxy/fix-error-announce-493 | clean/fix-error-announce-493 | [#527](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/527) | Announce validation error messages to TalkBack |
+| 17 | #164 | — | clean/fix-group-announcement-164 | [#528](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/528) | Prevent VoiceOver "Group" on containers with selectAction |
+| 18 | #173 | — | clean/fix-choiceset-selected-173 | [#529](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/529) | Announce "selected" state for ChoiceSet compact items |
+| 19 | #100 | — | clean/fix-showcard-announce-100 | [#530](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/530) | Announce expanded/collapsed state for ShowCard actions |
+| 20 | #12/#108 | — | clean/fix-hidden-focus-12-108 | [#531](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/531) | Prevent TalkBack from focusing on hidden/GONE elements |
+
+## Batch 3 — ChoiceSet Fixes (PRs #532-#534)
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 21 | #483 | — | clean/fix-choiceset-label-repeat-483 | [#532](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/532) | iOS: Stop repeating ChoiceSet label on every radio/checkbox |
+| 22 | #180 | — | clean/fix-choiceset-modal-180 | [#533](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/533) | iOS: Prevent VoiceOver escape to background in dropdown |
+| 23 | #89 | — | clean/fix-choiceset-position-89 | [#534](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/534) | Android: Announce position info for ChoiceSet items |
+
+## Batch 4 — Input & Image Fixes (PRs #535-#537)
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 24 | #107 | — | clean/fix-email-inputtype-107 | [#535](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/535) | Android: Add TYPE_CLASS_TEXT to email/url/password |
+| 25 | #88 | — | clean/fix-double-announce-88 | [#536](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/536) | Android: Prevent TalkBack double label announcement |
+| 26 | #171 | — | clean/fix-image-selectaction-a11y-171 | [#537](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/537) | iOS: Fallback a11y label for images with selectAction |
+
+## Batch 5 — Table & ColumnSet Fixes (PRs #538-#540)
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 27 | #42/#44 | — | clean/fix-columnset-reading-order-42 | [#538](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/538) | iOS: Fix VoiceOver reading order for ColumnSet |
+| 28 | #48 (iOS) | — | clean/fix-table-a11y-48-ios | [#539](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/539) | iOS: Set accessibilityContainerType on table |
+| 29 | #48 (Android) | — | clean/fix-table-a11y-48-android | [#540](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/540) | Android: Table heading + CollectionInfo for TalkBack |
+
+## Batch 6 — Heading, Button & Spinner Fixes (PRs #541-#543)
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 30 | #170 | — | clean/fix-heading-activatable-170 | [#541](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/541) | iOS: Prevent "double tap to activate" on headings |
+| 31 | #176 | — | clean/fix-button-role-twice-176 | [#542](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/542) | iOS: Prevent button role announced twice |
+| 32 | #109 | — | clean/fix-spinner-focus-109 | [#543](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/543) | Android: Improve keyboard focus for Spinner dropdown |
+
+## Batch 7 — Selected State, Required & Video Fixes (PRs #544-#546)
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 33 | #103 | — | clean/fix-spinner-selected-visual-103 | [#544](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/544) | Android: Highlight selected item in dropdown |
+| 34 | #190 | — | clean/fix-required-asterisk-190 | [#545](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/545) | iOS: Show required asterisk for inputs without label |
+| 35 | #168 | — | clean/fix-video-focus-order-168 | [#546](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/546) | iOS: Improve VoiceOver focus order on video player |
+
+## Batch 8 — RTL, Container & Picker Fixes (PRs #547-#549)
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 36 | #274 | proxy/fix-rtl-config-274 | clean/fix-rtl-config-274 | [#547](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/547) | iOS: Fix duplicate ACRRtlRTL condition in configRtl |
+| 37 | #105 | proxy/fix-container-child-a11y-105 | clean/fix-container-child-a11y-105 | [#548](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/548) | Android: Preserve keyboard focusability for container children |
+| 38 | #86 | proxy/fix-timepicker-focus-86 | clean/fix-timepicker-focus-86 | [#549](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/549) | Android: Return focus after dismissing time/date picker |
