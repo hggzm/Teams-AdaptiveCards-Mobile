@@ -276,6 +276,14 @@ jobs:
         cd source/ios/SnapshotTests
         # Ensure Snapshots dir exists for recording
         mkdir -p Snapshots/Baselines Snapshots/Failures Snapshots/Diffs
+
+        # Create marker file for record mode (env vars do not propagate to iOS Simulator)
+        if [ "$RECORD_SNAPSHOTS" = "1" ]; then
+          touch Snapshots/.record_mode
+          echo "Created .record_mode marker file"
+        else
+          rm -f Snapshots/.record_mode
+        fi
         
         # List available schemes for debugging
         echo "Available schemes:"

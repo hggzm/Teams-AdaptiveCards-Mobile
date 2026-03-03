@@ -92,7 +92,13 @@ open class SnapshotTestCase: XCTestCase {
 
     /// Whether to record new baselines instead of comparing
     public var recordMode: Bool {
-        ProcessInfo.processInfo.environment["RECORD_SNAPSHOTS"] == "1"
+        // Check env var first (works for local development)
+        if ProcessInfo.processInfo.environment["RECORD_SNAPSHOTS"] == "1" {
+            return true
+        }
+        // Fallback: check marker file (env vars don't propagate to iOS Simulator on CI)
+        let markerPath = "\(snapshotDirectory)/.record_mode"
+        return FileManager.default.fileExists(atPath: markerPath)
     }
 
     /// Root directory for snapshot artifacts.
