@@ -76,7 +76,7 @@ let package = Package(
         ),
         .testTarget(
             name: "VisualSnapshotTests",
-            dependencies: ["AdaptiveCards"],
+            dependencies: [],
             path: "source/ios/SnapshotTests",
             exclude: [
                 "Snapshots",
