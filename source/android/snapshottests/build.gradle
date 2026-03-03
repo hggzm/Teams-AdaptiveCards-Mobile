@@ -1,0 +1,45 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+//
+// Snapshot tests module — uses Paparazzi for JVM-based screenshot comparison.
+// These tests run on the JVM (no emulator needed) and compare rendered Android
+// Views against committed baseline images.
+//
+// Record baselines:  ./gradlew :snapshottests:recordPaparazziDebug
+// Verify snapshots:  ./gradlew :snapshottests:verifyPaparazziDebug
+//
+
+apply from: '../constants.gradle'
+
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'app.cash.paparazzi'
+}
+
+android {
+    namespace = "io.adaptivecards.snapshottests"
+    compileSdk = project.ext.compileSdkVersion
+
+    defaultConfig {
+        minSdk = project.ext.minSdkVersion
+        targetSdk = project.ext.targetSdkVersion
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+dependencies {
+    // We depend on the adaptivecards library for view classes, styles, etc.
+    implementation project(':adaptivecards')
+
+    // Paparazzi is a testImplementation dependency
+    testImplementation 'junit:junit:4.13.2'
+}

@@ -353,7 +353,7 @@ jobs:
         retention-days: 14
 
   android-visual-tests:
-    name: '3b. Android Visual Regression'
+    name: '3b. Android Visual Regression (Paparazzi)'
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -368,88 +368,58 @@ jobs:
         cache: 'gradle'
     - uses: gradle/actions/setup-gradle@v4
 
-    - name: Card inventory
-      run: |
-        TOTAL=$(find source -name '*.json' \( -path '*/TestFiles/*' -o -path '*/testcards/*' \) ! -name '*Invalid*' | wc -l | tr -d ' ')
-        echo "Testing against $TOTAL test cards"
-
-    - name: Build all modules
+    - name: Record Paparazzi baselines (manual trigger only)
+      if: ${{ github.event.inputs.record_baselines == 'true' }}
       working-directory: source/android
       run: |
-        ./gradlew assembleDebug --stacktrace 2>&1 | tail -20
-        echo "Android full build completed"
+        echo "RECORDING MODE — creating new Paparazzi baselines"
+        ./gradlew :snapshottests:recordPaparazziDebug --stacktrace 2>&1 | tail -20
+        echo "### Android Visual Regression: RECORDED" >> $GITHUB_STEP_SUMMARY
 
-    - name: Run rendering tests with visual output
+    - name: Verify Paparazzi snapshots
+      if: ${{ github.event.inputs.record_baselines != 'true' }}
       working-directory: source/android
       run: |
+        echo "VERIFY MODE — comparing against committed baselines"
         mkdir -p /tmp/visual-output/android
 
-        # Run unit tests for any rendering modules
-        ./gradlew testDebugUnitTest --stacktrace 2>&1 | tee /tmp/visual-output/android/test.log | tail -30
+        # Run Paparazzi verification (compares rendered output against baselines)
+        ./gradlew :snapshottests:verifyPaparazziDebug --stacktrace 2>&1 | tee /tmp/visual-output/android/paparazzi.log | tail -30
 
-        echo "### Android Visual Regression" >> $GITHUB_STEP_SUMMARY
-        if grep -q 'BUILD SUCCESSFUL' /tmp/visual-output/android/test.log; then
-          echo "- Build + test: PASSED" >> $GITHUB_STEP_SUMMARY
+        echo "### Android Visual Regression (Paparazzi)" >> $GITHUB_STEP_SUMMARY
+        if grep -q 'BUILD SUCCESSFUL' /tmp/visual-output/android/paparazzi.log; then
+          TESTS=$(grep -c 'PASSED' /tmp/visual-output/android/paparazzi.log 2>/dev/null || echo "?")
+          echo "- Snapshot verification: **PASSED** ($TESTS tests)" >> $GITHUB_STEP_SUMMARY
         else
-          echo "- Build + test: CHECK LOG" >> $GITHUB_STEP_SUMMARY
+          FAILURES=$(grep -c 'FAILED' /tmp/visual-output/android/paparazzi.log 2>/dev/null || echo "?")
+          echo "- Snapshot verification: **FAILED** ($FAILURES failures)" >> $GITHUB_STEP_SUMMARY
+          echo "- Check uploaded diff artifacts for visual changes" >> $GITHUB_STEP_SUMMARY
         fi
 
-    - name: Generate visual diff report
-      if: always()
-      run: |
-        mkdir -p /tmp/visual-output/android/report
-
-        cat > /tmp/visual-output/android/report/index.html << 'HTMLEOF'
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Android Visual Regression Report</title>
-          <style>
-            body { font-family: -apple-system, sans-serif; margin: 2em; background: #f5f5f5; }
-            h1 { color: #333; }
-            .summary { background: white; padding: 1em; border-radius: 8px; margin: 1em 0; }
-            table { border-collapse: collapse; width: 100%; }
-            th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #eee; }
-            th { background: #f0f0f0; }
-            .status-pass { color: #28a745; font-weight: bold; }
-            .status-fail { color: #dc3545; font-weight: bold; }
-          </style>
-        </head>
-        <body>
-          <h1>Android Visual Regression Report</h1>
-          <div class="summary">
-            <p><strong>Platform:</strong> Android (Ubuntu runner)</p>
-            <p><strong>Generated:</strong> <script>document.write(new Date().toISOString())</script></p>
-          </div>
-          <h2>Test Results</h2>
-        HTMLEOF
-
-        # Aggregate test XML results into the report
-        echo "<h3>Test Reports</h3>" >> /tmp/visual-output/android/report/index.html
-        for report in $(find source/android -path '*/test-results/*' -name '*.xml' 2>/dev/null); do
-          echo "<details><summary>$(basename $report)</summary><pre>" >> /tmp/visual-output/android/report/index.html
-          head -50 "$report" >> /tmp/visual-output/android/report/index.html 2>/dev/null || true
-          echo "</pre></details>" >> /tmp/visual-output/android/report/index.html
-        done
-
-        echo "</body></html>" >> /tmp/visual-output/android/report/index.html
-
-    - name: Upload Android visual test results
+    - name: Upload Paparazzi baselines
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: android-visual-test-results
-        path: /tmp/visual-output/android/
-        retention-days: 30
+        name: android-paparazzi-baselines
+        path: source/android/snapshottests/src/test/snapshots/
+        retention-days: 90
 
-    - name: Upload Android test reports
+    - name: Upload Paparazzi failure diffs
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-paparazzi-failures
+        path: source/android/snapshottests/out/failures/
+        retention-days: 14
+
+    - name: Upload test reports
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: android-test-reports-visual
+        name: android-visual-test-reports
         path: |
-          source/android/**/build/reports/tests/
-          source/android/**/build/test-results/
+          source/android/snapshottests/build/reports/tests/
+          source/android/snapshottests/build/test-results/
         retention-days: 14
 
   # ============================================================================

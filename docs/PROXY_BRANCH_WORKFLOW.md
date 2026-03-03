@@ -8,11 +8,11 @@ The `proxy/integration` branch on `hggzm/Teams-AdaptiveCards-Mobile` serves as a
 
 ### Why a Proxy Branch?
 
-1. **Gate validation**  Every push to `proxy/**` triggers the Agent Validation Gate
+1. **Gate validation** - Every push to `proxy/**` triggers the Agent Validation Gate
    (unit tests, visual regression, parity checks) *before* touching upstream.
-2. **Safe iteration**  Agents (and humans) can push experimental work, iterate on
+2. **Safe iteration** - Agents (and humans) can push experimental work, iterate on
    failures, and only propose upstream PRs once the gate is green.
-3. **PR tracking**  Changes merged into `proxy/integration` are tracked in
+3. **PR tracking** - Changes merged into `proxy/integration` are tracked in
    `docs/PROXY_PR_LOG.md` until they are replicated as PRs on `microsoft/Teams-AdaptiveCards-Mobile`.
 
 ---
@@ -47,7 +47,6 @@ git checkout -b proxy/my-feature
 ### Step 2: Make Changes and Push
 
 ```bash
-# ... edit files ...
 git add -A
 git commit -m "feat: describe your change"
 git push origin proxy/my-feature
@@ -60,108 +59,119 @@ gh pr create \
   --repo hggzm/Teams-AdaptiveCards-Mobile \
   --base proxy/integration \
   --head proxy/my-feature \
-  --title "feat: describe your change" \
-  --body "Description of the change."
+  --title "feat: describe your change"
 ```
 
-The Agent Validation Gate will automatically run on the PR.
+### Step 4: Merge and Log
 
-### Step 4: Merge the PR
+Once the gate passes, merge the PR and add an entry to `docs/PROXY_PR_LOG.md`.
 
-Once the gate passes, merge the PR into `proxy/integration`.
+### Step 5: Replicate to Upstream (Clean Branch Strategy)
+
+**IMPORTANT:** Always use clean branches based on `upstream/main`, not `proxy/integration`.
 
 ```bash
-gh pr merge <PR_NUMBER> --repo hggzm/Teams-AdaptiveCards-Mobile --squash
-```
-
-### Step 5: Log it for Upstream Replication
-
-Add an entry to `docs/PROXY_PR_LOG.md`:
-
-```markdown
-| <proxy_pr_number> | <date> | <title> | <commit_hash> | pending |  |
-```
-
-### Step 6: Replicate to Upstream
-
-Create the same change as a PR on `microsoft/Teams-AdaptiveCards-Mobile`:
-
-```bash
-# Create branch from upstream/main
 git fetch upstream
-git checkout -b upstream/my-feature upstream/main
+git checkout -b clean/my-feature upstream/main
+git cherry-pick <fix_commit_hash>
+git push origin clean/my-feature
 
-# Cherry-pick or re-apply the change
-git cherry-pick <commit_hash>  # or manually apply
+# First: Verify on fork
+gh pr create --repo hggzm/Teams-AdaptiveCards-Mobile \
+  --base main --head clean/my-feature --title "fix: description"
 
-# Push to fork (PRs to microsoft/ come from the fork)
-git push origin upstream/my-feature
-
-# Open PR against upstream
-gh pr create \
-  --repo microsoft/Teams-AdaptiveCards-Mobile \
-  --base main \
-  --head hggzm:upstream/my-feature \
-  --title "feat: describe your change" \
-  --body "Cherry-picked from proxy/integration (hggzm PR #<proxy_pr_number>)."
-```
-
-### Step 7: Update the Log
-
-Once the upstream PR is merged, update `docs/PROXY_PR_LOG.md`:
-
-```markdown
-| <proxy_pr_number> | <date> | <title> | <commit_hash> | merged | <upstream_pr_url> |
+# Then: Open upstream PR
+gh pr create --repo microsoft/Teams-AdaptiveCards-Mobile \
+  --base main --head hggzm:clean/my-feature --title "fix: description"
 ```
 
 ---
 
-## Agent Validation Gate (E2E)
+## Clean Branch Strategy
 
-**Workflow file:** `.github/workflows/agent-gate.yml`
+### Why clean branches?
 
-Triggers on every push to `proxy/**` or `main`, and on PRs targeting those branches.
+The `proxy/integration` branch contains proxy-only changes:
+- CI workflow (`agent-gate.yml`)
+- Documentation (`PROXY_*.md`)
+- Visual diff testing (`snapshottests/` module, Paparazzi config)
 
-### Jobs (9 total)
+If you branch from `proxy/integration` for an upstream PR, the diff will include
+ALL proxy changes (900+ lines across many files).
 
-| # | Job | Runner | Blocking | Description |
-|---|-----|--------|----------|-------------|
-| 1a | Structure + JSON Validation | ubuntu | Yes | Repo structure, test card JSON syntax |
-| 2a | iOS SPM Build + Test | macOS 15 | Yes | `swift build` + `swift test --filter AdaptiveCardsTest` |
-| 2b | iOS Xcode Build + Unit Tests | macOS 15 | No | xcworkspace build + AdaptiveCardsTests via xcodebuild |
-| 2c | Android Build | ubuntu | Yes | `./gradlew :adaptivecards:assembleDebug` |
-| 2d | Android Unit Tests | ubuntu | No | `./gradlew :adaptivecards:testDebugUnitTest` |
-| 3a | iOS Visual Regression | macOS 15 | No | ADCIOSVisualizer card rendering + xcresult |
-| 3b | Android Visual Regression | ubuntu | No | Full build + rendering test output |
-| 4 | Cross-Platform Parity | ubuntu | No | Source file counts, test card inventory |
-|  | **GATE VERDICT** | ubuntu |  | Aggregates results; fails if any blocking job fails |
+### How it works
 
-### Checking Gate Status
-
-```bash
-# Latest run conclusion
-gh run list --repo hggzm/Teams-AdaptiveCards-Mobile \
-  --workflow agent-gate.yml --limit 1 --json conclusion
-
-# Detailed job breakdown
-gh run view <RUN_ID> --repo hggzm/Teams-AdaptiveCards-Mobile
+```
+upstream/main ──────────────────────── target
+       \
+        └── clean/fix-my-bug ── cherry-pick only the fix commit
 ```
 
-### Artifacts Produced
+Each `clean/fix-*` branch shows exactly **1 file changed** in the PR diff.
 
-| Artifact | Contents |
-|----------|----------|
-| `ios-unit-test-logs` | xcodebuild test output |
-| `ios-visual-test-results` | HTML report + test log from ADCIOSVisualizer |
-| `ios-visual-xcresult` | Xcode result bundle |
-| `android-unit-test-reports` | JUnit XML + HTML test reports |
-| `android-visual-test-results` | HTML report + test log |
-| `android-test-reports-visual` | JUnit XML from rendering tests |
+### Current clean branches
 
-### Recording Visual Baselines
+| Branch | File | Fork PR | Upstream PR |
+|--------|------|---------|-------------|
+| `clean/fix-image-role-accessibility` | ImageRenderer.java | #30 | #518 |
+| `clean/fix-openurl-duplicate-role` | ActionElementRenderer.java | #31 | #519 |
+| `clean/fix-error-message-accessibility` | StretchableInputLayout.java | #32 | #520 |
+| `clean/fix-dropdown-index-count` | ChoiceSetInputRenderer.java | #33 | #521 |
+| `clean/fix-choiceset-group-labels` | ChoiceSetInputRenderer.java | #34 | #522 |
+| `clean/fix-showcard-toggle-a11y` | BaseActionElementRenderer.java | #35 | #523 |
+| `clean/fix-progress-bar-accessibility` | ProgressBarRenderer.kt | #36 | #524 |
 
-Use the manual trigger with `record_baselines: true`:
+---
 
+## Visual Regression Testing
+
+### Android (Paparazzi Snapshot Tests)
+
+The `snapshottests` module uses [Paparazzi](https://cashapp.github.io/paparazzi/)
+for JVM-based screenshot comparison. No emulator required.
+
+#### Commands
+
+```bash
+# Record new baselines:
+cd source/android
+./gradlew :snapshottests:recordPaparazziDebug
+
+# Verify against baselines:
+./gradlew :snapshottests:verifyPaparazziDebug
+```
+
+#### How it works
+
+1. Paparazzi renders Views using Android's layoutlib on the JVM
+2. Screenshots are saved to `snapshottests/src/test/snapshots/` (committed to git)
+3. On verify, re-renders and pixel-compares against baselines (0.1% tolerance)
+4. Failures produce diff images in `snapshottests/out/failures/`
+
+#### Test coverage
+
+| Test Class | Tests | What it covers |
+|-----------|-------|----------------|
+| `AccessibilitySnapshotTests` | 14 | Image role, link role, error messages, radio groups, showcard toggle, progress bars |
+| `CardLayoutSnapshotTests` | 4 | Activity update, input form, poll results, expense report layouts |
+
+#### CI integration
+
+In `agent-gate.yml`, the `android-visual-tests` job:
+- Runs `verifyPaparazziDebug` automatically
+- Uploads baselines as `android-paparazzi-baselines` artifact
+- Uploads diff images as `android-paparazzi-failures` (on failure only)
+
+#### Re-recording baselines
+
+After intentional visual changes:
+```bash
+./gradlew :snapshottests:recordPaparazziDebug
+git add snapshottests/src/test/snapshots/
+git commit -m "chore: update visual baselines"
+```
+
+Or via CI manual trigger:
 ```bash
 gh workflow run agent-gate.yml \
   --repo hggzm/Teams-AdaptiveCards-Mobile \
@@ -169,45 +179,64 @@ gh workflow run agent-gate.yml \
   -f record_baselines=true
 ```
 
+### iOS (Visualizer Snapshots)
+
+The iOS visual regression job builds ADCIOSVisualizer, runs its tests, and
+produces xcresult bundles for analysis.
+
+---
+
+## Agent Validation Gate
+
+**Workflow:** `.github/workflows/agent-gate.yml`
+
+### Jobs
+
+| # | Job | Runner | Blocking |
+|---|-----|--------|----------|
+| 1a | Structure + JSON Validation | ubuntu | Yes |
+| 2a | iOS SPM Build + Test | macOS 15 | Yes |
+| 2b | iOS Xcode Build + Unit Tests | macOS 15 | No |
+| 2c | Android Build | ubuntu | Yes |
+| 2d | Android Unit Tests | ubuntu | No |
+| 3a | iOS Visual Regression | macOS 15 | No |
+| 3b | Android Visual Regression (Paparazzi) | ubuntu | No |
+| 4 | Cross-Platform Parity | ubuntu | No |
+| - | **GATE VERDICT** | ubuntu | Aggregator |
+
+### Artifacts
+
+| Artifact | Contents |
+|----------|----------|
+| `ios-unit-test-logs` | xcodebuild output |
+| `ios-visual-test-results` | HTML report + test log |
+| `ios-visual-xcresult` | Xcode result bundle |
+| `android-unit-test-reports` | JUnit XML + HTML |
+| `android-paparazzi-baselines` | Paparazzi PNG baselines |
+| `android-paparazzi-failures` | Visual diff images (on failure) |
+| `android-visual-test-reports` | JUnit XML from snapshot tests |
+
 ---
 
 ## Syncing with Upstream
 
-### Pulling upstream changes into proxy/integration
+### Keep fork main in sync
+
+```bash
+git fetch upstream
+git checkout main
+git reset --hard upstream/main
+git push origin main --force
+```
+
+### Merge upstream into proxy/integration
 
 ```bash
 git fetch upstream
 git checkout proxy/integration
-
-# Merge upstream changes
 git merge upstream/main --no-edit
-
-# Resolve any conflicts, then push
 git push origin proxy/integration
 ```
-
-### Keeping proxy/integration up to date
-
-Run this periodically (or after major upstream merges):
-
-```bash
-git fetch upstream
-git log --oneline proxy/integration..upstream/main  # see what's new
-git checkout proxy/integration
-git merge upstream/main
-git push origin proxy/integration
-```
-
----
-
-## Dashboard Tracking
-
-The autonomy engine monitors this fork via two jobs:
-
-| Job ID | What it does | Interval |
-|--------|-------------|----------|
-| `github-issues-sync-prod-fork` | Syncs issues from the fork | 600s |
-| `github-work-state-tracker-prod-fork` | Tracks work state on the fork | 300s |
 
 ---
 
@@ -215,21 +244,10 @@ The autonomy engine monitors this fork via two jobs:
 
 | Path | Description |
 |------|-------------|
-| `.github/workflows/agent-gate.yml` | Agent validation gate (E2E) |
+| `.github/workflows/agent-gate.yml` | Agent validation gate |
 | `docs/PROXY_BRANCH_WORKFLOW.md` | This document |
-| `docs/PROXY_PR_LOG.md` | PR tracking log (proxy -> upstream) |
-| `docs/PROXY_BRANCH_TRACKER.md` | Legacy tracker (initial setup notes) |
-| `Package.swift` | SPM package manifest (iOS) |
-| `source/ios/AdaptiveCards/AdaptiveCards.xcworkspace` | Xcode workspace |
-| `source/android/build.gradle` | Top-level Gradle build |
-| `source/shared/cpp/ObjectModel/` | Shared C++ object model |
-
-## Build Systems
-
-### iOS
-- **SPM** (`Package.swift`): ObjectModel (C++17) + AdaptiveCards (ObjC/Swift) + AdaptiveCardsTest. iOS 13+.
-- **Xcode** (`AdaptiveCards.xcworkspace`): CocoaPods (FluentUI, SVGKit). iOS 15+.
-
-### Android
-- Gradle 8.10, AGP 8.5.2, Kotlin 1.9.24, JDK 17, NDK 28.0.13004108
-- CMake builds `adaptivecards-native-lib` shared library from `source/shared/cpp/ObjectModel/*.cpp`
+| `docs/PROXY_PR_LOG.md` | PR tracking log |
+| `docs/PROXY_BRANCH_TRACKER.md` | Branch tracker |
+| `source/android/snapshottests/` | Paparazzi visual regression |
+| `source/android/adaptivecards/` | Main Android library |
+| `source/shared/cpp/ObjectModel/` | Shared C++ model |
