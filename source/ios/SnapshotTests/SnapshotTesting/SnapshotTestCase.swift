@@ -95,8 +95,12 @@ open class SnapshotTestCase: XCTestCase {
         ProcessInfo.processInfo.environment["RECORD_SNAPSHOTS"] == "1"
     }
 
-    /// Root directory for snapshot artifacts
+    /// Root directory for snapshot artifacts.
+    /// Override with SNAPSHOT_OUTPUT_DIR env var for CI.
     open var snapshotDirectory: String {
+        if let envDir = ProcessInfo.processInfo.environment["SNAPSHOT_OUTPUT_DIR"] {
+            return envDir
+        }
         let testFileURL = URL(fileURLWithPath: #filePath)
         let snapshotTestsDir = testFileURL
             .deletingLastPathComponent()  // SnapshotTesting/

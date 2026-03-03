@@ -259,6 +259,11 @@ jobs:
     - name: Run iOS Snapshot Tests (SPM)
       run: |
         echo "=== Running iOS Snapshot Tests ==="
+        mkdir -p /tmp/visual-output
+
+        # Set snapshot output to source tree so artifacts are findable
+        export SNAPSHOT_OUTPUT_DIR="${{ github.workspace }}/source/ios/SnapshotTests/Snapshots"
+
         # Record mode when manually triggered with record_baselines=true
         if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.record_baselines }}" = "true" ]; then
           export RECORD_SNAPSHOTS=1
@@ -267,13 +272,11 @@ jobs:
           echo "Mode: VERIFYING against baselines"
         fi
 
-        xcodebuild test \
-          -scheme "AdaptiveCards-Package" \
-          -sdk iphonesimulator \
-          -destination "platform=iOS Simulator,id=$SIM_UDID" \
-          -only-testing:VisualSnapshotTests \
-          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-          2>&1 | tee /tmp/visual-output/snapshot-test.log | grep -E "Test Case|passed|failed|Test Suite|SNAPSHOT" || true
+        set -o pipefail
+        xcodebuild test           -scheme "AdaptiveCards-Package"           -sdk iphonesimulator           -destination "platform=iOS Simulator,id=$SIM_UDID"           -only-testing:VisualSnapshotTests           CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO           2>&1 | tee /tmp/visual-output/snapshot-test.log | grep -E "Test Case|passed|failed|Test Suite|SNAPSHOT|error:" || true
+
+        SNAP_EXIT=${PIPESTATUS[0]}
+        echo "xcodebuild exit code: $SNAP_EXIT"
 
         # Summary
         SNAP_PASSED=$(grep -c "passed" /tmp/visual-output/snapshot-test.log 2>/dev/null || echo "0")
@@ -281,6 +284,15 @@ jobs:
         echo "### iOS Snapshot Tests" >> $GITHUB_STEP_SUMMARY
         echo "- Passed: $SNAP_PASSED" >> $GITHUB_STEP_SUMMARY
         echo "- Failed: $SNAP_FAILED" >> $GITHUB_STEP_SUMMARY
+
+        # List any baselines that were recorded
+        echo "Baselines directory contents:"
+        ls -la "$SNAPSHOT_OUTPUT_DIR/Baselines/" 2>/dev/null || echo "(empty or not found)"
+
+        if [ "$SNAP_EXIT" -ne 0 ] && [ "$RECORD_SNAPSHOTS" != "1" ]; then
+          echo "::warning::Snapshot tests had failures (exit $SNAP_EXIT)"
+        fi
+      continue-on-error: true
 
     - name: Upload iOS snapshot baselines
       if: always()
