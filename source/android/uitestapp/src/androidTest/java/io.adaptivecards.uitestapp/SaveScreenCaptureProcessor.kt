@@ -13,8 +13,8 @@ class SaveScreenCaptureProcessor : ScreenCaptureProcessor {
         val file: String = capture?.name ?: "Default.jpg"
         val data: ByteArray = getImageData(capture)
 
-        val screenshotPath =
-            Environment.getExternalStorageDirectory().absolutePath + "/screenshots/"
+        // Use /data/local/tmp which is writable without WRITE_EXTERNAL_STORAGE
+        val screenshotPath = "/data/local/tmp/screenshots/"
         val screenshotDirectory = File(screenshotPath)
         if (!screenshotDirectory.exists()) {
             screenshotDirectory.mkdirs()

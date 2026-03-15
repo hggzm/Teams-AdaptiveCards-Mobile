@@ -72,7 +72,7 @@ jobs:
         disable-animations: true
         script: |
           # Create screenshot directory on emulator
-          adb shell mkdir -p /sdcard/screenshots
+          adb shell mkdir -p /data/local/tmp/screenshots
 
           # Run the visual regression tests
           echo "Running visual regression tests..."
@@ -81,7 +81,7 @@ jobs:
           # Pull screenshots from emulator
           echo "Pulling screenshots..."
           mkdir -p /tmp/card-screenshots
-          adb pull /sdcard/screenshots/ /tmp/card-screenshots/ 2>&1 || true
+          adb pull /data/local/tmp/screenshots/ /tmp/card-screenshots/ 2>&1 || true
 
           # List what was captured
           echo "=== Captured Screenshots ==="
