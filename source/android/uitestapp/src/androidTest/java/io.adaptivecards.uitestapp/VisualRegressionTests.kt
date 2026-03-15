@@ -55,3 +55,4 @@ class VisualRegressionTests {
     @Test fun visual_SportingEvent() = renderCardAndCapture("SportingEvent.json")
 }
 // Visual regression test trigger
+// API 29 trigger
