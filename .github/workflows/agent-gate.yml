@@ -176,7 +176,6 @@ jobs:
     - uses: gradle/actions/setup-gradle@v4
     - name: Build adaptivecards library
       working-directory: source/android
-      continue-on-error: true
       run: |
         ./gradlew :adaptivecards:assembleDebug --stacktrace 2>&1 | tee /tmp/android-build.log | tail -30
         if grep -q 'BUILD SUCCESSFUL' /tmp/android-build.log; then
@@ -579,8 +578,8 @@ jobs:
         # Required gates (must pass)
         check_required "Structure Check" "${{ needs.structure-check.result }}"
         check_required "iOS SPM Build" "${{ needs.ios-spm-build.result }}"
-        # Android Build is advisory — pre-existing upstream Gradle config issues
-        # check_required "Android Build" "${{ needs.android-build.result }}"
+        check_required "Android Build" "${{ needs.android-build.result }}"
+        check_required "Android Tests" "${{ needs.android-unit-tests.result }}"
 
         echo ""
         echo "--- Advisory (non-blocking) ---"
