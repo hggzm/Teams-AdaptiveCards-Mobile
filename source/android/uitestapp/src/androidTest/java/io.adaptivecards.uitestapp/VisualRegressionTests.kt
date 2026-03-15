@@ -102,3 +102,4 @@ class VisualRegressionTests {
         renderCardAndCapture("SportingEvent.json", "card_SportingEvent")
     }
 }
+// Visual regression test trigger
