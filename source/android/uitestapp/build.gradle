@@ -37,6 +37,7 @@ android {
             assets {
                 srcDirs {
                     ["../../../samples/v1.3/Scenarios/",
+                    "../../../samples/v1.5/Scenarios/",
                     "../../../samples/v1.5/Test/",
                      "../../../samples/v1.5/Elements/",
                      "../mobile/samples/v1.5/"]
