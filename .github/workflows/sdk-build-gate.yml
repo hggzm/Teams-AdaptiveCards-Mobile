@@ -1,0 +1,292 @@
+name: SDK Build Gate
+
+# ==============================================================================
+# SDK BUILD GATE — For deeper SDK code changes
+# ==============================================================================
+# Runs Android + iOS builds and unit tests as BLOCKING checks.
+# Use this when making SDK-level code changes (renderer fixes, a11y SDK changes).
+#
+# Trigger: push/PR to proxy/fix-* branches, or manual dispatch
+#
+# Agent usage:
+#   gh run list --repo hggzm/Teams-AdaptiveCards-Mobile --workflow sdk-build-gate.yml --limit 1 --json conclusion
+# ==============================================================================
+
+on:
+  push:
+    branches: [ 'proxy/fix-*' ]
+    paths:
+      - 'source/android/**'
+      - 'source/ios/**'
+      - 'source/shared/**'
+  pull_request:
+    branches: [ main, 'proxy/**' ]
+    paths:
+      - 'source/android/**'
+      - 'source/ios/**'
+      - 'source/shared/**'
+  workflow_dispatch:
+    inputs:
+      run_android:
+        description: 'Run Android build + tests'
+        type: boolean
+        default: true
+      run_ios:
+        description: 'Run iOS build + tests'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sdk-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================================
+  # ANDROID: Build + Unit Tests (BLOCKING)
+  # ============================================================================
+
+  android-build:
+    name: 'Android Build'
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_android }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+    - uses: gradle/actions/setup-gradle@v4
+
+    - name: Build adaptivecards library
+      working-directory: source/android
+      run: |
+        echo "### Android SDK Build" >> $GITHUB_STEP_SUMMARY
+        ./gradlew :adaptivecards:assembleDebug --stacktrace 2>&1 | tee /tmp/build.log | tail -30
+        if grep -q 'BUILD SUCCESSFUL' /tmp/build.log; then
+          echo "**Result: PASSED** :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "**Result: FAILED** :x:" >> $GITHUB_STEP_SUMMARY
+          echo "::error::Android build failed"
+          exit 1
+        fi
+
+    - name: Upload build log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-build-log
+        path: /tmp/build.log
+        retention-days: 5
+
+  android-tests:
+    name: 'Android Unit Tests'
+    needs: android-build
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_android }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+    - uses: gradle/actions/setup-gradle@v4
+
+    - name: Run unit tests
+      working-directory: source/android
+      run: |
+        echo "### Android Unit Tests" >> $GITHUB_STEP_SUMMARY
+        ./gradlew :adaptivecards:testDebugUnitTest --stacktrace 2>&1 | tee /tmp/test.log | tail -30
+        if grep -q 'BUILD SUCCESSFUL' /tmp/test.log; then
+          TESTS=$(grep -oP '\d+ tests?' /tmp/test.log | tail -1 || echo "tests")
+          echo "**Result: PASSED** ($TESTS) :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "**Result: FAILED** :x:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E "FAILED|> Task.*FAILED|failures" /tmp/test.log | tail -20 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "::error::Android unit tests failed"
+          exit 1
+        fi
+
+    - name: Upload test reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-test-reports
+        path: |
+          source/android/adaptivecards/build/reports/tests/
+          /tmp/test.log
+        retention-days: 5
+
+  # ============================================================================
+  # iOS: Build + Unit Tests (BLOCKING)
+  # ============================================================================
+
+  ios-build:
+    name: 'iOS Xcode Build'
+    runs-on: macos-15
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_ios }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install CocoaPods
+      run: gem install cocoapods 2>/dev/null || true
+
+    - name: Pod Install
+      working-directory: source/ios/AdaptiveCards
+      run: pod install --repo-update 2>&1 | tail -20
+
+    - name: Boot iOS Simulator
+      id: sim
+      run: |
+        SIMULATOR=$(xcrun simctl list devices available --json | python3 -c "
+        import json, sys
+        devices = json.load(sys.stdin)['devices']
+        for runtime, devs in devices.items():
+          if 'iOS' in runtime:
+            for d in devs:
+              if 'iPhone' in d['name']:
+                print(d['udid']); sys.exit(0)
+        ")
+        echo "SIM_UDID=$SIMULATOR" >> $GITHUB_ENV
+        xcrun simctl boot "$SIMULATOR" 2>/dev/null || true
+        echo "Using simulator: $SIMULATOR"
+
+    - name: Build AdaptiveCards
+      working-directory: source/ios/AdaptiveCards
+      run: |
+        echo "### iOS Xcode Build" >> $GITHUB_STEP_SUMMARY
+        xcodebuild build \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme AdaptiveCards \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee /tmp/ios-build.log | tail -20
+        if grep -qiE 'BUILD SUCCEEDED' /tmp/ios-build.log; then
+          echo "**Result: PASSED** :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "**Result: FAILED** :x:" >> $GITHUB_STEP_SUMMARY
+          echo "::error::iOS build failed"
+          exit 1
+        fi
+
+    - name: Upload build log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ios-build-log
+        path: /tmp/ios-build.log
+        retention-days: 5
+
+  ios-tests:
+    name: 'iOS Unit Tests'
+    needs: ios-build
+    runs-on: macos-15
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_ios }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install CocoaPods
+      run: gem install cocoapods 2>/dev/null || true
+
+    - name: Pod Install
+      working-directory: source/ios/AdaptiveCards
+      run: pod install --repo-update 2>&1 | tail -20
+
+    - name: Boot iOS Simulator
+      run: |
+        SIMULATOR=$(xcrun simctl list devices available --json | python3 -c "
+        import json, sys
+        devices = json.load(sys.stdin)['devices']
+        for runtime, devs in devices.items():
+          if 'iOS' in runtime:
+            for d in devs:
+              if 'iPhone' in d['name']:
+                print(d['udid']); sys.exit(0)
+        ")
+        echo "SIM_UDID=$SIMULATOR" >> $GITHUB_ENV
+        xcrun simctl boot "$SIMULATOR" 2>/dev/null || true
+
+    - name: Run iOS Unit Tests
+      working-directory: source/ios/AdaptiveCards
+      run: |
+        echo "### iOS Unit Tests" >> $GITHUB_STEP_SUMMARY
+        xcodebuild test \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme AdaptiveCards \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          -only-testing:AdaptiveCardsTests \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee /tmp/ios-test.log | grep -E "Test Case|passed|failed|Test Suite"
+        if grep -q '\*\* TEST SUCCEEDED \*\*' /tmp/ios-test.log; then
+          echo "**Result: PASSED** :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "**Result: FAILED** :x:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E "Test Case.*failed|Executed.*failures" /tmp/ios-test.log | tail -20 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "::error::iOS unit tests failed"
+          exit 1
+        fi
+
+    - name: Upload test reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ios-test-reports
+        path: /tmp/ios-test.log
+        retention-days: 5
+
+  # ============================================================================
+  # VERDICT
+  # ============================================================================
+
+  verdict:
+    name: 'SDK Build Verdict'
+    needs: [android-build, android-tests, ios-build, ios-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - name: Evaluate SDK gate
+      run: |
+        echo "============================================="
+        echo "   SDK BUILD GATE — VERDICT"
+        echo "============================================="
+        echo ""
+        PASS=true
+
+        check() {
+          local name=$1; local result=$2
+          if [ "$result" = "success" ]; then
+            echo "PASS: $name"
+          elif [ "$result" = "skipped" ]; then
+            echo "SKIP: $name (not triggered)"
+          else
+            echo "FAIL: $name ($result)"
+            PASS=false
+          fi
+        }
+
+        check "Android Build" "${{ needs.android-build.result }}"
+        check "Android Tests" "${{ needs.android-tests.result }}"
+        check "iOS Build" "${{ needs.ios-build.result }}"
+        check "iOS Tests" "${{ needs.ios-tests.result }}"
+
+        echo ""
+        if [ "$PASS" = true ]; then
+          echo "SDK BUILD VERDICT: PASSED"
+          echo "**SDK BUILD VERDICT: PASSED** :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "SDK BUILD VERDICT: FAILED"
+          echo "**SDK BUILD VERDICT: FAILED** :x:" >> $GITHUB_STEP_SUMMARY
+          exit 1
+        fi
