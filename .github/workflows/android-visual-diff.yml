@@ -76,9 +76,7 @@ jobs:
 
           # Run the visual regression tests
           echo "Running visual regression tests..."
-          cd source/android && ./gradlew :uitestapp:connectedDebugAndroidTest \
-            -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.VisualRegressionTests \
-            --stacktrace 2>&1 | tee /tmp/visual-test.log | tail -30
+          cd source/android && ./gradlew :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.VisualRegressionTests --stacktrace 2>&1 | tee /tmp/visual-test.log | tail -30
 
           # Pull screenshots from emulator
           echo "Pulling screenshots..."
