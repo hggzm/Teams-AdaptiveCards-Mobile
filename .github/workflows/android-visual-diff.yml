@@ -72,7 +72,7 @@ jobs:
         disable-animations: true
         script: |
           # Create screenshot directory on emulator
-          adb shell mkdir -p /data/local/tmp/screenshots
+          # Screenshots saved to app internal storage (context.filesDir/screenshots)
 
           # Run the visual regression tests
           echo "Running visual regression tests..."
@@ -81,7 +81,11 @@ jobs:
           # Pull screenshots from emulator
           echo "Pulling screenshots..."
           mkdir -p /tmp/card-screenshots
-          adb pull /data/local/tmp/screenshots/ /tmp/card-screenshots/ 2>&1 || true
+          adb shell run-as io.adaptivecards.uitestapp ls files/screenshots/ 2>&1 || echo "No screenshots dir"
+          # Pull screenshots from app internal storage
+          for f in $(adb shell run-as io.adaptivecards.uitestapp ls files/screenshots/ 2>/dev/null); do
+            adb shell run-as io.adaptivecards.uitestapp cat files/screenshots/$f > /tmp/card-screenshots/$f 2>/dev/null
+          done
 
           # List what was captured
           echo "=== Captured Screenshots ==="

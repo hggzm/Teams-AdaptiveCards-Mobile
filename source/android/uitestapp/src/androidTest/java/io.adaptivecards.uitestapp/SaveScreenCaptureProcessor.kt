@@ -2,10 +2,10 @@
 // Licensed under the MIT License.
 package io.adaptivecards.uitestapp
 
+import android.graphics.Bitmap
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.screenshot.ScreenCapture
 import androidx.test.runner.screenshot.ScreenCaptureProcessor
-
-import android.os.Environment
 import java.io.*
 
 class SaveScreenCaptureProcessor : ScreenCaptureProcessor {
@@ -13,15 +13,14 @@ class SaveScreenCaptureProcessor : ScreenCaptureProcessor {
         val file: String = capture?.name ?: "Default.jpg"
         val data: ByteArray = getImageData(capture)
 
-        // Use /data/local/tmp which is writable without WRITE_EXTERNAL_STORAGE
-        val screenshotPath = "/data/local/tmp/screenshots/"
-        val screenshotDirectory = File(screenshotPath)
-        if (!screenshotDirectory.exists()) {
-            screenshotDirectory.mkdirs()
+        // Use the app's internal files dir which is always writable
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val screenshotDir = File(context.filesDir, "screenshots")
+        if (!screenshotDir.exists()) {
+            screenshotDir.mkdirs()
         }
 
-        val screenshotFilePath = "$screenshotPath/$file"
-        val screenshotFile = File(screenshotFilePath)
+        val screenshotFile = File(screenshotDir, file)
         screenshotFile.createNewFile()
 
         val fos = FileOutputStream(screenshotFile)
@@ -29,7 +28,7 @@ class SaveScreenCaptureProcessor : ScreenCaptureProcessor {
         fos.flush()
         fos.close()
 
-        return screenshotPath
+        return screenshotDir.absolutePath
     }
 
     @Throws(IOException::class)
