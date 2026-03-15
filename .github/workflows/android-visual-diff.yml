@@ -1,0 +1,125 @@
+name: Android Visual Diff
+
+# ==============================================================================
+# Android Visual Diff — Renders real cards on emulator and captures screenshots
+# ==============================================================================
+# Uses the uitestapp to render Adaptive Cards through AdaptiveCardRenderer
+# on an Android emulator, then captures screenshots for visual comparison.
+#
+# Artifacts: android-card-screenshots (PNG images of rendered cards)
+# ==============================================================================
+
+on:
+  push:
+    branches: [ 'proxy/**' ]
+    paths:
+      - 'source/android/**'
+      - 'source/shared/**'
+      - 'samples/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-visual-diff:
+    name: 'Android Card Screenshots'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+
+    - uses: gradle/actions/setup-gradle@v4
+
+    - name: Enable KVM
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+
+    - name: Build uitestapp + adaptivecards
+      working-directory: source/android
+      run: |
+        echo "### Android Visual Diff" >> $GITHUB_STEP_SUMMARY
+        echo "Building uitestapp..." >> $GITHUB_STEP_SUMMARY
+        ./gradlew :uitestapp:assembleDebug :uitestapp:assembleDebugAndroidTest --stacktrace 2>&1 | tail -20
+        if [ $? -eq 0 ]; then
+          echo "- Build: **PASSED** :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- Build: **FAILED** :x:" >> $GITHUB_STEP_SUMMARY
+          exit 1
+        fi
+
+    - name: Run visual tests on emulator
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 30
+        arch: x86_64
+        profile: pixel_5
+        force-avd-creation: false
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+        disable-animations: true
+        script: |
+          # Create screenshot directory on emulator
+          adb shell mkdir -p /sdcard/screenshots
+
+          # Run the visual regression tests
+          echo "Running visual regression tests..."
+          cd source/android && ./gradlew :uitestapp:connectedDebugAndroidTest \
+            -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.VisualRegressionTests \
+            --stacktrace 2>&1 | tee /tmp/visual-test.log | tail -30
+
+          # Pull screenshots from emulator
+          echo "Pulling screenshots..."
+          mkdir -p /tmp/card-screenshots
+          adb pull /sdcard/screenshots/ /tmp/card-screenshots/ 2>&1 || true
+
+          # List what was captured
+          echo "=== Captured Screenshots ==="
+          find /tmp/card-screenshots -name "*.jpg" -o -name "*.png" | sort
+
+          # Count results
+          TOTAL=$(find /tmp/card-screenshots -name "*.jpg" -o -name "*.png" | wc -l)
+          echo "Total screenshots: $TOTAL"
+
+    - name: Generate summary
+      if: always()
+      run: |
+        TOTAL=$(find /tmp/card-screenshots -name "*.jpg" -o -name "*.png" 2>/dev/null | wc -l)
+        echo "- Screenshots captured: **$TOTAL** :camera:" >> $GITHUB_STEP_SUMMARY
+        if [ "$TOTAL" -gt 0 ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Card | Screenshot |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------------|" >> $GITHUB_STEP_SUMMARY
+          for f in $(find /tmp/card-screenshots -name "*.jpg" -o -name "*.png" 2>/dev/null | sort); do
+            name=$(basename "$f")
+            echo "| $name | Uploaded as artifact |" >> $GITHUB_STEP_SUMMARY
+          done
+        fi
+
+    - name: Upload card screenshots
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-card-screenshots
+        path: /tmp/card-screenshots/
+        retention-days: 30
+
+    - name: Upload test log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-visual-test-log
+        path: /tmp/visual-test.log
+        retention-days: 14
