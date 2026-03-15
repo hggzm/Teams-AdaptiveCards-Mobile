@@ -71,14 +71,12 @@ jobs:
         emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
         disable-animations: true
         script: |
-          cd source/android
-
           # Create screenshot directory on emulator
           adb shell mkdir -p /sdcard/screenshots
 
           # Run the visual regression tests
           echo "Running visual regression tests..."
-          ./gradlew :uitestapp:connectedDebugAndroidTest \
+          cd source/android && ./gradlew :uitestapp:connectedDebugAndroidTest \
             -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.VisualRegressionTests \
             --stacktrace 2>&1 | tee /tmp/visual-test.log | tail -30
 
