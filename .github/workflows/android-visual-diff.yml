@@ -72,28 +72,35 @@ jobs:
         disable-animations: true
         script: |
           # Create screenshot directory on emulator
-          # Screenshots saved to app internal storage (context.filesDir/screenshots)
-
-          # Run the visual regression tests
-          echo "Running visual regression tests..."
-          cd source/android && ./gradlew :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.VisualRegressionTests --stacktrace 2>&1 | tee /tmp/visual-test.log | tail -30
-
-          # Extract screenshots from app-internal storage
-          echo "Extracting screenshots..."
           mkdir -p /tmp/card-screenshots
 
-          # Method: use adb exec-out with run-as to tar stream files
-          SCREENSHOT_LIST=$(adb shell "run-as io.adaptivecards.uitestapp find files/screenshots -name '*.jpg' -o -name '*.png' -o -name '*.jpeg' 2>/dev/null" | tr -d '\r')
-          echo "Found screenshots: $SCREENSHOT_LIST"
-          for f in $SCREENSHOT_LIST; do
-            BASENAME=$(basename "$f")
-            echo "Pulling: $f -> $BASENAME"
-            adb exec-out run-as io.adaptivecards.uitestapp cat "$f" > "/tmp/card-screenshots/$BASENAME" 2>/dev/null
+          # Install the test APKs
+          cd source/android
+          ./gradlew :uitestapp:assembleDebug :uitestapp:assembleDebugAndroidTest --stacktrace 2>&1 | tail -10
+          adb install -t uitestapp/build/outputs/apk/debug/uitestapp-debug.apk 2>&1
+          adb install -t uitestapp/build/outputs/apk/androidTest/debug/uitestapp-debug-androidTest.apk 2>&1
+
+          # Define cards to render
+          CARDS="ActivityUpdate ExpenseReport FlightDetails FlightUpdate InputForm Restaurant StockUpdate WeatherLarge SportingEvent"
+
+          # Run tests one at a time and capture via adb screencap after each
+          for CARD in $CARDS; do
+            echo "=== Rendering: $CARD ==="
+            # Run just this one test
+            adb shell am instrument -w -e class "io.adaptivecards.uitestapp.VisualRegressionTests#visual_${CARD}" io.adaptivecards.uitestapp.test/androidx.test.runner.AndroidJUnitRunner 2>&1 | tail -5 || true
+            # Wait for render to settle
+            sleep 2
+            # Capture screen via adb screencap (no permissions needed!)
+            adb exec-out screencap -p > "/tmp/card-screenshots/${CARD}.png" 2>/dev/null
+            echo "Captured: ${CARD}.png ($(wc -c < /tmp/card-screenshots/${CARD}.png 2>/dev/null || echo 0) bytes)"
           done
 
-          # Also grab Gradle HTML test reports
+          # Also run all tests for the log
+          ./gradlew :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.VisualRegressionTests --stacktrace 2>&1 | tee /tmp/visual-test.log | tail -20 || true
+
+          # Grab Gradle HTML test reports
           mkdir -p /tmp/card-screenshots/reports
-          cp -r source/android/uitestapp/build/reports/androidTests/ /tmp/card-screenshots/reports/ 2>/dev/null || true
+          cp -r uitestapp/build/reports/androidTests/ /tmp/card-screenshots/reports/ 2>/dev/null || true
 
           # List what was captured
           echo "=== Captured Screenshots ==="
