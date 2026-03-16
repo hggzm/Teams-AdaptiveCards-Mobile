@@ -78,14 +78,15 @@ jobs:
           echo "Running visual regression tests..."
           cd source/android && ./gradlew :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.VisualRegressionTests --stacktrace 2>&1 | tee /tmp/visual-test.log | tail -30
 
-          # Pull screenshots from emulator
-          echo "Pulling screenshots..."
+          # Copy screenshots from app-internal to /sdcard/ then pull
+          echo "Extracting screenshots from app storage..."
           mkdir -p /tmp/card-screenshots
-          adb shell run-as io.adaptivecards.uitestapp ls files/screenshots/ 2>&1 || echo "No screenshots dir"
-          # Pull screenshots from app internal storage
-          for f in $(adb shell run-as io.adaptivecards.uitestapp ls files/screenshots/ 2>/dev/null); do
-            adb shell run-as io.adaptivecards.uitestapp cat files/screenshots/$f > /tmp/card-screenshots/$f 2>/dev/null
-          done
+          adb shell "run-as io.adaptivecards.uitestapp sh -c 'ls files/screenshots/ 2>/dev/null && cp files/screenshots/* /sdcard/ 2>/dev/null'" || true
+          adb pull /sdcard/ /tmp/card-screenshots/ 2>/dev/null || true
+          # Also grab Gradle test reports (has test results HTML)
+          mkdir -p /tmp/card-screenshots/reports
+          cp -r source/android/uitestapp/build/reports/androidTests/ /tmp/card-screenshots/reports/ 2>/dev/null || true
+          cp -r source/android/uitestapp/build/outputs/connected_android_test_additional_output/ /tmp/card-screenshots/test-output/ 2>/dev/null || true
 
           # List what was captured
           echo "=== Captured Screenshots ==="
