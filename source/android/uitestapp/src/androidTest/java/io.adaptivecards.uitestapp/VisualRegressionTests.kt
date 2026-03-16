@@ -57,3 +57,4 @@ class VisualRegressionTests {
 // Visual regression test trigger
 // API 29 trigger
 // screenshot artifact fix trigger
+// adb exec-out fix
