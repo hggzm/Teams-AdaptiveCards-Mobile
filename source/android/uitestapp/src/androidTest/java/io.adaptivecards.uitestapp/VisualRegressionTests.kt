@@ -60,3 +60,4 @@ class VisualRegressionTests {
 // adb exec-out fix
 // screencap approach
 // final script fix
+// gradlew path fix

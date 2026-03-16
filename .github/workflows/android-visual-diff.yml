@@ -75,7 +75,7 @@ jobs:
           mkdir -p /tmp/card-screenshots
 
           # Run all visual regression tests via Gradle
-          cd $WORKDIR && ./gradlew :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.VisualRegressionTests --stacktrace 2>&1 | tee /tmp/visual-test.log | tail -20 || true
+          $WORKDIR/gradlew -p $WORKDIR :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.VisualRegressionTests --stacktrace 2>&1 | tee /tmp/visual-test.log | tail -20 || true
 
           # Capture final screen state
           adb exec-out screencap -p > /tmp/card-screenshots/final_state.png 2>/dev/null || true
