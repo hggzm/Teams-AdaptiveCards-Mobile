@@ -59,3 +59,4 @@ class VisualRegressionTests {
 // screenshot artifact fix trigger
 // adb exec-out fix
 // screencap approach
+// final script fix
