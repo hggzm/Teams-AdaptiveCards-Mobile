@@ -33,6 +33,5 @@ steps:
     signingOption: ${{ parameters.signingOption }}
     sdk: ${{ parameters.sdk }}
     configuration: ${{ parameters.configuration }}
-    destinationPlatformOption: 'iOS'
-    destinationSimulators: 'iPhone 12'
+    destinationPlatformOption: 'default'
     useXcpretty: false
