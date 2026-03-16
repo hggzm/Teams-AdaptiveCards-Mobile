@@ -61,3 +61,4 @@ class VisualRegressionTests {
 // screencap approach
 // final script fix
 // gradlew path fix
+// workspace fix

@@ -71,11 +71,11 @@ jobs:
         emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
         disable-animations: true
         script: |
-          WORKDIR="${{ github.workspace }}/source/android"
+          # Working directory resolved by GitHub Actions
           mkdir -p /tmp/card-screenshots
 
           # Run all visual regression tests via Gradle
-          $WORKDIR/gradlew -p $WORKDIR :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.VisualRegressionTests --stacktrace 2>&1 | tee /tmp/visual-test.log | tail -20 || true
+          ${{ github.workspace }}/source/android/gradlew -p ${{ github.workspace }}/source/android :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.VisualRegressionTests --stacktrace 2>&1 | tee /tmp/visual-test.log | tail -20 || true
 
           # Capture final screen state
           adb exec-out screencap -p > /tmp/card-screenshots/final_state.png 2>/dev/null || true
@@ -93,7 +93,7 @@ jobs:
 
           # Copy Gradle test reports
           mkdir -p /tmp/card-screenshots/reports
-          cp -r $WORKDIR/uitestapp/build/reports/androidTests/ /tmp/card-screenshots/reports/ 2>/dev/null || true
+          cp -r ${{ github.workspace }}/source/android/uitestapp/build/reports/androidTests/ /tmp/card-screenshots/reports/ 2>/dev/null || true
 
           # List everything captured
           echo "=== Captured files ==="
