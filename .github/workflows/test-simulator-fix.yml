@@ -1,0 +1,52 @@
+name: Test iOS CI Simulator Fix
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-default-destination:
+    name: 'Test destinationPlatformOption default'
+    runs-on: macos-15
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: List available simulators
+      run: |
+        echo "=== Xcode version ==="
+        xcodebuild -version
+        echo ""
+        echo "=== Available simulator runtimes ==="
+        xcrun simctl list runtimes 2>&1 || echo "No runtimes"
+        echo ""
+        echo "=== Available devices ==="
+        xcrun simctl list devices available 2>&1 | head -30
+        echo ""
+        echo "=== Available destinations for scheme ==="
+        cd source/ios/AdaptiveCards
+        pod install --repo-update 2>&1 | tail -5
+        xcodebuild -workspace AdaptiveCards.xcworkspace -scheme AdaptiveCards -showdestinations 2>&1 | head -40
+
+    - name: Test build with generic simulator destination
+      working-directory: source/ios/AdaptiveCards
+      run: |
+        echo "=== Testing: generic/platform=iOS Simulator ==="
+        xcodebuild build \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme AdaptiveCards \
+          -sdk iphonesimulator \
+          -destination 'generic/platform=iOS Simulator' \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tail -20
+        echo "EXIT_CODE=$?"
+
+    - name: Test build with default (no destination specified)
+      working-directory: source/ios/AdaptiveCards
+      run: |
+        echo "=== Testing: no -destination flag, just -sdk iphonesimulator ==="
+        xcodebuild build \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme AdaptiveCards \
+          -sdk iphonesimulator \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tail -20
+        echo "EXIT_CODE=$?"
