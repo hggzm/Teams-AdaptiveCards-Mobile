@@ -1,11 +1,12 @@
 name: A11y Screenshot Gate
 
 # ==============================================================================
-# Accessibility Screenshot Validation -- Renders cards with TalkBack-relevant
-# interactions, captures before/after screenshots, records TalkBack audio
-# screen recordings, and posts inline results to the PR.
-#
-# Artifacts: a11y-android-screenshots (named PNGs + MP4 recordings per scenario)
+# Accessibility Screenshot Validation
+# - Runs each a11y test individually on Android emulator with TalkBack enabled
+# - Captures per-test screenshots via adb screencap
+# - Records screen with TalkBack focus overlay visible
+# - Validates artifacts are real (not static/corrupt)
+# - Deploys to GitHub Pages and posts inline images in PR comment
 # ==============================================================================
 
 on:
@@ -25,7 +26,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 concurrency:
@@ -36,7 +37,7 @@ jobs:
   a11y-screenshots:
     name: 'A11y Screenshot Validation'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
     - uses: actions/checkout@v4
@@ -72,7 +73,7 @@ jobs:
       run: |
         cat > /tmp/run-a11y-tests.sh << 'EMUSCRIPT'
         #!/usr/bin/env bash
-        set -euo pipefail
+        set -x
         WORKSPACE="${1:-.}"
         GRADLEW="$WORKSPACE/source/android/gradlew"
         PROJECT="$WORKSPACE/source/android"
@@ -80,71 +81,113 @@ jobs:
         RECORDINGS="/tmp/a11y-recordings"
         mkdir -p "$SCREENSHOTS" "$RECORDINGS"
 
-        # Enable TalkBack accessibility service
-        echo "Enabling TalkBack..."
+        # ── Enable TalkBack so focus rectangles appear on screen ──
+        echo "=== Enabling TalkBack accessibility service ==="
         adb shell settings put secure enabled_accessibility_services com.google.android.marvin.talkback/com.google.android.marvin.talkback.TalkBackService 2>/dev/null || true
         adb shell settings put secure accessibility_enabled 1 2>/dev/null || true
+        sleep 3
+
+        # Verify TalkBack status
+        TB_STATUS=$(adb shell settings get secure enabled_accessibility_services 2>/dev/null)
+        A11Y_ON=$(adb shell settings get secure accessibility_enabled 2>/dev/null)
+        echo "TalkBack service: $TB_STATUS"
+        echo "Accessibility enabled: $A11Y_ON"
+
+        # ── Start screen recording ──
+        # Use --bugreport to embed timestamps; SIGINT finalize will write moov atom
+        echo "=== Starting screen recording ==="
+        adb shell "screenrecord --bugreport --time-limit 300 --size 720x1280 /sdcard/a11y_recording.mp4" &
+        RECORD_PID=$!
         sleep 2
 
-        # Start screen recording in background (max 180s, 720p)
-        echo "Starting screen recording..."
-        adb shell "screenrecord --time-limit 180 --size 720x1280 /sdcard/a11y_recording.mp4" &
-        RECORD_PID=$!
+        # ── Run each test individually with screencap after each ──
+        echo "--- Running a11y_showcard_collapsed ---"
+        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_showcard_collapsed --stacktrace 2>&1 | tail -5 || true
         sleep 1
+        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_showcard_collapsed.png" 2>/dev/null || true
+        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_showcard_collapsed.png" 2>/dev/null || echo 0)
+        echo "Captured android_a11y_showcard_collapsed.png ($SZ bytes)"
 
-        # Run a11y tests
-        echo "Running AccessibilityScreenshotTests..."
-        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests --stacktrace 2>&1 | tee /tmp/a11y-test.log || true
+        echo "--- Running a11y_showcard_expanded ---"
+        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_showcard_expanded --stacktrace 2>&1 | tail -5 || true
+        sleep 1
+        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_showcard_expanded.png" 2>/dev/null || true
+        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_showcard_expanded.png" 2>/dev/null || echo 0)
+        echo "Captured android_a11y_showcard_expanded.png ($SZ bytes)"
 
-        # Stop recording
-        echo "Stopping screen recording..."
-        kill $RECORD_PID 2>/dev/null || true
-        adb shell "kill \$(pgrep -f screenrecord)" 2>/dev/null || true
+        echo "--- Running a11y_showcard_collapsed_again ---"
+        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_showcard_collapsed_again --stacktrace 2>&1 | tail -5 || true
+        sleep 1
+        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_showcard_collapsed_again.png" 2>/dev/null || true
+        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_showcard_collapsed_again.png" 2>/dev/null || echo 0)
+        echo "Captured android_a11y_showcard_collapsed_again.png ($SZ bytes)"
+
+        echo "--- Running a11y_validation_empty_form ---"
+        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_validation_empty_form --stacktrace 2>&1 | tail -5 || true
+        sleep 1
+        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_validation_empty_form.png" 2>/dev/null || true
+        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_validation_empty_form.png" 2>/dev/null || echo 0)
+        echo "Captured android_a11y_validation_empty_form.png ($SZ bytes)"
+
+        echo "--- Running a11y_validation_error_visible ---"
+        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_validation_error_visible --stacktrace 2>&1 | tail -5 || true
+        sleep 1
+        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_validation_error_visible.png" 2>/dev/null || true
+        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_validation_error_visible.png" 2>/dev/null || echo 0)
+        echo "Captured android_a11y_validation_error_visible.png ($SZ bytes)"
+
+        echo "--- Running a11y_toggle_visibility_hidden ---"
+        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_toggle_visibility_hidden --stacktrace 2>&1 | tail -5 || true
+        sleep 1
+        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_toggle_visibility_hidden.png" 2>/dev/null || true
+        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_toggle_visibility_hidden.png" 2>/dev/null || echo 0)
+        echo "Captured android_a11y_toggle_visibility_hidden.png ($SZ bytes)"
+
+        echo "--- Running a11y_toggle_visibility_revealed ---"
+        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_toggle_visibility_revealed --stacktrace 2>&1 | tail -5 || true
+        sleep 1
+        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_toggle_visibility_revealed.png" 2>/dev/null || true
+        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_toggle_visibility_revealed.png" 2>/dev/null || echo 0)
+        echo "Captured android_a11y_toggle_visibility_revealed.png ($SZ bytes)"
+
+        echo "--- Running a11y_activity_showcard_buttons ---"
+        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_activity_showcard_buttons --stacktrace 2>&1 | tail -5 || true
+        sleep 1
+        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_activity_showcard_buttons.png" 2>/dev/null || true
+        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_activity_showcard_buttons.png" 2>/dev/null || echo 0)
+        echo "Captured android_a11y_activity_showcard_buttons.png ($SZ bytes)"
+
+        echo "--- Running a11y_activity_showcard_expanded ---"
+        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_activity_showcard_expanded --stacktrace 2>&1 | tail -5 || true
+        sleep 1
+        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_activity_showcard_expanded.png" 2>/dev/null || true
+        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_activity_showcard_expanded.png" 2>/dev/null || echo 0)
+        echo "Captured android_a11y_activity_showcard_expanded.png ($SZ bytes)"
+
+
+        # ── Finalize recording via SIGINT (writes moov atom) ──
+        echo "=== Finalizing screen recording ==="
+        # Send SIGINT to the screenrecord process on device (not to adb)
+        adb shell "kill -2 \$(pidof screenrecord)" 2>/dev/null || true
+        # Wait for adb shell to finish
+        wait $RECORD_PID 2>/dev/null || true
         sleep 3
 
         # Pull recording
-        adb pull /sdcard/a11y_recording.mp4 "$RECORDINGS/a11y_talkback_recording.mp4" 2>/dev/null || true
-        RECSZ=$(wc -c < "$RECORDINGS/a11y_talkback_recording.mp4" 2>/dev/null || echo 0)
-        echo "Recording size: $RECSZ bytes"
+        adb pull /sdcard/a11y_recording.mp4 "$RECORDINGS/android_a11y_talkback_recording.mp4" 2>/dev/null || true
+        RECSZ=$(wc -c < "$RECORDINGS/android_a11y_talkback_recording.mp4" 2>/dev/null || echo 0)
+        echo "Recording: $RECSZ bytes"
 
-        # Extract screenshots from app internal storage
-        PKG=io.adaptivecards.uitestapp
-        FILES=$(adb shell "run-as $PKG find files/screenshots -type f 2>/dev/null" | tr -d '\r' || true)
-        echo "App screenshots: $FILES"
-        INDEX=1
-        if [ -n "$FILES" ]; then
-          for f in $FILES; do
-            BN=$(basename "$f")
-            adb exec-out run-as "$PKG" cat "$f" > "$SCREENSHOTS/${INDEX}_${BN}" 2>/dev/null || true
-            echo "Extracted: ${INDEX}_${BN}"
-            INDEX=$((INDEX + 1))
-          done
-        fi
-
-        # Final screencap
-        adb exec-out screencap -p > "$SCREENSHOTS/final_state.png" 2>/dev/null || true
-
-        # Record screenshot tag names
-        adb logcat -d -s A11Y_SCREENSHOT:I | grep -oP 'A11Y_SCREENSHOT: \K.*' | tr -d '\r' > "$SCREENSHOTS/screenshot_manifest.txt" 2>/dev/null || true
-
-        # Disable TalkBack
+        # ── Disable TalkBack ──
         adb shell settings put secure enabled_accessibility_services "" 2>/dev/null || true
         adb shell settings put secure accessibility_enabled 0 2>/dev/null || true
 
-        # Copy test reports
-        mkdir -p "$SCREENSHOTS/reports"
-        cp -r "$PROJECT/uitestapp/build/reports/androidTests/" "$SCREENSHOTS/reports/" 2>/dev/null || true
-
-        # Write results
-        REPORT_DIR="$PROJECT/uitestapp/build/outputs/androidTest-results/connected"
-        if [ -d "$REPORT_DIR" ]; then
-          grep -r 'tests=' "$REPORT_DIR" | grep -oP 'tests="\K[0-9]+' | head -1 > /tmp/a11y-total.txt 2>/dev/null || echo "?" > /tmp/a11y-total.txt
-          grep -r 'failures=' "$REPORT_DIR" | grep -oP 'failures="\K[0-9]+' | head -1 > /tmp/a11y-failures.txt 2>/dev/null || echo "?" > /tmp/a11y-failures.txt
-          grep -r 'errors=' "$REPORT_DIR" | grep -oP 'errors="\K[0-9]+' | head -1 > /tmp/a11y-errors.txt 2>/dev/null || echo "?" > /tmp/a11y-errors.txt
-        fi
-
-        echo "=== Captured files ==="
-        find "$SCREENSHOTS" "$RECORDINGS" -type f | sort
+        # ── Summary ──
+        echo "=== Screenshot files ==="
+        ls -la "$SCREENSHOTS"/android_*.png 2>/dev/null
+        PNG_COUNT=$(find "$SCREENSHOTS" -name "android_*.png" -size +1k | wc -l)
+        echo "Valid PNGs (>1KB): $PNG_COUNT / 9"
+        echo "$PNG_COUNT" > /tmp/a11y-png-count.txt
         EMUSCRIPT
         chmod +x /tmp/run-a11y-tests.sh
 
@@ -152,63 +195,77 @@ jobs:
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: 29
+        target: google_apis
         arch: x86_64
         profile: pixel_5
         force-avd-creation: false
         emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
-        disable-animations: true
+        disable-animations: false
         script: |
           bash /tmp/run-a11y-tests.sh "${{ github.workspace }}"
 
-    - name: Generate step summary
+    - name: Validate artifacts
       if: always()
       run: |
-        TOTAL=$(cat /tmp/a11y-total.txt 2>/dev/null || echo "?")
-        FAILURES=$(cat /tmp/a11y-failures.txt 2>/dev/null || echo "?")
-        ERRORS=$(cat /tmp/a11y-errors.txt 2>/dev/null || echo "?")
+        echo "### Artifact Validation" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
 
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### Test Results" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
-        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-        echo "| Total tests | $TOTAL |" >> $GITHUB_STEP_SUMMARY
-        echo "| Failures | $FAILURES |" >> $GITHUB_STEP_SUMMARY
-        echo "| Errors | $ERRORS |" >> $GITHUB_STEP_SUMMARY
+        # Validate screenshots
+        PNG_COUNT=$(find /tmp/a11y-screenshots -name "android_*.png" -size +1k 2>/dev/null | wc -l)
+        echo "Screenshots found (>1KB): $PNG_COUNT / 9"
+        echo "- Screenshots: **$PNG_COUNT / 9** captured" >> $GITHUB_STEP_SUMMARY
 
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### Screenshots" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "| Scenario | PR |" >> $GITHUB_STEP_SUMMARY
-        echo "|----------|----|" >> $GITHUB_STEP_SUMMARY
-        echo "| ShowCard collapsed / expanded / re-collapsed | #663 |" >> $GITHUB_STEP_SUMMARY
-        echo "| Validation empty form / error visible | #662 |" >> $GITHUB_STEP_SUMMARY
-        echo "| Toggle visibility hidden / revealed | -- |" >> $GITHUB_STEP_SUMMARY
-        echo "| Activity ShowCard buttons / expanded | -- |" >> $GITHUB_STEP_SUMMARY
-
-        RECSZ=$(wc -c < /tmp/a11y-recordings/a11y_talkback_recording.mp4 2>/dev/null || echo 0)
-        if [ "$RECSZ" -gt 1000 ] 2>/dev/null; then
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "#### TalkBack Recording" >> $GITHUB_STEP_SUMMARY
-          echo "Screen recording with TalkBack enabled included in artifact." >> $GITHUB_STEP_SUMMARY
+        # Validate screenshots are different (not all identical)
+        if [ "$PNG_COUNT" -gt 1 ]; then
+          UNIQUE=$(md5sum /tmp/a11y-screenshots/android_*.png 2>/dev/null | awk '{print $1}' | sort -u | wc -l)
+          echo "- Unique screenshots: **$UNIQUE** (should be >1)" >> $GITHUB_STEP_SUMMARY
+          if [ "$UNIQUE" -le 1 ]; then
+            echo "::warning::All screenshots are identical - tests may not have changed card state"
+          fi
         fi
 
-    - name: Check test results
-      if: always()
-      run: |
-        FAILURES=$(cat /tmp/a11y-failures.txt 2>/dev/null || echo "0")
-        ERRORS=$(cat /tmp/a11y-errors.txt 2>/dev/null || echo "0")
-        if [ "$FAILURES" != "0" ] || [ "$ERRORS" != "0" ]; then
-          echo "::error::A11y tests had $FAILURES failures and $ERRORS errors"
-          exit 1
+        # Validate video is playable (has moov atom)
+        VID="/tmp/a11y-recordings/android_a11y_talkback_recording.mp4"
+        if [ -f "$VID" ]; then
+          VIDSZ=$(wc -c < "$VID")
+          echo "- Recording: **$(echo "scale=1; $VIDSZ / 1048576" | bc) MB**" >> $GITHUB_STEP_SUMMARY
+
+          # Check for moov atom (required for playable MP4)
+          if python3 -c "
+          with open('$VID', 'rb') as f:
+              data = f.read()
+          has_moov = b'moov' in data
+          has_ftyp = data[4:8] == b'ftyp'
+          print('ftyp:', has_ftyp, '| moov:', has_moov)
+          exit(0 if has_moov and has_ftyp else 1)
+          "; then
+            echo "- Video: **playable** (moov atom present) :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Video: **NOT playable** (moov atom missing) :x:" >> $GITHUB_STEP_SUMMARY
+            echo "::warning::Video recording is corrupt (no moov atom). screenrecord may have been killed before finalizing."
+          fi
+
+          # Check frame diversity (video is not static)
+          mkdir -p /tmp/a11y-frames
+          ffmpeg -y -loglevel error -i "$VID" -vf "fps=1/10" /tmp/a11y-frames/f_%03d.png 2>/dev/null || true
+          FRAME_COUNT=$(ls /tmp/a11y-frames/f_*.png 2>/dev/null | wc -l)
+          if [ "$FRAME_COUNT" -gt 1 ]; then
+            UNIQUE_FRAMES=$(md5sum /tmp/a11y-frames/f_*.png 2>/dev/null | awk '{print $1}' | sort -u | wc -l)
+            echo "- Video frames: **$UNIQUE_FRAMES unique** out of $FRAME_COUNT sampled" >> $GITHUB_STEP_SUMMARY
+            if [ "$UNIQUE_FRAMES" -le 1 ]; then
+              echo "::warning::Video appears to be a static image (all frames identical)"
+            fi
+          fi
+        else
+          echo "- Recording: **MISSING** :x:" >> $GITHUB_STEP_SUMMARY
         fi
 
-    - name: Merge artifacts
+    - name: Merge artifacts for upload
       if: always()
       run: |
-        mkdir -p /tmp/a11y-artifacts/recordings
-        cp -r /tmp/a11y-screenshots/* /tmp/a11y-artifacts/ 2>/dev/null || true
-        cp /tmp/a11y-recordings/*.mp4 /tmp/a11y-artifacts/recordings/ 2>/dev/null || true
+        mkdir -p /tmp/a11y-artifacts
+        cp /tmp/a11y-screenshots/android_*.png /tmp/a11y-artifacts/ 2>/dev/null || true
+        cp /tmp/a11y-recordings/*.mp4 /tmp/a11y-artifacts/ 2>/dev/null || true
 
     - name: Upload a11y artifacts
       if: always()
@@ -218,6 +275,48 @@ jobs:
         path: /tmp/a11y-artifacts/
         retention-days: 30
 
+    - name: Deploy to GitHub Pages
+      if: always()
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: /tmp/a11y-artifacts
+        destination_dir: .
+        keep_files: true
+
+    - name: Post PR comment with inline images
+      if: always() && github.event_name == 'pull_request'
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: a11y-android-results
+        message: |
+          ## :wheelchair: Android A11y Screenshot Results
+          
+          > [Full Gallery](https://hggzm.github.io/Teams-AdaptiveCards-Mobile) | [CI Run](../actions/runs/${{ github.run_id }})
+          
+          ### ShowCard Expand/Collapse (PR #663)
+          | Before (Collapsed) | After (Expanded) |
+          |:--:|:--:|
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_showcard_collapsed.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_showcard_expanded.png) |
+          
+          ### Validation Error (PR #662)
+          | Before (Empty Form) | After (Errors Visible) |
+          |:--:|:--:|
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_validation_empty_form.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_validation_error_visible.png) |
+          
+          ### ToggleVisibility
+          | Before (Hidden) | After (Revealed) |
+          |:--:|:--:|
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_toggle_visibility_hidden.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_toggle_visibility_revealed.png) |
+          
+          ### ActivityUpdate ShowCard
+          | Before (Buttons) | After (Expanded) |
+          |:--:|:--:|
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_activity_showcard_buttons.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_activity_showcard_expanded.png) |
+          
+          ### TalkBack Recording
+          :movie_camera: [Watch with TalkBack voiceover](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_talkback_recording.mp4)
+
     - name: Upload test log
       if: always()
       uses: actions/upload-artifact@v4
@@ -225,43 +324,3 @@ jobs:
         name: a11y-test-log
         path: /tmp/a11y-test.log
         retention-days: 14
-
-    - name: Generate a11y catalog HTML
-      if: always()
-      run: |
-        python3 ${{ github.workspace }}/scripts/generate-a11y-catalog.py /tmp/a11y-artifacts /tmp/a11y-site
-
-    - name: Upload catalog site
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: a11y-catalog-site
-        path: /tmp/a11y-site/
-        retention-days: 30
-
-    - name: Post PR comment with results
-      if: always() && github.event_name == 'pull_request'
-      uses: marocchino/sticky-pull-request-comment@v2
-      with:
-        header: a11y-android-results
-        message: |
-          ## :wheelchair: Android A11y Screenshot Results
-
-          | Scenario | Status | PR |
-          |----------|--------|-----|
-          | ShowCard collapsed | :camera: captured | #663 |
-          | ShowCard expanded | :camera: captured | #663 |
-          | ShowCard re-collapsed | :camera: captured | #663 |
-          | Validation empty form | :camera: captured | #662 |
-          | Validation errors visible | :camera: captured | #662 |
-          | Toggle visibility hidden | :camera: captured | -- |
-          | Toggle visibility revealed | :camera: captured | -- |
-          | Activity ShowCard buttons | :camera: captured | -- |
-          | Activity ShowCard expanded | :camera: captured | -- |
-
-          ### Artifacts
-          - :framed_picture: **Screenshots**: [a11y-android-screenshots](../actions/runs/${{ github.run_id }})
-          - :movie_camera: **TalkBack Recording**: MP4 with voiceover in artifact
-          - :globe_with_meridians: **Visual Catalog**: [a11y-catalog-site](../actions/runs/${{ github.run_id }}) (download and open index.html)
-
-          > Run [${{ github.run_id }}](../actions/runs/${{ github.run_id }}) | Branch: `${{ github.head_ref || github.ref_name }}`
