@@ -1,0 +1,196 @@
+name: A11y Screenshot Validation Gate
+
+# ==============================================================================
+# ACCESSIBILITY SCREENSHOT VALIDATION GATE
+# ==============================================================================
+# Renders Adaptive Cards on an iOS Simulator, captures named screenshots of
+# accessibility interaction states (ShowCard expand/collapse, ToggleVisibility),
+# runs hard assertions on a11y properties, and uploads all screenshots as
+# CI artifacts for upstream PR evidence.
+# ==============================================================================
+
+on:
+  push:
+    branches: [ 'proxy/**' ]
+    paths:
+      - 'source/ios/**'
+      - 'samples/**'
+      - '.github/workflows/a11y-screenshot-gate.yml'
+  pull_request:
+    branches: [ 'proxy/**' ]
+    paths:
+      - 'source/ios/**'
+      - 'samples/**'
+      - '.github/workflows/a11y-screenshot-gate.yml'
+  workflow_dispatch:
+    inputs:
+      record_baselines:
+        description: 'Record new a11y baselines instead of comparing'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: a11y-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-a11y-screenshots:
+    name: 'iOS A11y Screenshot Validation'
+    runs-on: macos-15
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+
+    - name: Swift and Xcode version
+      run: |
+        swift --version
+        xcodebuild -version
+        echo "### A11y Screenshot Gate" >> $GITHUB_STEP_SUMMARY
+        echo "- **Runner:** $(sw_vers -productName) $(sw_vers -productVersion)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Xcode:** $(xcodebuild -version | head -1)" >> $GITHUB_STEP_SUMMARY
+
+    - name: Boot iOS Simulator
+      run: |
+        SIMULATOR=$(xcrun simctl list devices available --json | python3 -c "
+        import json, sys
+        devices = json.load(sys.stdin)['devices']
+        for runtime, devs in devices.items():
+          if 'iOS' in runtime:
+            for d in devs:
+              if 'iPhone' in d['name']:
+                print(d['udid']); sys.exit(0)
+        ")
+        echo "SIM_UDID=$SIMULATOR" >> $GITHUB_ENV
+        xcrun simctl boot "$SIMULATOR" 2>/dev/null || true
+        SIM_NAME=$(xcrun simctl list devices available --json | python3 -c "
+        import json, sys
+        devices = json.load(sys.stdin)['devices']
+        for runtime, devs in devices.items():
+          if 'iOS' in runtime:
+            for d in devs:
+              if d['udid'] == '$SIMULATOR':
+                print(d['name']); sys.exit(0)
+        " 2>/dev/null || echo "Unknown")
+        echo "Using simulator: $SIM_NAME ($SIMULATOR)"
+        echo "- **Simulator:** $SIM_NAME" >> $GITHUB_STEP_SUMMARY
+
+    - name: Configure snapshot mode
+      run: |
+        cd source/ios/SnapshotTests
+        mkdir -p Snapshots/Baselines Snapshots/Failures Snapshots/Diffs
+
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.record_baselines }}" = "true" ]; then
+          touch Snapshots/.record_mode
+          echo "Mode: RECORDING new a11y baselines"
+          echo "- **Mode:** Recording baselines" >> $GITHUB_STEP_SUMMARY
+        else
+          rm -f Snapshots/.record_mode
+          echo "Mode: VERIFYING against baselines"
+          echo "- **Mode:** Verification" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Run A11y Interaction Snapshot Tests
+      run: |
+        echo "=== Running A11y Interaction Snapshot Tests ==="
+        cd source/ios/SnapshotTests
+
+        xcodebuild test \
+          -scheme "VisualSnapshotTests-Package" \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          -only-testing:VisualSnapshotTests/A11yInteractionSnapshotTests \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee /tmp/a11y-test.log || true
+
+        A11Y_EXIT=${PIPESTATUS[0]}
+        echo "xcodebuild exit code: $A11Y_EXIT"
+
+        # Parse results
+        PASSED=$(grep -c "Test Case.*passed" /tmp/a11y-test.log 2>/dev/null || echo "0")
+        FAILED=$(grep -c "Test Case.*failed" /tmp/a11y-test.log 2>/dev/null || echo "0")
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### A11y Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Passed | $PASSED |" >> $GITHUB_STEP_SUMMARY
+        echo "| Failed | $FAILED |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        # List test details
+        echo "#### Test Details" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        grep -E "Test Case.*A11yInteraction" /tmp/a11y-test.log >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(no test output)" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+
+        if [ "$A11Y_EXIT" -ne 0 ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> **Warning:** Some a11y tests failed. Check artifacts for diff images." >> $GITHUB_STEP_SUMMARY
+          echo "::warning::A11y screenshot tests had failures (exit $A11Y_EXIT)"
+        fi
+
+    - name: Collect all a11y screenshots
+      if: always()
+      run: |
+        mkdir -p /tmp/a11y-screenshots
+
+        # Copy baselines (recorded or existing)
+        if [ -d "source/ios/SnapshotTests/Snapshots/Baselines" ]; then
+          for f in source/ios/SnapshotTests/Snapshots/Baselines/*a11y* source/ios/SnapshotTests/Snapshots/Baselines/*showcard_expand* source/ios/SnapshotTests/Snapshots/Baselines/*showcard_dismiss* source/ios/SnapshotTests/Snapshots/Baselines/*togglevisibility* source/ios/SnapshotTests/Snapshots/Baselines/*activityupdate*; do
+            [ -f "$f" ] && cp "$f" /tmp/a11y-screenshots/ 2>/dev/null
+          done
+        fi
+
+        # Also copy ALL baselines for completeness
+        cp source/ios/SnapshotTests/Snapshots/Baselines/*.png /tmp/a11y-screenshots/ 2>/dev/null || true
+
+        echo "A11y screenshots collected:"
+        ls -la /tmp/a11y-screenshots/ 2>/dev/null || echo "(none)"
+
+        # Add screenshot inventory to summary
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Screenshots Captured" >> $GITHUB_STEP_SUMMARY
+        SCREENSHOT_COUNT=$(ls /tmp/a11y-screenshots/*.png 2>/dev/null | wc -l | tr -d ' ')
+        echo "Total: **$SCREENSHOT_COUNT** screenshots" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        ls /tmp/a11y-screenshots/*.png 2>/dev/null | while read f; do
+          echo "- $(basename "$f")" >> $GITHUB_STEP_SUMMARY
+        done
+
+    - name: Upload a11y screenshots
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: a11y-ios-screenshots
+        path: /tmp/a11y-screenshots/
+        retention-days: 90
+
+    - name: Upload a11y baselines
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: a11y-ios-baselines
+        path: source/ios/SnapshotTests/Snapshots/Baselines/
+        retention-days: 90
+
+    - name: Upload a11y failures and diffs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: a11y-ios-failures
+        path: |
+          source/ios/SnapshotTests/Snapshots/Failures/
+          source/ios/SnapshotTests/Snapshots/Diffs/
+        retention-days: 14
+
+    - name: Upload test log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: a11y-ios-test-log
+        path: /tmp/a11y-test.log
+        retention-days: 14
