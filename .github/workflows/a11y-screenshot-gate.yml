@@ -90,13 +90,12 @@ jobs:
           echo "- **Mode:** Verification" >> $GITHUB_STEP_SUMMARY
         fi
 
-    - name: Start screen recording
+    - name: Install CocoaPods and prepare workspace
       run: |
-        mkdir -p /tmp/a11y-recordings
-        xcrun simctl io "$SIM_UDID" recordVideo --codec h264 --force /tmp/a11y-recordings/raw_test_recording.mp4 &
-        echo $! > /tmp/a11y-recordings/record.pid
-        sleep 3
-        echo "Recording started (PID: $(cat /tmp/a11y-recordings/record.pid))"
+        cd source/ios/AdaptiveCards
+        gem install cocoapods 2>/dev/null || true
+        pod install --repo-update 2>&1 | tail -10 || true
+        echo "Workspace ready"
 
     - name: Run A11y Interaction Snapshot Tests
       run: |
@@ -117,25 +116,77 @@ jobs:
         grep -E "Test Case.*A11yInteraction" /tmp/a11y-test.log >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
         echo '```' >> $GITHUB_STEP_SUMMARY
 
-    - name: Stop screen recording
+    - name: Record accessibility interaction video
       if: always()
       run: |
-        if [ -f /tmp/a11y-recordings/record.pid ]; then
-          RPID=$(cat /tmp/a11y-recordings/record.pid)
-          kill -INT $RPID 2>/dev/null || true
-          for i in $(seq 1 15); do
-            kill -0 $RPID 2>/dev/null || break
-            sleep 1
-          done
-          kill -9 $RPID 2>/dev/null || true
-          wait $RPID 2>/dev/null || true
-        fi
+        echo "=== Recording real accessibility interactions ==="
+        mkdir -p /tmp/a11y-recordings
+
+        # Open Accessibility Inspector pointed at the simulator
+        # This shows element overlays, focus rings, and a11y properties
+        open -a "Accessibility Inspector" 2>/dev/null || true
         sleep 2
+
+        # Start screen recording of the simulator
+        xcrun simctl io "$SIM_UDID" recordVideo \
+          --codec h264 --force \
+          /tmp/a11y-recordings/raw_test_recording.mp4 &
+        RPID=$!
+        echo $RPID > /tmp/a11y-recordings/record.pid
+        sleep 2
+        echo "Recording started (PID: $RPID)"
+
+        # Run the real XCUITests that interact with actual cards on screen
+        # These drive: navigate to card -> tap ShowCard -> type text -> submit
+        cd source/ios/AdaptiveCards
+        xcodebuild test \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme ADCIOSVisualizer \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testSmokeTestActivityUpdateComment \
+          -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testSmokeTestActivityUpdateDate \
+          -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testFocusOnValidationFailure \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee /tmp/a11y-recordings/xcuitest.log | tail -30 || true
+        cd $GITHUB_WORKSPACE
+
+        # Give a moment for the last interaction to display
+        sleep 3
+
+        # Stop recording cleanly (SIGINT for valid mp4)
+        kill -INT $RPID 2>/dev/null || true
+        for i in $(seq 1 15); do
+          kill -0 $RPID 2>/dev/null || break
+          sleep 1
+        done
+        kill -9 $RPID 2>/dev/null || true
+        wait $RPID 2>/dev/null || true
+        sleep 2
+
+        # Close Accessibility Inspector
+        osascript -e 'quit app "Accessibility Inspector"' 2>/dev/null || true
+
         RAW="/tmp/a11y-recordings/raw_test_recording.mp4"
         if [ -f "$RAW" ]; then
-          echo "Raw recording: $(wc -c < "$RAW") bytes"
+          RAW_SIZE=$(wc -c < "$RAW")
+          echo "Recording: $RAW_SIZE bytes"
+          echo "- **Recording size:** $RAW_SIZE bytes" >> $GITHUB_STEP_SUMMARY
         else
-          echo "::warning::No raw recording file"
+          echo "::warning::No recording captured"
+        fi
+
+        # Parse XCUITest results
+        if [ -f /tmp/a11y-recordings/xcuitest.log ]; then
+          UITEST_PASSED=$(grep -c "Test Case.*passed" /tmp/a11y-recordings/xcuitest.log 2>/dev/null || echo "0")
+          UITEST_FAILED=$(grep -c "Test Case.*failed" /tmp/a11y-recordings/xcuitest.log 2>/dev/null || echo "0")
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### XCUITest Results (recorded)" >> $GITHUB_STEP_SUMMARY
+          echo "- Passed: $UITEST_PASSED" >> $GITHUB_STEP_SUMMARY
+          echo "- Failed: $UITEST_FAILED" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep "Test Case" /tmp/a11y-recordings/xcuitest.log >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
         fi
 
     - name: Generate accessibility transcript
@@ -162,31 +213,20 @@ jobs:
         ffmpeg -version | head -1
         ffprobe -version | head -1
 
-    - name: Generate narrated audio and merge with video
+    - name: Prepare final video
       if: always()
       run: |
-        # Generate narration segments with macOS say
-        python3 .github/scripts/a11y_narrate.py /tmp/a11y-recordings/transcript.json /tmp/a11y-recordings
-
-        # Merge video + narration
         RAW="/tmp/a11y-recordings/raw_test_recording.mp4"
-        NARRATION="/tmp/a11y-recordings/narration.aiff"
         FINAL="/tmp/a11y-recordings/voiceover_demo.mp4"
 
-        if [ -f "$RAW" ] && [ -f "$NARRATION" ]; then
-          echo "Merging video with narrated audio..."
-          ffmpeg -y -i "$RAW" -i "$NARRATION" -c:v copy -c:a aac -b:a 128k -shortest "$FINAL" 2>&1 | tail -5 || {
-            echo "ffmpeg merge failed, using raw video"
-            cp "$RAW" "$FINAL"
-          }
-        elif [ -f "$RAW" ]; then
-          echo "No narration audio, using raw video"
+        if [ -f "$RAW" ]; then
+          # Use the raw recording directly - it contains real UI interactions
+          # with Accessibility Inspector overlays visible
           cp "$RAW" "$FINAL"
-        fi
-
-        if [ -f "$FINAL" ]; then
           FSIZE=$(wc -c < "$FINAL")
-          echo "Final video: $FSIZE bytes"
+          echo "Final video (real interactions): $FSIZE bytes"
+        else
+          echo "::warning::No recording available"
         fi
 
     - name: Validate video content
@@ -218,11 +258,39 @@ jobs:
           [ -z "$HAS_VIDEO" ] && echo "::warning::No video stream" && ERRORS=$((ERRORS + 1))
 
           HAS_AUDIO=$(ffprobe -v error -select_streams a -show_entries stream=codec_type -of csv=p=0 "$FINAL" 2>/dev/null)
-          [ -z "$HAS_AUDIO" ] && echo "WARN: No audio stream"
+          [ -z "$HAS_AUDIO" ] && echo "INFO: No audio stream (expected for simulator recording)"
 
           FRAMES=$(ffprobe -v error -count_frames -select_streams v -show_entries stream=nb_read_frames -of default=noprint_wrappers=1:nokey=1 "$FINAL" 2>/dev/null || echo "0")
           echo "Frames: $FRAMES"
           [ "${FRAMES:-0}" -lt 30 ] && echo "::warning::Low frame count" && ERRORS=$((ERRORS + 1))
+
+          # Check for frame changes (video must NOT be static)
+          # Extract 3 frames at different timestamps and compare
+          echo "Checking for frame changes (non-static video)..."
+          mkdir -p /tmp/a11y-framecheck
+          ffmpeg -y -i "$FINAL" -vf "select=eq(n\,10)" -frames:v 1 /tmp/a11y-framecheck/frame_a.png 2>/dev/null || true
+          ffmpeg -y -i "$FINAL" -vf "select=eq(n\,100)" -frames:v 1 /tmp/a11y-framecheck/frame_b.png 2>/dev/null || true
+          ffmpeg -y -i "$FINAL" -vf "select=eq(n\,200)" -frames:v 1 /tmp/a11y-framecheck/frame_c.png 2>/dev/null || true
+
+          if [ -f /tmp/a11y-framecheck/frame_a.png ] && [ -f /tmp/a11y-framecheck/frame_b.png ]; then
+            # Compare frame hashes - if all identical, video is static
+            HASH_A=$(md5 -q /tmp/a11y-framecheck/frame_a.png 2>/dev/null || md5sum /tmp/a11y-framecheck/frame_a.png | cut -d' ' -f1)
+            HASH_B=$(md5 -q /tmp/a11y-framecheck/frame_b.png 2>/dev/null || md5sum /tmp/a11y-framecheck/frame_b.png | cut -d' ' -f1)
+            HASH_C="none"
+            [ -f /tmp/a11y-framecheck/frame_c.png ] && HASH_C=$(md5 -q /tmp/a11y-framecheck/frame_c.png 2>/dev/null || md5sum /tmp/a11y-framecheck/frame_c.png | cut -d' ' -f1)
+
+            echo "Frame hashes: A=$HASH_A B=$HASH_B C=$HASH_C"
+            if [ "$HASH_A" = "$HASH_B" ] && [ "$HASH_A" = "$HASH_C" ]; then
+              echo "::error::Video is STATIC - all sampled frames are identical"
+              ERRORS=$((ERRORS + 1))
+            else
+              echo "OK: Video has frame changes (not static)"
+            fi
+
+            # Save sample frames as artifacts
+            cp /tmp/a11y-framecheck/frame_*.png /tmp/a11y-recordings/ 2>/dev/null || true
+          fi
+          rm -rf /tmp/a11y-framecheck
         fi
 
         echo "" >> $GITHUB_STEP_SUMMARY
