@@ -93,12 +93,15 @@ jobs:
         echo "TalkBack service: $TB_STATUS"
         echo "Accessibility enabled: $A11Y_ON"
 
-        # ── Start screen recording ──
-        # Use --bugreport to embed timestamps; SIGINT finalize will write moov atom
+        # ── Start screen recording on the device ──
+        # Run screenrecord in device background via nohup so it persists
+        # Use /data/local/tmp (always writable, no scoped storage)
         echo "=== Starting screen recording ==="
-        adb shell "screenrecord --bugreport --time-limit 300 --size 720x1280 /sdcard/a11y_recording.mp4" &
-        RECORD_PID=$!
+        adb shell "nohup screenrecord --time-limit 300 --size 720x1280 /data/local/tmp/a11y_recording.mp4 > /dev/null 2>&1 &"
         sleep 2
+        # Verify screenrecord started
+        SR_PID=$(adb shell pidof screenrecord 2>/dev/null | tr -d '\r')
+        echo "screenrecord PID on device: $SR_PID"
 
         # ── Run each test individually with screencap after each ──
         echo "--- Running a11y_showcard_collapsed ---"
@@ -165,16 +168,25 @@ jobs:
         echo "Captured android_a11y_activity_showcard_expanded.png ($SZ bytes)"
 
 
-        # ── Finalize recording via SIGINT (writes moov atom) ──
+        # ── Finalize recording ──
         echo "=== Finalizing screen recording ==="
-        # Send SIGINT to the screenrecord process on device (not to adb)
-        adb shell "kill -2 \$(pidof screenrecord)" 2>/dev/null || true
-        # Wait for adb shell to finish
-        wait $RECORD_PID 2>/dev/null || true
-        sleep 3
+        # Send SIGINT to let screenrecord write the moov atom
+        SR_PID=$(adb shell pidof screenrecord 2>/dev/null | tr -d '\r')
+        echo "screenrecord PID: $SR_PID"
+        if [ -n "$SR_PID" ]; then
+          adb shell "kill -2 $SR_PID" 2>/dev/null || true
+          echo "Sent SIGINT, waiting for finalization..."
+          sleep 5
+        else
+          echo "WARNING: screenrecord not running"
+        fi
+
+        # Verify file exists on device before pulling
+        DEV_SZ=$(adb shell "stat -c%s /data/local/tmp/a11y_recording.mp4 2>/dev/null" | tr -d '\r' || echo 0)
+        echo "Recording on device: $DEV_SZ bytes"
 
         # Pull recording
-        adb pull /sdcard/a11y_recording.mp4 "$RECORDINGS/android_a11y_talkback_recording.mp4" 2>/dev/null || true
+        adb pull /data/local/tmp/a11y_recording.mp4 "$RECORDINGS/android_a11y_talkback_recording.mp4" 2>&1 || true
         RECSZ=$(wc -c < "$RECORDINGS/android_a11y_talkback_recording.mp4" 2>/dev/null || echo 0)
         echo "Recording: $RECSZ bytes"
 
