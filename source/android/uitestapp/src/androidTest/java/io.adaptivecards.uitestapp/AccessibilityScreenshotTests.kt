@@ -17,6 +17,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.GrantPermissionRule
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
 import org.hamcrest.Description
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers
@@ -219,16 +222,30 @@ class AccessibilityScreenshotTests {
     fun a11y_toggle_visibility_revealed() {
         renderCard("ExpenseReport.json")
 
-        // Click the column containing "Show history" to trigger ToggleVisibility
-        Espresso.onView(ViewMatchers.withText("Show history"))
-            .perform(ViewActions.scrollTo(), ViewActions.click())
-        Thread.sleep(1000)
+        // Use UiDevice to click "Show history" — this ensures the click hits
+        // the Column's selectAction (Espresso clicks the TextBlock which may
+        // not propagate to the parent's OnClickListener)
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
-        // After toggle, "Show history" is hidden and "Hide history" appears.
-        // The view may not be in a scrollable parent, so check without scrollTo.
-        Espresso.onView(ViewMatchers.withText("Hide history"))
-            .check(ViewAssertions.matches(
-                ViewMatchers.withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)))
+        // Scroll to "Show history" first via Espresso
+        Espresso.onView(ViewMatchers.withText("Show history"))
+            .perform(ViewActions.scrollTo())
+        Thread.sleep(500)
+
+        // Click via UiDevice (clicks on screen coordinates, triggers parent selectAction)
+        val showHistory = device.findObject(By.text("Show history"))
+        Assert.assertNotNull("Show history text should be on screen", showHistory)
+        showHistory.click()
+        Thread.sleep(1500)
+
+        // After toggle, verify the content area became visible.
+        // The toggle targets cardContent4 (Container with expense history text).
+        // Check that "Hide history" text now exists on screen
+        val hideHistory = device.findObject(By.text("Hide history"))
+        Assert.assertNotNull(
+            "After toggle, 'Hide history' text should be visible on screen",
+            hideHistory
+        )
 
         takeNamedScreenshot("toggle_visibility_revealed")
     }

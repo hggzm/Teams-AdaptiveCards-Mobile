@@ -1,0 +1,59 @@
+name: Deploy A11y Catalog
+
+# Deploys the accessibility screenshot catalog to GitHub Pages
+# after the A11y Screenshot Gate workflow completes.
+
+on:
+  workflow_run:
+    workflows: ["A11y Screenshot Gate"]
+    types: [completed]
+    branches: ['proxy/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-catalog:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success' ||
+      github.event.workflow_run.conclusion == 'failure'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download a11y catalog artifact
+      uses: dawidd6/action-download-artifact@v6
+      with:
+        workflow: a11y-screenshot-gate.yml
+        name: a11y-catalog-site
+        path: _site/a11y
+        if_no_artifact_found: warn
+        search_artifacts: true
+
+    - name: Download a11y screenshots artifact
+      uses: dawidd6/action-download-artifact@v6
+      with:
+        workflow: a11y-screenshot-gate.yml
+        name: a11y-android-screenshots
+        path: _site/a11y/raw
+        if_no_artifact_found: warn
+        search_artifacts: true
+
+    - name: Create landing page
+      run: |
+        mkdir -p _site
+        python3 -c "
+        html = '<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>AdaptiveCards Mobile CI</title><style>body{font-family:-apple-system,sans-serif;background:#0d1117;color:#c9d1d9;display:flex;justify-content:center;padding:40px}.c{max-width:600px;width:100%}h1{font-size:22px;color:#58a6ff;margin-bottom:16px}a.l{display:block;padding:16px;background:#161b22;border:1px solid #30363d;border-radius:8px;color:#58a6ff;text-decoration:none;margin-bottom:10px;font-size:15px}a.l:hover{border-color:#58a6ff}.d{font-size:12px;color:#8b949e;margin-top:4px}</style></head><body><div class=\"c\"><h1>AdaptiveCards Mobile CI Artifacts</h1><a href=\"a11y/\" class=\"l\">A11y Screenshot Catalog<div class=\"d\">Before/after screenshots + TalkBack recordings from Android a11y tests</div></a></div></body></html>'
+        open('_site/index.html','w').write(html)
+        open('_site/.nojekyll','w').close()
+        "
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./_site
+        force_orphan: true

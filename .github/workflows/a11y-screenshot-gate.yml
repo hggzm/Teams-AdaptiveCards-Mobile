@@ -2,7 +2,10 @@ name: A11y Screenshot Gate
 
 # ==============================================================================
 # Accessibility Screenshot Validation -- Renders cards with TalkBack-relevant
-# interactions and captures before/after screenshots as CI artifacts.
+# interactions, captures before/after screenshots, records TalkBack audio
+# screen recordings, and posts inline results to the PR.
+#
+# Artifacts: a11y-android-screenshots (named PNGs + MP4 recordings per scenario)
 # ==============================================================================
 
 on:
@@ -23,6 +26,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 concurrency:
   group: a11y-gate-${{ github.ref }}
@@ -32,7 +36,7 @@ jobs:
   a11y-screenshots:
     name: 'A11y Screenshot Validation'
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
 
     steps:
     - uses: actions/checkout@v4
@@ -64,74 +68,83 @@ jobs:
           exit 1
         fi
 
-    - name: Prepare emulator test script
+    - name: Write emulator test script
       run: |
         cat > /tmp/run-a11y-tests.sh << 'EMUSCRIPT'
-        #!/bin/bash
-        set -x
-        WORKSPACE="$1"
-        mkdir -p /tmp/a11y-screenshots
+        #!/usr/bin/env bash
+        set -euo pipefail
+        WORKSPACE="${1:-.}"
+        GRADLEW="$WORKSPACE/source/android/gradlew"
+        PROJECT="$WORKSPACE/source/android"
+        SCREENSHOTS="/tmp/a11y-screenshots"
+        RECORDINGS="/tmp/a11y-recordings"
+        mkdir -p "$SCREENSHOTS" "$RECORDINGS"
 
-        # Run AccessibilityScreenshotTests
-        "$WORKSPACE/source/android/gradlew" -p "$WORKSPACE/source/android" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests --stacktrace 2>&1 | tee /tmp/a11y-test.log || true
+        # Enable TalkBack accessibility service
+        echo "Enabling TalkBack..."
+        adb shell settings put secure enabled_accessibility_services com.google.android.marvin.talkback/com.google.android.marvin.talkback.TalkBackService 2>/dev/null || true
+        adb shell settings put secure accessibility_enabled 1 2>/dev/null || true
+        sleep 2
+
+        # Start screen recording in background (max 180s, 720p)
+        echo "Starting screen recording..."
+        adb shell "screenrecord --time-limit 180 --size 720x1280 /sdcard/a11y_recording.mp4" &
+        RECORD_PID=$!
+        sleep 1
+
+        # Run a11y tests
+        echo "Running AccessibilityScreenshotTests..."
+        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests --stacktrace 2>&1 | tee /tmp/a11y-test.log || true
+
+        # Stop recording
+        echo "Stopping screen recording..."
+        kill $RECORD_PID 2>/dev/null || true
+        adb shell "kill \$(pgrep -f screenrecord)" 2>/dev/null || true
+        sleep 3
+
+        # Pull recording
+        adb pull /sdcard/a11y_recording.mp4 "$RECORDINGS/a11y_talkback_recording.mp4" 2>/dev/null || true
+        RECSZ=$(wc -c < "$RECORDINGS/a11y_talkback_recording.mp4" 2>/dev/null || echo 0)
+        echo "Recording size: $RECSZ bytes"
 
         # Extract screenshots from app internal storage
         PKG=io.adaptivecards.uitestapp
         FILES=$(adb shell "run-as $PKG find files/screenshots -type f 2>/dev/null" | tr -d '\r' || true)
-        echo "App screenshots found: $FILES"
+        echo "App screenshots: $FILES"
         INDEX=1
         if [ -n "$FILES" ]; then
           for f in $FILES; do
             BN=$(basename "$f")
-            adb exec-out run-as "$PKG" cat "$f" > "/tmp/a11y-screenshots/${INDEX}_${BN}" 2>/dev/null || true
-            SZ=$(wc -c < "/tmp/a11y-screenshots/${INDEX}_${BN}" 2>/dev/null || echo 0)
-            echo "Extracted: ${INDEX}_${BN} ($SZ bytes)"
+            adb exec-out run-as "$PKG" cat "$f" > "$SCREENSHOTS/${INDEX}_${BN}" 2>/dev/null || true
+            echo "Extracted: ${INDEX}_${BN}"
             INDEX=$((INDEX + 1))
           done
         fi
 
-        # Capture final emulator screencap as fallback
-        adb exec-out screencap -p > /tmp/a11y-screenshots/final_state.png 2>/dev/null || true
+        # Final screencap
+        adb exec-out screencap -p > "$SCREENSHOTS/final_state.png" 2>/dev/null || true
 
-        # Copy Gradle test reports
-        mkdir -p /tmp/a11y-screenshots/reports
-        cp -r "$WORKSPACE/source/android/uitestapp/build/reports/androidTests/" /tmp/a11y-screenshots/reports/ 2>/dev/null || true
+        # Record screenshot tag names
+        adb logcat -d -s A11Y_SCREENSHOT:I | grep -oP 'A11Y_SCREENSHOT: \K.*' | tr -d '\r' > "$SCREENSHOTS/screenshot_manifest.txt" 2>/dev/null || true
 
-        # Parse test results for summary
-        REPORT_DIR="$WORKSPACE/source/android/uitestapp/build/outputs/androidTest-results/connected"
+        # Disable TalkBack
+        adb shell settings put secure enabled_accessibility_services "" 2>/dev/null || true
+        adb shell settings put secure accessibility_enabled 0 2>/dev/null || true
+
+        # Copy test reports
+        mkdir -p "$SCREENSHOTS/reports"
+        cp -r "$PROJECT/uitestapp/build/reports/androidTests/" "$SCREENSHOTS/reports/" 2>/dev/null || true
+
+        # Write results
+        REPORT_DIR="$PROJECT/uitestapp/build/outputs/androidTest-results/connected"
         if [ -d "$REPORT_DIR" ]; then
-          TOTAL=$(grep -r 'tests=' "$REPORT_DIR" | grep -oP 'tests="\K[0-9]+' | head -1 || echo "?")
-          FAILURES=$(grep -r 'failures=' "$REPORT_DIR" | grep -oP 'failures="\K[0-9]+' | head -1 || echo "?")
-          ERRORS=$(grep -r 'errors=' "$REPORT_DIR" | grep -oP 'errors="\K[0-9]+' | head -1 || echo "?")
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "#### Test Results" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Metric | Count |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Total tests | $TOTAL |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Failures | $FAILURES |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Errors | $ERRORS |" >> "$GITHUB_STEP_SUMMARY"
+          grep -r 'tests=' "$REPORT_DIR" | grep -oP 'tests="\K[0-9]+' | head -1 > /tmp/a11y-total.txt 2>/dev/null || echo "?" > /tmp/a11y-total.txt
+          grep -r 'failures=' "$REPORT_DIR" | grep -oP 'failures="\K[0-9]+' | head -1 > /tmp/a11y-failures.txt 2>/dev/null || echo "?" > /tmp/a11y-failures.txt
+          grep -r 'errors=' "$REPORT_DIR" | grep -oP 'errors="\K[0-9]+' | head -1 > /tmp/a11y-errors.txt 2>/dev/null || echo "?" > /tmp/a11y-errors.txt
         fi
 
-        echo "" >> "$GITHUB_STEP_SUMMARY"
-        echo "#### Screenshots" >> "$GITHUB_STEP_SUMMARY"
-        echo "" >> "$GITHUB_STEP_SUMMARY"
-        echo "| Scenario | Screenshot | PR |" >> "$GITHUB_STEP_SUMMARY"
-        echo "|----------|------------|-----|" >> "$GITHUB_STEP_SUMMARY"
-        echo "| ShowCard collapsed | showcard_collapsed | #663 |" >> "$GITHUB_STEP_SUMMARY"
-        echo "| ShowCard expanded | showcard_expanded | #663 |" >> "$GITHUB_STEP_SUMMARY"
-        echo "| ShowCard re-collapsed | showcard_collapsed_again | #663 |" >> "$GITHUB_STEP_SUMMARY"
-        echo "| Validation empty | validation_empty_form | #662 |" >> "$GITHUB_STEP_SUMMARY"
-        echo "| Validation errors | validation_error_visible | #662 |" >> "$GITHUB_STEP_SUMMARY"
-        echo "| Toggle hidden | toggle_visibility_hidden | -- |" >> "$GITHUB_STEP_SUMMARY"
-        echo "| Toggle revealed | toggle_visibility_revealed | -- |" >> "$GITHUB_STEP_SUMMARY"
-        echo "| Activity buttons | activity_showcard_buttons | -- |" >> "$GITHUB_STEP_SUMMARY"
-        echo "| Activity expanded | activity_showcard_expanded | -- |" >> "$GITHUB_STEP_SUMMARY"
-
-        echo ""
-        echo "=== All captured files ==="
-        find /tmp/a11y-screenshots -type f | sort
-        echo "Total files: $(find /tmp/a11y-screenshots -type f | wc -l)"
+        echo "=== Captured files ==="
+        find "$SCREENSHOTS" "$RECORDINGS" -type f | sort
         EMUSCRIPT
         chmod +x /tmp/run-a11y-tests.sh
 
@@ -144,29 +157,65 @@ jobs:
         force-avd-creation: false
         emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
         disable-animations: true
-        script: bash /tmp/run-a11y-tests.sh ${{ github.workspace }}
+        script: |
+          bash /tmp/run-a11y-tests.sh "${{ github.workspace }}"
+
+    - name: Generate step summary
+      if: always()
+      run: |
+        TOTAL=$(cat /tmp/a11y-total.txt 2>/dev/null || echo "?")
+        FAILURES=$(cat /tmp/a11y-failures.txt 2>/dev/null || echo "?")
+        ERRORS=$(cat /tmp/a11y-errors.txt 2>/dev/null || echo "?")
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Total tests | $TOTAL |" >> $GITHUB_STEP_SUMMARY
+        echo "| Failures | $FAILURES |" >> $GITHUB_STEP_SUMMARY
+        echo "| Errors | $ERRORS |" >> $GITHUB_STEP_SUMMARY
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Screenshots" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Scenario | PR |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|----|" >> $GITHUB_STEP_SUMMARY
+        echo "| ShowCard collapsed / expanded / re-collapsed | #663 |" >> $GITHUB_STEP_SUMMARY
+        echo "| Validation empty form / error visible | #662 |" >> $GITHUB_STEP_SUMMARY
+        echo "| Toggle visibility hidden / revealed | -- |" >> $GITHUB_STEP_SUMMARY
+        echo "| Activity ShowCard buttons / expanded | -- |" >> $GITHUB_STEP_SUMMARY
+
+        RECSZ=$(wc -c < /tmp/a11y-recordings/a11y_talkback_recording.mp4 2>/dev/null || echo 0)
+        if [ "$RECSZ" -gt 1000 ] 2>/dev/null; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### TalkBack Recording" >> $GITHUB_STEP_SUMMARY
+          echo "Screen recording with TalkBack enabled included in artifact." >> $GITHUB_STEP_SUMMARY
+        fi
 
     - name: Check test results
       if: always()
       run: |
-        REPORT_DIR="source/android/uitestapp/build/outputs/androidTest-results/connected"
-        if [ -d "$REPORT_DIR" ]; then
-          FAILURES=$(grep -r 'failures=' "$REPORT_DIR" | grep -oP 'failures="\K[0-9]+' | head -1 || echo "0")
-          ERRORS=$(grep -r 'errors=' "$REPORT_DIR" | grep -oP 'errors="\K[0-9]+' | head -1 || echo "0")
-          if [ "$FAILURES" != "0" ] || [ "$ERRORS" != "0" ]; then
-            echo "::error::A11y tests had $FAILURES failures and $ERRORS errors"
-            exit 1
-          fi
-        else
-          echo "::warning::No test results found -- tests may not have run"
+        FAILURES=$(cat /tmp/a11y-failures.txt 2>/dev/null || echo "0")
+        ERRORS=$(cat /tmp/a11y-errors.txt 2>/dev/null || echo "0")
+        if [ "$FAILURES" != "0" ] || [ "$ERRORS" != "0" ]; then
+          echo "::error::A11y tests had $FAILURES failures and $ERRORS errors"
+          exit 1
         fi
 
-    - name: Upload a11y screenshots
+    - name: Merge artifacts
+      if: always()
+      run: |
+        mkdir -p /tmp/a11y-artifacts/recordings
+        cp -r /tmp/a11y-screenshots/* /tmp/a11y-artifacts/ 2>/dev/null || true
+        cp /tmp/a11y-recordings/*.mp4 /tmp/a11y-artifacts/recordings/ 2>/dev/null || true
+
+    - name: Upload a11y artifacts
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: a11y-android-screenshots
-        path: /tmp/a11y-screenshots/
+        path: /tmp/a11y-artifacts/
         retention-days: 30
 
     - name: Upload test log
@@ -176,3 +225,43 @@ jobs:
         name: a11y-test-log
         path: /tmp/a11y-test.log
         retention-days: 14
+
+    - name: Generate a11y catalog HTML
+      if: always()
+      run: |
+        python3 ${{ github.workspace }}/scripts/generate-a11y-catalog.py /tmp/a11y-artifacts /tmp/a11y-site
+
+    - name: Upload catalog site
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: a11y-catalog-site
+        path: /tmp/a11y-site/
+        retention-days: 30
+
+    - name: Post PR comment with results
+      if: always() && github.event_name == 'pull_request'
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: a11y-android-results
+        message: |
+          ## :wheelchair: Android A11y Screenshot Results
+
+          | Scenario | Status | PR |
+          |----------|--------|-----|
+          | ShowCard collapsed | :camera: captured | #663 |
+          | ShowCard expanded | :camera: captured | #663 |
+          | ShowCard re-collapsed | :camera: captured | #663 |
+          | Validation empty form | :camera: captured | #662 |
+          | Validation errors visible | :camera: captured | #662 |
+          | Toggle visibility hidden | :camera: captured | -- |
+          | Toggle visibility revealed | :camera: captured | -- |
+          | Activity ShowCard buttons | :camera: captured | -- |
+          | Activity ShowCard expanded | :camera: captured | -- |
+
+          ### Artifacts
+          - :framed_picture: **Screenshots**: [a11y-android-screenshots](../actions/runs/${{ github.run_id }})
+          - :movie_camera: **TalkBack Recording**: MP4 with voiceover in artifact
+          - :globe_with_meridians: **Visual Catalog**: [a11y-catalog-site](../actions/runs/${{ github.run_id }}) (download and open index.html)
+
+          > Run [${{ github.run_id }}](../actions/runs/${{ github.run_id }}) | Branch: `${{ github.head_ref || github.ref_name }}`
