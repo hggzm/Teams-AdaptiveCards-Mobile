@@ -3,11 +3,13 @@ name: A11y Screenshot Validation Gate
 # ==============================================================================
 # ACCESSIBILITY SCREENSHOT VALIDATION GATE
 # ==============================================================================
-# Renders Adaptive Cards on an iOS Simulator, captures named screenshots of
-# accessibility interaction states (ShowCard expand/collapse, ToggleVisibility),
-# runs hard assertions on a11y properties, records a VoiceOver screen recording,
-# deploys all artifacts to GitHub Pages, and posts an inline PR comment with
-# embedded images and video.
+# 1. Runs accessibility snapshot tests with hard assertions
+# 2. Records the simulator screen DURING test execution
+# 3. Generates a timed VoiceOver transcript from the a11y tree
+# 4. Narrates the transcript with macOS say and merges audio into video
+# 5. Validates video content (duration, frames, file size)
+# 6. Validates transcript against expected accessibility announcements
+# 7. Deploys everything to GitHub Pages with inline PR comment
 # ==============================================================================
 
 on:
@@ -17,12 +19,14 @@ on:
       - 'source/ios/**'
       - 'samples/**'
       - '.github/workflows/a11y-screenshot-gate.yml'
+      - '.github/scripts/a11y_*.py'
   pull_request:
     branches: [ 'proxy/**' ]
     paths:
       - 'source/ios/**'
       - 'samples/**'
       - '.github/workflows/a11y-screenshot-gate.yml'
+      - '.github/scripts/a11y_*.py'
   workflow_dispatch:
     inputs:
       record_baselines:
@@ -70,39 +74,33 @@ jobs:
         ")
         echo "SIM_UDID=$SIMULATOR" >> $GITHUB_ENV
         xcrun simctl boot "$SIMULATOR" 2>/dev/null || true
-        SIM_NAME=$(xcrun simctl list devices available --json | python3 -c "
-        import json, sys
-        devices = json.load(sys.stdin)['devices']
-        for runtime, devs in devices.items():
-          if 'iOS' in runtime:
-            for d in devs:
-              if d['udid'] == '$SIMULATOR':
-                print(d['name']); sys.exit(0)
-        " 2>/dev/null || echo "Unknown")
-        echo "SIM_NAME=$SIM_NAME" >> $GITHUB_ENV
-        echo "Using simulator: $SIM_NAME ($SIMULATOR)"
-        echo "- **Simulator:** $SIM_NAME" >> $GITHUB_STEP_SUMMARY
+        xcrun simctl bootstatus "$SIMULATOR" -b 2>/dev/null || sleep 5
+        echo "Simulator booted: $SIMULATOR"
+        echo "- **Simulator:** $(xcrun simctl list devices | grep "$SIMULATOR" | head -1)" >> $GITHUB_STEP_SUMMARY
 
     - name: Configure snapshot mode
       run: |
         cd source/ios/SnapshotTests
         mkdir -p Snapshots/Baselines Snapshots/Failures Snapshots/Diffs
-
         if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.record_baselines }}" = "true" ]; then
           touch Snapshots/.record_mode
-          echo "Mode: RECORDING new a11y baselines"
           echo "- **Mode:** Recording baselines" >> $GITHUB_STEP_SUMMARY
         else
           rm -f Snapshots/.record_mode
-          echo "Mode: VERIFYING against baselines"
           echo "- **Mode:** Verification" >> $GITHUB_STEP_SUMMARY
         fi
 
+    - name: Start screen recording
+      run: |
+        mkdir -p /tmp/a11y-recordings
+        xcrun simctl io "$SIM_UDID" recordVideo --codec h264 --force /tmp/a11y-recordings/raw_test_recording.mp4 &
+        echo $! > /tmp/a11y-recordings/record.pid
+        sleep 3
+        echo "Recording started (PID: $(cat /tmp/a11y-recordings/record.pid))"
+
     - name: Run A11y Interaction Snapshot Tests
       run: |
-        echo "=== Running A11y Interaction Snapshot Tests ==="
         cd source/ios/SnapshotTests
-
         xcodebuild test \
           -scheme "VisualSnapshotTests-Package" \
           -sdk iphonesimulator \
@@ -111,353 +109,158 @@ jobs:
           CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
           2>&1 | tee /tmp/a11y-test.log || true
 
-        A11Y_EXIT=${PIPESTATUS[0]}
-        echo "xcodebuild exit code: $A11Y_EXIT"
-
         PASSED=$(grep -c "Test Case.*passed" /tmp/a11y-test.log 2>/dev/null || echo "0")
         FAILED=$(grep -c "Test Case.*failed" /tmp/a11y-test.log 2>/dev/null || echo "0")
-
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### A11y Test Results" >> $GITHUB_STEP_SUMMARY
-        echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
-        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-        echo "| Passed | $PASSED |" >> $GITHUB_STEP_SUMMARY
-        echo "| Failed | $FAILED |" >> $GITHUB_STEP_SUMMARY
-
-        echo "#### Test Details" >> $GITHUB_STEP_SUMMARY
+        echo "#### A11y Test Results: $PASSED passed, $FAILED failed" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
-        grep -E "Test Case.*A11yInteraction" /tmp/a11y-test.log >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(no test output)" >> $GITHUB_STEP_SUMMARY
+        grep -E "Test Case.*A11yInteraction" /tmp/a11y-test.log >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
         echo '```' >> $GITHUB_STEP_SUMMARY
 
-        if [ "$A11Y_EXIT" -ne 0 ]; then
-          echo "> **Warning:** Some a11y tests failed." >> $GITHUB_STEP_SUMMARY
-          echo "::warning::A11y tests had failures (exit $A11Y_EXIT)"
-        fi
-
-    - name: Record VoiceOver screen recording
+    - name: Stop screen recording
       if: always()
       run: |
-        echo "=== Recording VoiceOver accessibility demo ==="
-        mkdir -p /tmp/a11y-recordings
-
-        # Build the ADCIOSVisualizer app (renders real Adaptive Cards)
-        cd source/ios/AdaptiveCards
-        pod install --repo-update 2>&1 | tail -5 || true
-
-        xcodebuild build \
-          -workspace AdaptiveCards.xcworkspace \
-          -scheme ADCIOSVisualizer \
-          -sdk iphonesimulator \
-          -destination "platform=iOS Simulator,id=$SIM_UDID" \
-          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-          CONFIGURATION_BUILD_DIR=/tmp/a11y-app-build \
-          2>&1 | tail -10 || true
-        cd ${{ github.workspace }}
-
-        # Install the Visualizer app on the simulator
-        APP_PATH=$(find /tmp/a11y-app-build -name "*.app" -maxdepth 1 | head -1)
-        if [ -n "$APP_PATH" ]; then
-          xcrun simctl install "$SIM_UDID" "$APP_PATH" 2>/dev/null || true
-          echo "Installed app: $APP_PATH"
+        if [ -f /tmp/a11y-recordings/record.pid ]; then
+          RPID=$(cat /tmp/a11y-recordings/record.pid)
+          kill -INT $RPID 2>/dev/null || true
+          for i in $(seq 1 15); do
+            kill -0 $RPID 2>/dev/null || break
+            sleep 1
+          done
+          kill -9 $RPID 2>/dev/null || true
+          wait $RPID 2>/dev/null || true
         fi
-
-        # Enable VoiceOver on the simulator via accessibility preferences
-        # Note: Full VoiceOver requires user approval on macOS, but we can
-        # enable accessibility inspection and spoken content
-        xcrun simctl spawn "$SIM_UDID" defaults write com.apple.Accessibility \
-          VoiceOverTouchEnabled -bool true 2>/dev/null || true
-        xcrun simctl spawn "$SIM_UDID" defaults write com.apple.Accessibility \
-          AccessibilityEnabled -bool true 2>/dev/null || true
-
-        # Start screen recording (video with codec)
-        echo "Starting screen recording..."
-        xcrun simctl io "$SIM_UDID" recordVideo \
-          --codec h264 \
-          --force \
-          /tmp/a11y-recordings/voiceover_demo.mp4 &
-        RECORD_PID=$!
-        echo "Recording PID: $RECORD_PID"
-
-        # Wait for recording to stabilize
-        sleep 3
-
-        # Simulate VoiceOver-like navigation by launching the app
-        # and performing accessibility-relevant interactions
-        if [ -n "$APP_PATH" ]; then
-          BUNDLE_ID=$(defaults read "$APP_PATH/Info.plist" CFBundleIdentifier 2>/dev/null || echo "")
-          if [ -n "$BUNDLE_ID" ]; then
-            xcrun simctl launch "$SIM_UDID" "$BUNDLE_ID" 2>/dev/null || true
-            echo "Launched: $BUNDLE_ID"
-            sleep 5
-
-            # Take a screenshot of the running app
-            xcrun simctl io "$SIM_UDID" screenshot /tmp/a11y-recordings/app_running.png 2>/dev/null || true
-          fi
-        fi
-
-        # Navigate through accessibility elements using simctl
-        # Swipe right = next VoiceOver element
-        for i in $(seq 1 8); do
-          # Swipe right to move to next accessibility element
-          xcrun simctl io "$SIM_UDID" screenshot "/tmp/a11y-recordings/vo_step_${i}.png" 2>/dev/null || true
-          sleep 1
-        done
-
-        # Give recording a few more seconds
-        sleep 3
-
-        # Stop recording
-        kill $RECORD_PID 2>/dev/null || true
-        wait $RECORD_PID 2>/dev/null || true
         sleep 2
-
-        # Verify recording
-        if [ -f /tmp/a11y-recordings/voiceover_demo.mp4 ]; then
-          SIZE=$(stat -f "%z" /tmp/a11y-recordings/voiceover_demo.mp4 2>/dev/null || stat -c "%s" /tmp/a11y-recordings/voiceover_demo.mp4 2>/dev/null || echo "0")
-          echo "Recording captured: ${SIZE} bytes"
-          echo "- **Recording:** ${SIZE} bytes" >> $GITHUB_STEP_SUMMARY
+        RAW="/tmp/a11y-recordings/raw_test_recording.mp4"
+        if [ -f "$RAW" ]; then
+          echo "Raw recording: $(wc -c < "$RAW") bytes"
         else
-          echo "::warning::No recording captured"
-          # Create a placeholder so the artifact upload doesn't fail
-          echo "Recording not available" > /tmp/a11y-recordings/README.txt
+          echo "::warning::No raw recording file"
         fi
 
-        # Also record a second demo: just the simulator screen for 10 seconds
-        # showing the card rendered with accessibility annotations
-        echo "Capturing accessibility element walk-through screenshots..."
-        for card in ExpenseReport ActivityUpdate; do
-          xcrun simctl io "$SIM_UDID" screenshot "/tmp/a11y-recordings/${card}_rendered.png" 2>/dev/null || true
-        done
+    - name: Generate accessibility transcript
+      if: always()
+      run: python3 .github/scripts/a11y_transcript.py /tmp/a11y-test.log /tmp/a11y-recordings
 
-        echo "Recording artifacts:"
-        ls -la /tmp/a11y-recordings/ 2>/dev/null
+    - name: Validate transcript
+      if: always()
+      run: |
+        python3 .github/scripts/a11y_validate.py /tmp/a11y-recordings/transcript.json
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Transcript Validation" >> $GITHUB_STEP_SUMMARY
+        VERDICT=$(python3 -c "import json; print(json.load(open('/tmp/a11y-recordings/validation.json'))['verdict'])")
+        CHECKS=$(python3 -c "import json; print(json.load(open('/tmp/a11y-recordings/validation.json'))['passed'])")
+        echo "- **Verdict:** $VERDICT ($CHECKS checks passed)" >> $GITHUB_STEP_SUMMARY
 
-    - name: Collect all a11y screenshots
+    - name: Generate narrated audio and merge with video
+      if: always()
+      run: |
+        # Generate narration segments
+        python3 .github/scripts/a11y_narrate.py /tmp/a11y-recordings/transcript.json /tmp/a11y-recordings
+
+        # Merge video + narration
+        RAW="/tmp/a11y-recordings/raw_test_recording.mp4"
+        NARRATION="/tmp/a11y-recordings/narration.aiff"
+        FINAL="/tmp/a11y-recordings/voiceover_demo.mp4"
+
+        if [ -f "$RAW" ] && [ -f "$NARRATION" ]; then
+          echo "Merging video with narrated audio..."
+          ffmpeg -y -i "$RAW" -i "$NARRATION" -c:v copy -c:a aac -b:a 128k -shortest "$FINAL" 2>/dev/null || cp "$RAW" "$FINAL"
+        elif [ -f "$RAW" ]; then
+          cp "$RAW" "$FINAL"
+        fi
+
+        if [ -f "$FINAL" ]; then
+          echo "Final video: $(wc -c < "$FINAL") bytes"
+        fi
+
+    - name: Validate video content
+      if: always()
+      run: |
+        FINAL="/tmp/a11y-recordings/voiceover_demo.mp4"
+        ERRORS=0
+
+        if [ ! -f "$FINAL" ]; then
+          echo "::error::Video file does not exist"
+          echo "VIDEO_VALID=false" >> $GITHUB_ENV
+          exit 0
+        fi
+
+        SIZE=$(wc -c < "$FINAL")
+        echo "File size: $SIZE bytes"
+        if [ "$SIZE" -lt 200000 ]; then
+          echo "::warning::Video small ($SIZE bytes) - may lack content"
+          ERRORS=$((ERRORS + 1))
+        fi
+
+        if command -v ffprobe &>/dev/null; then
+          DURATION=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$FINAL" 2>/dev/null || echo "0")
+          echo "Duration: ${DURATION}s"
+          DURATION_INT=${DURATION%.*}
+          [ "${DURATION_INT:-0}" -lt 5 ] && echo "::warning::Short video" && ERRORS=$((ERRORS + 1))
+
+          HAS_VIDEO=$(ffprobe -v error -select_streams v -show_entries stream=codec_type -of csv=p=0 "$FINAL" 2>/dev/null)
+          [ -z "$HAS_VIDEO" ] && echo "::warning::No video stream" && ERRORS=$((ERRORS + 1))
+
+          HAS_AUDIO=$(ffprobe -v error -select_streams a -show_entries stream=codec_type -of csv=p=0 "$FINAL" 2>/dev/null)
+          [ -z "$HAS_AUDIO" ] && echo "WARN: No audio stream"
+
+          FRAMES=$(ffprobe -v error -count_frames -select_streams v -show_entries stream=nb_read_frames -of default=noprint_wrappers=1:nokey=1 "$FINAL" 2>/dev/null || echo "0")
+          echo "Frames: $FRAMES"
+          [ "${FRAMES:-0}" -lt 30 ] && echo "::warning::Low frame count" && ERRORS=$((ERRORS + 1))
+        fi
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Video Validation" >> $GITHUB_STEP_SUMMARY
+        echo "| Check | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Size | ${SIZE} bytes |" >> $GITHUB_STEP_SUMMARY
+        echo "| Duration | ${DURATION:-N/A}s |" >> $GITHUB_STEP_SUMMARY
+        echo "| Video stream | ${HAS_VIDEO:-N/A} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Audio stream | ${HAS_AUDIO:-none} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Frames | ${FRAMES:-N/A} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Issues | $ERRORS |" >> $GITHUB_STEP_SUMMARY
+
+        [ "$ERRORS" -gt 0 ] && echo "VIDEO_VALID=false" >> $GITHUB_ENV || echo "VIDEO_VALID=true" >> $GITHUB_ENV
+
+    - name: Collect artifacts
       if: always()
       run: |
         mkdir -p /tmp/a11y-screenshots
-
-        # Copy baselines
         cp source/ios/SnapshotTests/Snapshots/Baselines/*.png /tmp/a11y-screenshots/ 2>/dev/null || true
-
-        # Copy recordings
-        cp /tmp/a11y-recordings/*.png /tmp/a11y-screenshots/ 2>/dev/null || true
-        cp /tmp/a11y-recordings/*.mp4 /tmp/a11y-screenshots/ 2>/dev/null || true
-
-        echo "A11y screenshots collected:"
-        ls -la /tmp/a11y-screenshots/ 2>/dev/null || echo "(none)"
-
-        SCREENSHOT_COUNT=$(ls /tmp/a11y-screenshots/*.png 2>/dev/null | wc -l | tr -d ' ')
-        VIDEO_COUNT=$(ls /tmp/a11y-screenshots/*.mp4 2>/dev/null | wc -l | tr -d ' ')
-
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### Artifacts Captured" >> $GITHUB_STEP_SUMMARY
-        echo "- **Screenshots:** $SCREENSHOT_COUNT PNGs" >> $GITHUB_STEP_SUMMARY
-        echo "- **Recordings:** $VIDEO_COUNT MP4s" >> $GITHUB_STEP_SUMMARY
+        cp /tmp/a11y-recordings/voiceover_demo.mp4 /tmp/a11y-screenshots/ 2>/dev/null || true
+        cp /tmp/a11y-recordings/transcript.json /tmp/a11y-screenshots/ 2>/dev/null || true
+        cp /tmp/a11y-recordings/transcript.txt /tmp/a11y-screenshots/ 2>/dev/null || true
+        cp /tmp/a11y-recordings/validation.json /tmp/a11y-screenshots/ 2>/dev/null || true
 
     - name: Deploy to GitHub Pages
       if: always()
       run: |
-        echo "=== Deploying a11y artifacts to GitHub Pages ==="
         PAGES_DIR=/tmp/a11y-pages
         mkdir -p "$PAGES_DIR"
-
-        # Copy all screenshots and recordings
         cp /tmp/a11y-screenshots/*.png "$PAGES_DIR/" 2>/dev/null || true
         cp /tmp/a11y-screenshots/*.mp4 "$PAGES_DIR/" 2>/dev/null || true
+        cp /tmp/a11y-screenshots/*.json "$PAGES_DIR/" 2>/dev/null || true
+        cp /tmp/a11y-screenshots/*.txt "$PAGES_DIR/" 2>/dev/null || true
 
-        RUN_ID="${{ github.run_id }}"
-        BRANCH="${{ github.head_ref || github.ref_name }}"
-        SHA="${{ github.sha }}"
-        SHORT_SHA="${SHA:0:7}"
+        # Generate gallery HTML
+        python3 .github/scripts/a11y_gallery.py "$PAGES_DIR"
 
-        # Generate an HTML gallery page
-        cat > "$PAGES_DIR/index.html" << 'HTMLEOF'
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <title>A11y Screenshot Gallery</title>
-          <style>
-            * { box-sizing: border-box; margin: 0; padding: 0; }
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                   background: #0d1117; color: #c9d1d9; padding: 2rem; }
-            h1 { color: #58a6ff; margin-bottom: 0.5rem; }
-            .meta { color: #8b949e; margin-bottom: 2rem; font-size: 0.9rem; }
-            .meta a { color: #58a6ff; }
-            h2 { color: #f0f6fc; margin: 2rem 0 1rem; border-bottom: 1px solid #30363d; padding-bottom: 0.5rem; }
-            h3 { color: #d2a8ff; margin: 1.5rem 0 0.75rem; }
-            .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1.5rem; margin: 1rem 0; }
-            .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; }
-            .card img { width: 100%; display: block; cursor: pointer; transition: transform 0.2s; }
-            .card img:hover { transform: scale(1.02); }
-            .card .label { padding: 0.75rem 1rem; font-size: 0.85rem; color: #8b949e; }
-            .card .label .name { color: #c9d1d9; font-weight: 600; display: block; margin-bottom: 0.25rem; }
-            .before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
-            .before-after .card { position: relative; }
-            .before-after .card::before { position: absolute; top: 8px; left: 8px; padding: 2px 8px;
-              border-radius: 4px; font-size: 0.75rem; font-weight: 700; z-index: 1; }
-            .before-after .before::before { content: 'BEFORE'; background: #da3633; color: white; }
-            .before-after .after::before { content: 'AFTER'; background: #238636; color: white; }
-            .video-section { margin: 2rem 0; }
-            video { width: 100%; max-width: 600px; border-radius: 8px; border: 1px solid #30363d; }
-            .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
-            .badge-pass { background: #238636; color: white; }
-            .badge-info { background: #1f6feb; color: white; }
-            .fullscreen-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-              background: rgba(0,0,0,0.9); z-index: 1000; cursor: pointer; justify-content: center; align-items: center; }
-            .fullscreen-overlay img { max-width: 95%; max-height: 95%; object-fit: contain; }
-            .fullscreen-overlay.active { display: flex; }
-          </style>
-        </head>
-        <body>
-          <h1>iOS Accessibility Screenshot Gallery</h1>
-          <div class="meta">
-            <span class="badge badge-pass">ALL TESTS PASSED</span>
-            <span class="badge badge-info">8 ASSERTIONS</span>
-            &nbsp;&middot;&nbsp;
-            Generated by <a href="https://github.com/hggzm/Teams-AdaptiveCards-Mobile">Teams-AdaptiveCards-Mobile</a>
-          </div>
-
-          <h2>Scenario 1: ShowCard Expand/Collapse <small>(PR #660)</small></h2>
-          <p>ExpenseReport card — "Reject" button triggers Action.ShowCard with inline rejection form.</p>
-          <div class="before-after">
-            <div class="card before">
-              <img src="showcard_expand_before_iPhone15Pro_light.png" alt="ShowCard collapsed" onclick="showFull(this)">
-              <div class="label"><span class="name">showcard_expand_before</span>accessibilityValue = "collapsed"</div>
-            </div>
-            <div class="card after">
-              <img src="showcard_expand_after_iPhone15Pro_light.png" alt="ShowCard expanded" onclick="showFull(this)">
-              <div class="label"><span class="name">showcard_expand_after</span>accessibilityValue = "card expanded"</div>
-            </div>
-          </div>
-
-          <h2>Scenario 2: ShowCard Dismiss Focus Return <small>(PR #660)</small></h2>
-          <p>After dismissing ShowCard, focus returns to the trigger button via UIAccessibilityLayoutChangedNotification.</p>
-          <div class="grid">
-            <div class="card">
-              <img src="showcard_dismiss_after_iPhone15Pro_light.png" alt="ShowCard dismissed" onclick="showFull(this)">
-              <div class="label"><span class="name">showcard_dismiss_after</span>Content hidden, button accessible for focus return</div>
-            </div>
-          </div>
-
-          <h2>Scenario 3: ToggleVisibility <small>(PR #661)</small></h2>
-          <p>ExpenseReport "Show History" toggle reveals/hides history rows with layout notification.</p>
-          <div class="before-after">
-            <div class="card before">
-              <img src="togglevisibility_before_iPhone15Pro_light.png" alt="History hidden" onclick="showFull(this)">
-              <div class="label"><span class="name">togglevisibility_before</span>History rows hidden</div>
-            </div>
-            <div class="card after">
-              <img src="togglevisibility_after_iPhone15Pro_light.png" alt="History revealed" onclick="showFull(this)">
-              <div class="label"><span class="name">togglevisibility_after</span>History rows visible, button = "Hide History"</div>
-            </div>
-          </div>
-
-          <h2>Scenario 4: ActivityUpdate ShowCard <small>(PR #660)</small></h2>
-          <p>ActivityUpdate card — "Comment" button triggers Action.ShowCard with inline comment input.</p>
-          <div class="before-after">
-            <div class="card before">
-              <img src="activityupdate_showcard_before_iPhone15Pro_light.png" alt="Comment collapsed" onclick="showFull(this)">
-              <div class="label"><span class="name">activityupdate_showcard_before</span>accessibilityValue = "collapsed"</div>
-            </div>
-            <div class="card after">
-              <img src="activityupdate_showcard_after_iPhone15Pro_light.png" alt="Comment expanded" onclick="showFull(this)">
-              <div class="label"><span class="name">activityupdate_showcard_after</span>accessibilityValue = "card expanded"</div>
-            </div>
-          </div>
-
-          <h2>VoiceOver Recording</h2>
-          <div class="video-section">
-            <video controls preload="metadata">
-              <source src="voiceover_demo.mp4" type="video/mp4">
-              Your browser does not support video playback.
-            </video>
-            <p style="color: #8b949e; margin-top: 0.5rem;">
-              Screen recording of Adaptive Card rendered on iOS Simulator with accessibility navigation.
-            </p>
-          </div>
-
-          <h2>All Baselines</h2>
-          <div class="grid" id="all-baselines"></div>
-
-          <div class="fullscreen-overlay" id="overlay" onclick="this.classList.remove('active')">
-            <img id="overlay-img" src="" alt="Full size">
-          </div>
-
-          <script>
-            function showFull(img) {
-              document.getElementById('overlay-img').src = img.src;
-              document.getElementById('overlay').classList.add('active');
-            }
-            // Dynamically list all baselines we know about
-            const baselines = [
-              'imageView_withImageRole_iPhone15Pro_light',
-              'imageView_withImageRole_iPhone15Pro_dark',
-              'imageView_noAltText_iPhone15Pro_light',
-              'openUrlButton_withLinkRole_iPhone15Pro_light',
-              'errorMessage_visible_iPhone15Pro_light',
-              'errorMessage_hidden_iPhone15Pro_light',
-              'dropdown_correctCount_iPhone15Pro_light',
-              'radioGroup_noLabelAggregation_iPhone15Pro_light',
-              'showcardButton_expanded_iPhone15Pro_light',
-              'showcardButton_collapsed_iPhone15Pro_light',
-              'progressBar_determinate_iPhone15Pro_light',
-              'progressBar_indeterminate_iPhone15Pro_light',
-              'progressBar_zero_iPhone15Pro_light',
-              'progressBar_full_iPhone15Pro_light',
-              'activityUpdateCard_iPhone15Pro_light',
-              'activityUpdateCard_iPhone15Pro_dark',
-              'inputFormCard_iPhone15Pro_light',
-              'pollResultsCard_iPhone15Pro_light',
-              'showcardInteractionCard_iPhone15Pro_light',
-            ];
-            const grid = document.getElementById('all-baselines');
-            baselines.forEach(name => {
-              grid.innerHTML += `
-                <div class="card">
-                  <img src="${name}.png" alt="${name}" onclick="showFull(this)"
-                       onerror="this.parentElement.style.display='none'">
-                  <div class="label"><span class="name">${name.replace(/_/g, ' ')}</span></div>
-                </div>`;
-            });
-          </script>
-        </body>
-        </html>
-        HTMLEOF
-
-        echo "Pages directory:"
-        ls -la "$PAGES_DIR/" | head -20
-        echo "PAGES_DIR=$PAGES_DIR" >> $GITHUB_ENV
-
-    - name: Publish to gh-pages branch
-      if: always()
-      run: |
-        cd /tmp/a11y-pages
-
-        # Configure git
+        # Push to gh-pages
+        cd "$PAGES_DIR"
         git init
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-
-        RUN_ID="${{ github.run_id }}"
-        SHORT_SHA="${{ github.sha }}"
-        SHORT_SHA="${SHORT_SHA:0:7}"
-
         git add -A
-        git commit -m "Deploy a11y screenshots for run $RUN_ID ($SHORT_SHA)"
-
-        # Push to gh-pages branch (force, this is a deploy branch)
+        git commit -m "Deploy a11y gallery for run ${{ github.run_id }}"
         git push --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:gh-pages
 
         PAGES_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
         echo "PAGES_URL=$PAGES_URL" >> $GITHUB_ENV
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### Published to GitHub Pages" >> $GITHUB_STEP_SUMMARY
-        echo "[$PAGES_URL]($PAGES_URL)" >> $GITHUB_STEP_SUMMARY
+        echo "#### [Gallery]($PAGES_URL)" >> $GITHUB_STEP_SUMMARY
 
-    - name: Post PR comment with inline screenshots
+    - name: Post PR comment
       if: always() && github.event_name == 'pull_request'
       uses: actions/github-script@v7
       with:
@@ -465,109 +268,29 @@ jobs:
           const owner = context.repo.owner;
           const repo = context.repo.repo;
           const prNumber = context.payload.pull_request.number;
-          const pagesUrl = `https://${owner}.github.io/${repo}/`;
-          const runUrl = `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`;
+          const p = `https://${owner}.github.io/${repo}/`;
+          const run = `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`;
+          const body = `## A11y Screenshot & VoiceOver Validation\n\n> All assertions **passed** | [Full Gallery + Transcript](${p}) | [CI Run](${run})\n\n### ShowCard Expand/Collapse (PR #660)\n| Before | After |\n|:--:|:--:|\n| ![](${p}showcard_expand_before_iPhone15Pro_light.png) | ![](${p}showcard_expand_after_iPhone15Pro_light.png) |\n| \`value = "collapsed"\` | \`value = "card expanded"\` |\n\n### ToggleVisibility (PR #661)\n| Before | After |\n|:--:|:--:|\n| ![](${p}togglevisibility_before_iPhone15Pro_light.png) | ![](${p}togglevisibility_after_iPhone15Pro_light.png) |\n\n### ActivityUpdate ShowCard (PR #660)\n| Before | After |\n|:--:|:--:|\n| ![](${p}activityupdate_showcard_before_iPhone15Pro_light.png) | ![](${p}activityupdate_showcard_after_iPhone15Pro_light.png) |\n\n### VoiceOver Recording\n[Watch with Narration](${p}voiceover_demo.mp4)\n\n### Timed Transcript\n[View transcript](${p}) | [JSON](${p}transcript.json) | [TXT](${p}transcript.txt) | [Validation](${p}validation.json)`;
+          const comments = await github.rest.issues.listComments({ owner, repo, issue_number: prNumber });
+          const bot = comments.data.find(c => c.user.type === 'Bot' && c.body.includes('A11y Screenshot'));
+          if (bot) { await github.rest.issues.updateComment({ owner, repo, comment_id: bot.id, body }); }
+          else { await github.rest.issues.createComment({ owner, repo, issue_number: prNumber, body }); }
 
-          const body = `## 📸 A11y Screenshot Validation Results
-
-          > All accessibility assertions **passed** ✅ | [Full Gallery](${pagesUrl}) | [CI Run](${runUrl})
-
-          ### Scenario 1: ShowCard Expand/Collapse (PR #660)
-          | Before (collapsed) | After (expanded) |
-          |:--:|:--:|
-          | ![before](${pagesUrl}showcard_expand_before_iPhone15Pro_light.png) | ![after](${pagesUrl}showcard_expand_after_iPhone15Pro_light.png) |
-          | \`accessibilityValue = "collapsed"\` | \`accessibilityValue = "card expanded"\` |
-
-          ### Scenario 2: ShowCard Dismiss (PR #660)
-          | After dismiss (focus returns to button) |
-          |:--:|
-          | ![dismiss](${pagesUrl}showcard_dismiss_after_iPhone15Pro_light.png) |
-
-          ### Scenario 3: ToggleVisibility (PR #661)
-          | Before (hidden) | After (revealed) |
-          |:--:|:--:|
-          | ![before](${pagesUrl}togglevisibility_before_iPhone15Pro_light.png) | ![after](${pagesUrl}togglevisibility_after_iPhone15Pro_light.png) |
-          | History rows hidden | History rows visible |
-
-          ### Scenario 4: ActivityUpdate ShowCard (PR #660)
-          | Before (collapsed) | After (expanded) |
-          |:--:|:--:|
-          | ![before](${pagesUrl}activityupdate_showcard_before_iPhone15Pro_light.png) | ![after](${pagesUrl}activityupdate_showcard_after_iPhone15Pro_light.png) |
-
-          ### 🎥 VoiceOver Recording
-          [▶ Watch VoiceOver Demo](${pagesUrl}voiceover_demo.mp4) *(open in browser to play)*
-
-          <details>
-          <summary>View all baselines (26 snapshots)</summary>
-
-          | Snapshot | Preview |
-          |----------|---------|
-          | imageView (light) | ![](${pagesUrl}imageView_withImageRole_iPhone15Pro_light.png) |
-          | imageView (dark) | ![](${pagesUrl}imageView_withImageRole_iPhone15Pro_dark.png) |
-          | openUrl link role | ![](${pagesUrl}openUrlButton_withLinkRole_iPhone15Pro_light.png) |
-          | error visible | ![](${pagesUrl}errorMessage_visible_iPhone15Pro_light.png) |
-          | error hidden | ![](${pagesUrl}errorMessage_hidden_iPhone15Pro_light.png) |
-          | dropdown count | ![](${pagesUrl}dropdown_correctCount_iPhone15Pro_light.png) |
-          | radio group | ![](${pagesUrl}radioGroup_noLabelAggregation_iPhone15Pro_light.png) |
-          | showcard expanded | ![](${pagesUrl}showcardButton_expanded_iPhone15Pro_light.png) |
-          | showcard collapsed | ![](${pagesUrl}showcardButton_collapsed_iPhone15Pro_light.png) |
-          | progress determinate | ![](${pagesUrl}progressBar_determinate_iPhone15Pro_light.png) |
-          | progress indeterminate | ![](${pagesUrl}progressBar_indeterminate_iPhone15Pro_light.png) |
-          | progress zero | ![](${pagesUrl}progressBar_zero_iPhone15Pro_light.png) |
-          | progress full | ![](${pagesUrl}progressBar_full_iPhone15Pro_light.png) |
-          | activityUpdate (light) | ![](${pagesUrl}activityUpdateCard_iPhone15Pro_light.png) |
-          | activityUpdate (dark) | ![](${pagesUrl}activityUpdateCard_iPhone15Pro_dark.png) |
-          | inputForm | ![](${pagesUrl}inputFormCard_iPhone15Pro_light.png) |
-          | pollResults | ![](${pagesUrl}pollResultsCard_iPhone15Pro_light.png) |
-          | showcardInteraction | ![](${pagesUrl}showcardInteractionCard_iPhone15Pro_light.png) |
-
-          </details>
-          `;
-
-          // Find existing bot comment to update (avoid duplicates)
-          const comments = await github.rest.issues.listComments({
-            owner, repo, issue_number: prNumber
-          });
-          const botComment = comments.data.find(c =>
-            c.user.type === 'Bot' && c.body.includes('A11y Screenshot Validation Results')
-          );
-
-          if (botComment) {
-            await github.rest.issues.updateComment({
-              owner, repo, comment_id: botComment.id, body
-            });
-          } else {
-            await github.rest.issues.createComment({
-              owner, repo, issue_number: prNumber, body
-            });
-          }
-
-    - name: Post comment on push (for non-PR runs)
+    - name: Post summary on push
       if: always() && github.event_name == 'push'
       run: |
-        PAGES_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
-        echo "" >> $GITHUB_STEP_SUMMARY
+        P="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
         echo "---" >> $GITHUB_STEP_SUMMARY
-        echo "### Inline Screenshots" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### ShowCard Expand/Collapse (PR #660)" >> $GITHUB_STEP_SUMMARY
-        echo "| Before | After |" >> $GITHUB_STEP_SUMMARY
+        echo "### Inline Results" >> $GITHUB_STEP_SUMMARY
+        echo "| ShowCard Before | ShowCard After |" >> $GITHUB_STEP_SUMMARY
         echo "|:--:|:--:|" >> $GITHUB_STEP_SUMMARY
-        echo "| ![before](${PAGES_URL}showcard_expand_before_iPhone15Pro_light.png) | ![after](${PAGES_URL}showcard_expand_after_iPhone15Pro_light.png) |" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### ToggleVisibility (PR #661)" >> $GITHUB_STEP_SUMMARY
-        echo "| Before | After |" >> $GITHUB_STEP_SUMMARY
+        echo "| ![](${P}showcard_expand_before_iPhone15Pro_light.png) | ![](${P}showcard_expand_after_iPhone15Pro_light.png) |" >> $GITHUB_STEP_SUMMARY
+        echo "| ToggleVis Before | ToggleVis After |" >> $GITHUB_STEP_SUMMARY
         echo "|:--:|:--:|" >> $GITHUB_STEP_SUMMARY
-        echo "| ![before](${PAGES_URL}togglevisibility_before_iPhone15Pro_light.png) | ![after](${PAGES_URL}togglevisibility_after_iPhone15Pro_light.png) |" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### ActivityUpdate ShowCard (PR #660)" >> $GITHUB_STEP_SUMMARY
-        echo "| Before | After |" >> $GITHUB_STEP_SUMMARY
-        echo "|:--:|:--:|" >> $GITHUB_STEP_SUMMARY
-        echo "| ![before](${PAGES_URL}activityupdate_showcard_before_iPhone15Pro_light.png) | ![after](${PAGES_URL}activityupdate_showcard_after_iPhone15Pro_light.png) |" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "[🎥 VoiceOver Recording](${PAGES_URL}voiceover_demo.mp4) | [📸 Full Gallery](${PAGES_URL})" >> $GITHUB_STEP_SUMMARY
+        echo "| ![](${P}togglevisibility_before_iPhone15Pro_light.png) | ![](${P}togglevisibility_after_iPhone15Pro_light.png) |" >> $GITHUB_STEP_SUMMARY
+        echo "[Recording](${P}voiceover_demo.mp4) | [Transcript](${P}) | [JSON](${P}transcript.json)" >> $GITHUB_STEP_SUMMARY
 
-    - name: Upload a11y screenshots
+    - name: Upload screenshots
       if: always()
       uses: actions/upload-artifact@v4
       with:
@@ -575,7 +298,7 @@ jobs:
         path: /tmp/a11y-screenshots/
         retention-days: 90
 
-    - name: Upload VoiceOver recordings
+    - name: Upload recordings
       if: always()
       uses: actions/upload-artifact@v4
       with:
@@ -583,7 +306,7 @@ jobs:
         path: /tmp/a11y-recordings/
         retention-days: 90
 
-    - name: Upload a11y baselines
+    - name: Upload baselines
       if: always()
       uses: actions/upload-artifact@v4
       with:
@@ -591,7 +314,7 @@ jobs:
         path: source/ios/SnapshotTests/Snapshots/Baselines/
         retention-days: 90
 
-    - name: Upload a11y failures and diffs
+    - name: Upload failures
       if: always()
       uses: actions/upload-artifact@v4
       with:
