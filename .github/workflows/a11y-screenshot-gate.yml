@@ -213,18 +213,26 @@ jobs:
         ffmpeg -version | head -1
         ffprobe -version | head -1
 
-    - name: Prepare final video
+    - name: Post-process video (trim, narrate, overlay)
       if: always()
       run: |
         RAW="/tmp/a11y-recordings/raw_test_recording.mp4"
         FINAL="/tmp/a11y-recordings/voiceover_demo.mp4"
+        TRANSCRIPT="/tmp/a11y-recordings/transcript.json"
+        XCUILOG="/tmp/a11y-recordings/xcuitest.log"
 
         if [ -f "$RAW" ]; then
-          # Use the raw recording directly - it contains real UI interactions
-          # with Accessibility Inspector overlays visible
-          cp "$RAW" "$FINAL"
-          FSIZE=$(wc -c < "$FINAL")
-          echo "Final video (real interactions): $FSIZE bytes"
+          echo "=== Post-processing video ==="
+          python3 .github/scripts/a11y_postprocess.py "$RAW" "$TRANSCRIPT" "$XCUILOG" "$FINAL"
+
+          if [ -f "$FINAL" ]; then
+            FSIZE=$(wc -c < "$FINAL")
+            echo "Final video: $FSIZE bytes"
+            echo "- **Final video:** $FSIZE bytes" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "::warning::Post-processing produced no output, using raw"
+            cp "$RAW" "$FINAL"
+          fi
         else
           echo "::warning::No recording available"
         fi
@@ -315,6 +323,7 @@ jobs:
         cp /tmp/a11y-recordings/transcript.json /tmp/a11y-screenshots/ 2>/dev/null || true
         cp /tmp/a11y-recordings/transcript.txt /tmp/a11y-screenshots/ 2>/dev/null || true
         cp /tmp/a11y-recordings/validation.json /tmp/a11y-screenshots/ 2>/dev/null || true
+        cp /tmp/a11y-recordings/video_metadata.json /tmp/a11y-screenshots/ 2>/dev/null || true
 
     - name: Deploy to GitHub Pages
       if: always()
