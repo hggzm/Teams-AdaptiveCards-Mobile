@@ -152,10 +152,20 @@ jobs:
         CHECKS=$(python3 -c "import json; print(json.load(open('/tmp/a11y-recordings/validation.json'))['passed'])")
         echo "- **Verdict:** $VERDICT ($CHECKS checks passed)" >> $GITHUB_STEP_SUMMARY
 
+    - name: Install ffmpeg
+      if: always()
+      run: |
+        if ! command -v ffmpeg &>/dev/null; then
+          echo "Installing ffmpeg via Homebrew..."
+          brew install --quiet ffmpeg 2>&1 | tail -3
+        fi
+        ffmpeg -version | head -1
+        ffprobe -version | head -1
+
     - name: Generate narrated audio and merge with video
       if: always()
       run: |
-        # Generate narration segments
+        # Generate narration segments with macOS say
         python3 .github/scripts/a11y_narrate.py /tmp/a11y-recordings/transcript.json /tmp/a11y-recordings
 
         # Merge video + narration
@@ -165,13 +175,18 @@ jobs:
 
         if [ -f "$RAW" ] && [ -f "$NARRATION" ]; then
           echo "Merging video with narrated audio..."
-          ffmpeg -y -i "$RAW" -i "$NARRATION" -c:v copy -c:a aac -b:a 128k -shortest "$FINAL" 2>/dev/null || cp "$RAW" "$FINAL"
+          ffmpeg -y -i "$RAW" -i "$NARRATION" -c:v copy -c:a aac -b:a 128k -shortest "$FINAL" 2>&1 | tail -5 || {
+            echo "ffmpeg merge failed, using raw video"
+            cp "$RAW" "$FINAL"
+          }
         elif [ -f "$RAW" ]; then
+          echo "No narration audio, using raw video"
           cp "$RAW" "$FINAL"
         fi
 
         if [ -f "$FINAL" ]; then
-          echo "Final video: $(wc -c < "$FINAL") bytes"
+          FSIZE=$(wc -c < "$FINAL")
+          echo "Final video: $FSIZE bytes"
         fi
 
     - name: Validate video content
