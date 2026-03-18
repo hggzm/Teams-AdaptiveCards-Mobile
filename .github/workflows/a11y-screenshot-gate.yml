@@ -94,14 +94,23 @@ jobs:
         echo "Accessibility enabled: $A11Y_ON"
 
         # ── Start screen recording on the device ──
-        # Run screenrecord in device background via nohup so it persists
-        # Use /data/local/tmp (always writable, no scoped storage)
         echo "=== Starting screen recording ==="
-        adb shell "nohup screenrecord --time-limit 300 --size 720x1280 /data/local/tmp/a11y_recording.mp4 > /dev/null 2>&1 &"
-        sleep 2
-        # Verify screenrecord started
-        SR_PID=$(adb shell pidof screenrecord 2>/dev/null | tr -d '\r')
-        echo "screenrecord PID on device: $SR_PID"
+        # Check if screenrecord exists on this emulator image
+        adb shell which screenrecord || echo "WARNING: screenrecord not found on emulator"
+        # Start screenrecord via a separate adb shell in background on the HOST
+        # This keeps the adb connection open and stable
+        adb shell screenrecord --time-limit 300 --size 720x1280 /data/local/tmp/a11y_recording.mp4 > /tmp/screenrecord-host.log 2>&1 &
+        RECORD_HOST_PID=$!
+        sleep 3
+        # Verify it started on the device
+        SR_PID=$(adb shell "pidof screenrecord" 2>/dev/null | tr -d '\r')
+        echo "screenrecord device PID: ${SR_PID:-NOT_RUNNING}"
+        echo "screenrecord host PID: $RECORD_HOST_PID"
+        # If screenrecord didn't start, check for errors
+        if [ -z "$SR_PID" ]; then
+          echo "ERROR: screenrecord did not start. Host log:"
+          cat /tmp/screenrecord-host.log 2>/dev/null || true
+        fi
 
         # ── Run each test individually with screencap after each ──
         echo "--- Running a11y_showcard_collapsed ---"
@@ -170,20 +179,26 @@ jobs:
 
         # ── Finalize recording ──
         echo "=== Finalizing screen recording ==="
-        # Send SIGINT to let screenrecord write the moov atom
-        SR_PID=$(adb shell pidof screenrecord 2>/dev/null | tr -d '\r')
-        echo "screenrecord PID: $SR_PID"
+        SR_PID=$(adb shell "pidof screenrecord" 2>/dev/null | tr -d '\r')
+        echo "screenrecord PID at finalize: ${SR_PID:-NOT_RUNNING}"
         if [ -n "$SR_PID" ]; then
+          # SIGINT lets screenrecord write the moov atom for a playable MP4
           adb shell "kill -2 $SR_PID" 2>/dev/null || true
-          echo "Sent SIGINT, waiting for finalization..."
+          echo "Sent SIGINT, waiting 5s for moov atom finalization..."
           sleep 5
         else
-          echo "WARNING: screenrecord not running"
+          echo "WARNING: screenrecord was not running at finalize time"
+          # Try to kill via host PID if still alive
+          kill $RECORD_HOST_PID 2>/dev/null || true
+          sleep 2
         fi
 
-        # Verify file exists on device before pulling
-        DEV_SZ=$(adb shell "stat -c%s /data/local/tmp/a11y_recording.mp4 2>/dev/null" | tr -d '\r' || echo 0)
-        echo "Recording on device: $DEV_SZ bytes"
+        # Check host log for errors
+        echo "Host screenrecord log:"
+        cat /tmp/screenrecord-host.log 2>/dev/null || true
+
+        # Check file on device
+        adb shell "ls -la /data/local/tmp/a11y_recording.mp4" 2>/dev/null || echo "File not found on device"
 
         # Pull recording
         adb pull /data/local/tmp/a11y_recording.mp4 "$RECORDINGS/android_a11y_talkback_recording.mp4" 2>&1 || true
