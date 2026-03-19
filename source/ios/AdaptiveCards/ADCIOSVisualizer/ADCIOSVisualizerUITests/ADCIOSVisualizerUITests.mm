@@ -173,6 +173,7 @@
 
     XCUIElement *commentTextInput = [chatWindow.textViews elementMatchingType:XCUIElementTypeAny identifier:@"comment"];
     [commentTextInput tap];
+    [NSThread sleepForTimeInterval:0.5]; // Wait for keyboard focus
     [commentTextInput typeText:@"A comment"];
 
     [buttons[@"Done"] tap];
@@ -457,12 +458,14 @@
     XCUIElement *outsideRequired = [testApp.textFields elementMatchingPredicate:[NSPredicate predicateWithFormat:@"identifier == %@", @"outsidePopover1"]];
     XCTAssertTrue(outsideRequired.exists);
     [outsideRequired tap];
+    [NSThread sleepForTimeInterval:0.5]; // Wait for keyboard focus
     [outsideRequired typeText:@"text outside popover required"];
     
     // Type in "Outside Popover Input"
     XCUIElement *outsideInput = [testApp.textFields elementMatchingPredicate:[NSPredicate predicateWithFormat:@"identifier == %@", @"outsidePopover2"]];
     XCTAssertTrue(outsideInput.exists);
     [outsideInput tap];
+    [NSThread sleepForTimeInterval:0.5]; // Wait for keyboard focus
     [outsideInput typeText:@"text outside popover Input"];
     
     // Dismiss the keyboard
@@ -575,12 +578,14 @@
     XCUIElement *outsideRequired = [testApp.textFields elementMatchingPredicate:[NSPredicate predicateWithFormat:@"identifier == %@", @"outsidePopover1"]];
     XCTAssertTrue(outsideRequired.exists);
     [outsideRequired tap];
+    [NSThread sleepForTimeInterval:0.5]; // Wait for keyboard focus
     [outsideRequired typeText:@"text outside popover required"];
     
     // Type in "Outside Popover Input"
     XCUIElement *outsideInput = [testApp.textFields elementMatchingPredicate:[NSPredicate predicateWithFormat:@"identifier == %@", @"outsidePopover2"]];
     XCTAssertTrue(outsideInput.exists);
     [outsideInput tap];
+    [NSThread sleepForTimeInterval:0.5]; // Wait for keyboard focus
     [outsideInput typeText:@"text outside popover Input"];
     
     // Dismiss the keyboard
@@ -689,12 +694,14 @@
     XCUIElement *outsideRequired = [testApp.textFields elementMatchingPredicate:[NSPredicate predicateWithFormat:@"identifier == %@", @"outsidePopover1"]];
     XCTAssertTrue(outsideRequired.exists);
     [outsideRequired tap];
+    [NSThread sleepForTimeInterval:0.5]; // Wait for keyboard focus
     [outsideRequired typeText:@"text outside popover required"];
     
     // Type in "Outside Popover Input"
     XCUIElement *outsideInput = [testApp.textFields elementMatchingPredicate:[NSPredicate predicateWithFormat:@"identifier == %@", @"outsidePopover2"]];
     XCTAssertTrue(outsideInput.exists);
     [outsideInput tap];
+    [NSThread sleepForTimeInterval:0.5]; // Wait for keyboard focus
     [outsideInput typeText:@"text outside popover Input"];
     
     // Dismiss the keyboard
@@ -865,6 +872,98 @@
         swipes++;
     }
     [element tap];
+}
+
+
+#pragma mark - A11y Tree Dump for Accessibility Verification
+
+- (void)testA11yDumpActivityUpdateShowCard
+{
+    [self openCardForVersion:@"v1.5" forCardType:@"Scenarios" withCardName:@"ActivityUpdate.json"];
+    [NSThread sleepForTimeInterval:1.0];
+
+    // Dump accessibility tree
+    NSMutableArray *elements = [NSMutableArray array];
+    XCUIElementType scanTypes[] = {
+        XCUIElementTypeButton, XCUIElementTypeStaticText,
+        XCUIElementTypeTextField, XCUIElementTypeTextView,
+        XCUIElementTypeImage, XCUIElementTypeSwitch, XCUIElementTypeSlider,
+    };
+    NSString *roleNames[] = {@"button", @"text", @"textField", @"textView", @"image", @"switch", @"slider"};
+
+    for (int t = 0; t < 7; t++) {
+        XCUIElementQuery *q = [testApp descendantsMatchingType:scanTypes[t]];
+        NSUInteger count = q.count;
+        for (NSUInteger i = 0; i < count && i < 30; i++) {
+            @try {
+                XCUIElement *elem = [q elementBoundByIndex:i];
+                if (!elem.exists) continue;
+                NSString *label = elem.label ?: @"";
+                if (label.length == 0) continue;
+                NSString *value = elem.value ? [NSString stringWithFormat:@"%@", elem.value] : @"";
+                CGRect frame = elem.frame;
+                if (frame.size.width < 5 || frame.size.height < 5) continue;
+                if (frame.size.width > 390 && frame.size.height > 800) continue;
+                [elements addObject:@{
+                    @"label": label, @"value": value, @"role": roleNames[t],
+                    @"frame": @{@"x": @(frame.origin.x), @"y": @(frame.origin.y),
+                                @"width": @(frame.size.width), @"height": @(frame.size.height)},
+                }];
+            } @catch (NSException *e) { continue; }
+        }
+    }
+
+    NSLog(@"A11Y_RESULT: activity_card %lu elements", (unsigned long)elements.count);
+
+    // Write to /tmp/a11y-xcui/
+    NSString *dir = @"/tmp/a11y-xcui";
+    [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
+
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:elements options:NSJSONWritingPrettyPrinted error:nil];
+    [jsonData writeToFile:[NSString stringWithFormat:@"%@/activity_card_rendered_elements.json", dir] atomically:YES];
+
+    // Screenshot
+    XCUIScreenshot *screenshot = [XCUIScreen.mainScreen screenshot];
+    [screenshot.PNGRepresentation writeToFile:[NSString stringWithFormat:@"%@/activity_card_rendered.png", dir] atomically:YES];
+
+    // Tap Comment ShowCard
+    XCUIElementQuery *buttons = testApp.buttons;
+    if ([buttons[@"Comment"] exists]) {
+        [buttons[@"Comment"] tap];
+        [NSThread sleepForTimeInterval:1.5];
+
+        // Re-scan after ShowCard expand
+        NSMutableArray *expanded = [NSMutableArray array];
+        for (int t = 0; t < 7; t++) {
+            XCUIElementQuery *q2 = [testApp descendantsMatchingType:scanTypes[t]];
+            NSUInteger c2 = q2.count;
+            for (NSUInteger i = 0; i < c2 && i < 30; i++) {
+                @try {
+                    XCUIElement *e2 = [q2 elementBoundByIndex:i];
+                    if (!e2.exists) continue;
+                    NSString *l2 = e2.label ?: @"";
+                    if (l2.length == 0) continue;
+                    NSString *v2 = e2.value ? [NSString stringWithFormat:@"%@", e2.value] : @"";
+                    CGRect f2 = e2.frame;
+                    if (f2.size.width < 5 || f2.size.height < 5) continue;
+                    if (f2.size.width > 390 && f2.size.height > 800) continue;
+                    [expanded addObject:@{
+                        @"label": l2, @"value": v2, @"role": roleNames[t],
+                        @"frame": @{@"x": @(f2.origin.x), @"y": @(f2.origin.y),
+                                    @"width": @(f2.size.width), @"height": @(f2.size.height)},
+                    }];
+                } @catch (NSException *e) { continue; }
+            }
+        }
+
+        NSLog(@"A11Y_RESULT: showcard_expanded %lu elements", (unsigned long)expanded.count);
+
+        NSData *json2 = [NSJSONSerialization dataWithJSONObject:expanded options:NSJSONWritingPrettyPrinted error:nil];
+        [json2 writeToFile:[NSString stringWithFormat:@"%@/showcard_comment_expanded_elements.json", dir] atomically:YES];
+
+        XCUIScreenshot *ss2 = [XCUIScreen.mainScreen screenshot];
+        [ss2.PNGRepresentation writeToFile:[NSString stringWithFormat:@"%@/showcard_comment_expanded.png", dir] atomically:YES];
+    }
 }
 
 @end

@@ -1,0 +1,276 @@
+name: AXe A11y Diagnostic
+
+on:
+  push:
+    branches: [ 'proxy/**' ]
+    paths:
+      - '.github/workflows/axe-a11y-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: axe-diag-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  axe-diagnostic:
+    name: 'AXe Accessibility Diagnostic'
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install AXe
+      run: |
+        echo "=== Installing AXe ==="
+        brew tap cameroncooke/axe
+        brew install axe
+        axe --help | head -5
+        echo "AXe version: $(axe --version 2>/dev/null || echo 'unknown')"
+
+    - name: Install ffmpeg
+      run: |
+        brew install --quiet ffmpeg 2>&1 | tail -3
+        ffmpeg -version | head -1
+
+    - name: Boot Simulator
+      run: |
+        SIMULATOR=$(xcrun simctl list devices available --json | python3 -c "
+        import json, sys
+        devices = json.load(sys.stdin)['devices']
+        for runtime, devs in devices.items():
+          if 'iOS' in runtime:
+            for d in devs:
+              if 'iPhone' in d['name']:
+                print(d['udid']); sys.exit(0)
+        ")
+        echo "SIM_UDID=$SIMULATOR" >> $GITHUB_ENV
+        xcrun simctl boot "$SIMULATOR" 2>/dev/null || true
+        xcrun simctl bootstatus "$SIMULATOR" -b 2>/dev/null || sleep 5
+        echo "Simulator booted: $SIMULATOR"
+
+    - name: Build ADCIOSVisualizer
+      run: |
+        cd source/ios/AdaptiveCards
+        gem install cocoapods 2>/dev/null || true
+        pod install --repo-update 2>&1 | tail -10 || true
+        xcodebuild build-for-testing \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme ADCIOSVisualizer \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tail -10
+        echo "Build complete"
+
+    - name: Diagnostic 1 - AXe describe-ui (home screen)
+      run: |
+        mkdir -p /tmp/axe-diag
+        echo "=== AXe describe-ui on home screen ==="
+        axe describe-ui --udid "$SIM_UDID" > /tmp/axe-diag/01_homescreen_a11y.txt 2>&1 || true
+        echo "--- Output (first 50 lines) ---"
+        head -50 /tmp/axe-diag/01_homescreen_a11y.txt
+        echo "--- Size: $(wc -c < /tmp/axe-diag/01_homescreen_a11y.txt) bytes ---"
+
+    - name: Diagnostic 2 - AXe screenshot (home screen)
+      run: |
+        axe screenshot --output /tmp/axe-diag/01_homescreen.png --udid "$SIM_UDID" 2>&1 || true
+        ls -la /tmp/axe-diag/01_homescreen.png 2>/dev/null
+
+    - name: Diagnostic 3 - Launch app and describe-ui
+      run: |
+        echo "=== Launching ADCIOSVisualizer via XCUITest ==="
+        # Run just the first test to get the app open with a card displayed
+        cd source/ios/AdaptiveCards
+        xcodebuild test-without-building \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme ADCIOSVisualizer \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testSmokeTestActivityUpdateComment \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | grep -E "Test Case|passed|failed" || true
+        cd $GITHUB_WORKSPACE
+
+        # The app is now showing the ActivityUpdate card after the test
+        sleep 2
+
+        # AXe describe-ui after test interaction
+        echo "=== describe-ui after card interaction ==="
+        axe describe-ui --udid "$SIM_UDID" > /tmp/axe-diag/02_after_test_a11y.txt 2>&1 || true
+        head -80 /tmp/axe-diag/02_after_test_a11y.txt
+        echo "--- Size: $(wc -c < /tmp/axe-diag/02_after_test_a11y.txt) bytes ---"
+
+        # AXe screenshot
+        axe screenshot --output /tmp/axe-diag/02_after_test.png --udid "$SIM_UDID" 2>&1 || true
+
+    - name: Diagnostic 4 - AXe record-video while navigating
+      run: |
+        echo "=== Recording with AXe while navigating via batch ==="
+
+        # First, open the app fresh by running another test
+        cd source/ios/AdaptiveCards
+        xcodebuild test-without-building \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme ADCIOSVisualizer \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testSmokeTestActivityUpdateDate \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | grep -E "Test Case|passed|failed" || true
+        cd $GITHUB_WORKSPACE
+        sleep 2
+
+        # Start AXe video recording in background
+        axe record-video --udid "$SIM_UDID" --fps 15 --output /tmp/axe-diag/axe_recording.mp4 &
+        AXE_PID=$!
+        sleep 2
+
+        # Describe UI after card rendered
+        axe describe-ui --udid "$SIM_UDID" > /tmp/axe-diag/03_during_record_a11y.txt 2>&1 || true
+
+        # Take screenshot during recording
+        axe screenshot --output /tmp/axe-diag/03_during_record.png --udid "$SIM_UDID" 2>&1 || true
+
+        # Try AXe batch interactions (tap elements by accessibility label)
+        echo "--- Trying AXe batch tap by label ---"
+        axe tap --label "Back" --udid "$SIM_UDID" 2>&1 || echo "No Back button"
+        sleep 2
+
+        axe describe-ui --udid "$SIM_UDID" > /tmp/axe-diag/04_after_back_a11y.txt 2>&1 || true
+        axe screenshot --output /tmp/axe-diag/04_after_back.png --udid "$SIM_UDID" 2>&1 || true
+
+        # Wait a bit for recording content
+        sleep 3
+
+        # Stop recording
+        kill -INT $AXE_PID 2>/dev/null || true
+        wait $AXE_PID 2>/dev/null || true
+        sleep 2
+
+        echo "=== Recording result ==="
+        ls -la /tmp/axe-diag/axe_recording.mp4 2>/dev/null || echo "No recording"
+
+    - name: Diagnostic 5 - AXe-driven a11y test scenario
+      run: |
+        echo "=== Full AXe-driven a11y scenario ==="
+
+        # Start fresh recording
+        axe record-video --udid "$SIM_UDID" --fps 15 --output /tmp/axe-diag/a11y_scenario.mp4 &
+        AXE_PID=$!
+        sleep 2
+
+        # Run the comment ShowCard test
+        cd source/ios/AdaptiveCards
+        xcodebuild test-without-building \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme ADCIOSVisualizer \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testSmokeTestActivityUpdateComment \
+          -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testFocusOnValidationFailure \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee /tmp/axe-diag/scenario_test.log | grep -E "Test Case|passed|failed" || true
+        cd $GITHUB_WORKSPACE
+
+        # Describe UI after tests
+        axe describe-ui --udid "$SIM_UDID" > /tmp/axe-diag/05_after_scenario_a11y.txt 2>&1 || true
+
+        sleep 3
+
+        # Stop recording
+        kill -INT $AXE_PID 2>/dev/null || true
+        wait $AXE_PID 2>/dev/null || true
+        sleep 2
+
+        echo "=== Scenario recording ==="
+        ls -la /tmp/axe-diag/a11y_scenario.mp4 2>/dev/null || echo "No recording"
+
+    - name: Diagnostic 6 - Validate video has content
+      run: |
+        echo "=== Video validation ==="
+        for vid in /tmp/axe-diag/*.mp4; do
+          if [ -f "$vid" ]; then
+            NAME=$(basename "$vid")
+            SIZE=$(wc -c < "$vid")
+            DUR=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$vid" 2>/dev/null || echo "?")
+            FRAMES=$(ffprobe -v error -count_frames -select_streams v -show_entries stream=nb_read_frames -of default=noprint_wrappers=1:nokey=1 "$vid" 2>/dev/null || echo "?")
+
+            # Frame change check
+            ffmpeg -y -i "$vid" -vf "select=eq(n\,5)" -frames:v 1 /tmp/axe-diag/fc_a.png 2>/dev/null || true
+            ffmpeg -y -i "$vid" -vf "select=eq(n\,50)" -frames:v 1 /tmp/axe-diag/fc_b.png 2>/dev/null || true
+            if [ -f /tmp/axe-diag/fc_a.png ] && [ -f /tmp/axe-diag/fc_b.png ]; then
+              HA=$(md5 -q /tmp/axe-diag/fc_a.png 2>/dev/null)
+              HB=$(md5 -q /tmp/axe-diag/fc_b.png 2>/dev/null)
+              if [ "$HA" = "$HB" ]; then
+                STATIC="STATIC"
+              else
+                STATIC="dynamic"
+              fi
+            else
+              STATIC="?"
+            fi
+            rm -f /tmp/axe-diag/fc_a.png /tmp/axe-diag/fc_b.png
+
+            echo "$NAME: ${SIZE}B, ${DUR}s, ${FRAMES} frames, $STATIC"
+          fi
+        done
+
+    - name: Generate summary
+      if: always()
+      run: |
+        echo "### AXe A11y Diagnostic Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        # List all a11y dumps
+        echo "#### Accessibility Tree Dumps" >> $GITHUB_STEP_SUMMARY
+        for f in /tmp/axe-diag/*_a11y.txt; do
+          if [ -f "$f" ]; then
+            NAME=$(basename "$f")
+            LINES=$(wc -l < "$f" | tr -d ' ')
+            SIZE=$(wc -c < "$f" | tr -d ' ')
+            echo "- **$NAME**: $LINES lines, $SIZE bytes" >> $GITHUB_STEP_SUMMARY
+          fi
+        done
+
+        # List screenshots
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Screenshots" >> $GITHUB_STEP_SUMMARY
+        for f in /tmp/axe-diag/*.png; do
+          if [ -f "$f" ]; then
+            NAME=$(basename "$f")
+            SIZE=$(wc -c < "$f" | tr -d ' ')
+            echo "- **$NAME**: $SIZE bytes" >> $GITHUB_STEP_SUMMARY
+          fi
+        done
+
+        # List videos
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Videos" >> $GITHUB_STEP_SUMMARY
+        for f in /tmp/axe-diag/*.mp4; do
+          if [ -f "$f" ]; then
+            NAME=$(basename "$f")
+            SIZE=$(wc -c < "$f" | tr -d ' ')
+            DUR=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$f" 2>/dev/null || echo "?")
+            echo "- **$NAME**: $SIZE bytes, ${DUR}s" >> $GITHUB_STEP_SUMMARY
+          fi
+        done
+
+        # Show first a11y tree dump
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Sample A11y Tree (after card interaction)" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        head -60 /tmp/axe-diag/02_after_test_a11y.txt >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(empty)" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload all diagnostics
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: axe-a11y-diagnostic
+        path: /tmp/axe-diag/
+        retention-days: 30
