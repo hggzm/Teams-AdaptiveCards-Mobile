@@ -985,15 +985,106 @@
     NSLog(@"A11Y_DUMP: %@ (%lu elements) -> %@", name, (unsigned long)elements.count, path);
 }
 
-- (void)saveScreenshot:(NSString *)name
+- (void)saveScreenshot:(NSString *)name withElements:(NSArray *)elements
 {
     XCUIScreenshot *screenshot = [XCUIScreen.mainScreen screenshot];
+    UIImage *image = screenshot.image;
+
+    // Draw accessibility overlays directly using CoreGraphics
+    UIGraphicsBeginImageContextWithOptions(image.size, YES, image.scale);
+    [image drawAtPoint:CGPointZero];
+    CGContextRef ctx = UIGraphicsGetCurrentContext();
+
+    // Scale factor: screenshot is in pixels, frames are in points
+    CGFloat scale = image.scale;
+
+    // Colors for bounding boxes (iOS system colors)
+    NSArray *colors = @[
+        [UIColor systemBlueColor], [UIColor systemGreenColor],
+        [UIColor systemOrangeColor], [UIColor systemRedColor],
+        [UIColor systemPurpleColor], [UIColor systemTealColor],
+        [UIColor systemPinkColor], [UIColor systemIndigoColor],
+        [UIColor systemYellowColor], [UIColor systemCyanColor],
+    ];
+
+    NSInteger drawn = 0;
+    for (NSUInteger i = 0; i < elements.count && i < 25; i++) {
+        NSDictionary *elem = elements[i];
+        NSDictionary *frame = elem[@"frame"];
+        CGFloat x = [frame[@"x"] floatValue] * scale;
+        CGFloat y = [frame[@"y"] floatValue] * scale;
+        CGFloat w = [frame[@"width"] floatValue] * scale;
+        CGFloat h = [frame[@"height"] floatValue] * scale;
+
+        if (w < 5 || h < 5) continue;
+
+        UIColor *color = colors[i % colors.count];
+        CGRect rect = CGRectMake(x, y, w, h);
+
+        // Draw semi-transparent filled box
+        CGContextSetFillColorWithColor(ctx, [color colorWithAlphaComponent:0.15].CGColor);
+        CGContextFillRect(ctx, rect);
+
+        // Draw border
+        CGContextSetStrokeColorWithColor(ctx, [color colorWithAlphaComponent:0.8].CGColor);
+        CGContextSetLineWidth(ctx, 3.0 * scale);
+        CGContextStrokeRect(ctx, rect);
+
+        // Draw index number badge (top-left corner)
+        NSString *indexStr = [NSString stringWithFormat:@"%lu", (unsigned long)(i + 1)];
+        CGFloat badgeSize = 22.0 * scale;
+        CGRect badgeRect = CGRectMake(x, y, badgeSize, badgeSize);
+        CGContextSetFillColorWithColor(ctx, color.CGColor);
+        CGContextFillEllipseInRect(ctx, badgeRect);
+
+        // Draw number text
+        NSDictionary *numAttrs = @{
+            NSFontAttributeName: [UIFont boldSystemFontOfSize:13.0 * scale],
+            NSForegroundColorAttributeName: [UIColor whiteColor],
+        };
+        CGSize numSize = [indexStr sizeWithAttributes:numAttrs];
+        CGPoint numPoint = CGPointMake(
+            x + (badgeSize - numSize.width) / 2,
+            y + (badgeSize - numSize.height) / 2
+        );
+        [indexStr drawAtPoint:numPoint withAttributes:numAttrs];
+
+        // Draw label text below the box
+        NSString *label = elem[@"label"] ?: @"";
+        NSString *role = elem[@"role"] ?: @"";
+        NSString *value = elem[@"value"] ?: @"";
+        NSString *tag = [NSString stringWithFormat:@"[%@] %@", role, label];
+        if (value.length > 0) {
+            tag = [NSString stringWithFormat:@"%@ = %@", tag, value];
+        }
+        NSDictionary *labelAttrs = @{
+            NSFontAttributeName: [UIFont systemFontOfSize:10.0 * scale],
+            NSForegroundColorAttributeName: [UIColor whiteColor],
+            NSBackgroundColorAttributeName: [color colorWithAlphaComponent:0.7],
+        };
+        CGPoint labelPoint = CGPointMake(x, y + h + 2 * scale);
+        [tag drawAtPoint:labelPoint withAttributes:labelAttrs];
+
+        drawn++;
+    }
+
+    UIImage *annotated = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+
+    // Save annotated screenshot
     NSString *dir = @"/tmp/a11y-xcui";
     [[NSFileManager defaultManager] createDirectoryAtPath:dir
                               withIntermediateDirectories:YES attributes:nil error:nil];
-    NSString *path = [NSString stringWithFormat:@"%@/%@.png", dir, name];
-    [screenshot.PNGRepresentation writeToFile:path atomically:YES];
-    NSLog(@"A11Y_SCREENSHOT: %@ -> %@", name, path);
+
+    // Save annotated version
+    NSString *annotatedPath = [NSString stringWithFormat:@"%@/annotated_%@.png", dir, name];
+    [UIImagePNGRepresentation(annotated) writeToFile:annotatedPath atomically:YES];
+
+    // Also save raw version
+    NSString *rawPath = [NSString stringWithFormat:@"%@/%@.png", dir, name];
+    [screenshot.PNGRepresentation writeToFile:rawPath atomically:YES];
+
+    NSLog(@"A11Y_ANNOTATED: %@ (%ld elements drawn) -> %@", name, (long)drawn, annotatedPath);
 }
 
 - (void)testA11yDumpActivityUpdateShowCard
@@ -1004,7 +1095,7 @@
     // Dump card rendered state
     NSArray *tree1 = [self dumpA11yTree:testApp];
     [self writeA11yDump:tree1 named:@"activity_card_rendered"];
-    [self saveScreenshot:@"activity_card_rendered"];
+    [self saveScreenshot:@"activity_card_rendered" withElements:tree1];
     NSLog(@"A11Y: ActivityUpdate card has %lu elements", (unsigned long)tree1.count);
 
     // Tap Comment ShowCard
@@ -1015,7 +1106,7 @@
 
         NSArray *tree2 = [self dumpA11yTree:testApp];
         [self writeA11yDump:tree2 named:@"showcard_comment_expanded"];
-        [self saveScreenshot:@"showcard_comment_expanded"];
+        [self saveScreenshot:@"showcard_comment_expanded" withElements:tree2];
         NSLog(@"A11Y: ShowCard expanded has %lu elements", (unsigned long)tree2.count);
     }
 }
@@ -1027,7 +1118,7 @@
 
     NSArray *tree = [self dumpA11yTree:testApp];
     [self writeA11yDump:tree named:@"expense_card_rendered"];
-    [self saveScreenshot:@"expense_card_rendered"];
+    [self saveScreenshot:@"expense_card_rendered" withElements:tree];
     NSLog(@"A11Y: ExpenseReport card has %lu elements", (unsigned long)tree.count);
 }
 
