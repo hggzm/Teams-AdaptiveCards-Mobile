@@ -85,34 +85,32 @@ class AccessibilityScreenshotTests {
         execShellBlocking("screencap -p $path")
 
         // Dump the accessibility/view hierarchy via UiDevice.
-        // Dump to ByteArray in memory, then write to /data/local/tmp/ via
-        // shell in compressed chunks. This bypasses app-private dir permission
-        // issues (adb pull can't read from /data/user/0/PKG/ and run-as is
-        // unreliable on google_apis emulators).
+        // Log a11y element labels + bounds to logcat via android.util.Log.
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         try {
             val baos = java.io.ByteArrayOutputStream()
             device.dumpWindowHierarchy(baos)
-            val xmlBytes = baos.toByteArray()
-            if (xmlBytes.size > 100) {
-                val destPath = "$A11Y_TREE_DIR/android_a11y_$name.xml"
-                execShellBlocking("mkdir -p $A11Y_TREE_DIR")
-                // Truncate the file first
-                execShellBlocking("true > $destPath")
-                // Write in chunks via printf to avoid shell arg length limits
-                val chunkSize = 4000
-                var offset = 0
-                while (offset < xmlBytes.size) {
-                    val end = minOf(offset + chunkSize, xmlBytes.size)
-                    val chunk = String(xmlBytes, offset, end - offset, Charsets.UTF_8)
-                    // Escape single quotes for shell
-                    val escaped = chunk.replace("'", "'\"'\"'")
-                    execShellBlocking("printf '%s' '$escaped' >> $destPath")
-                    offset = end
+            val xml = baos.toString("UTF-8")
+            val labelPattern = Regex("content-desc=\"([^\"]+)\"")
+            val textPattern = Regex(" text=\"([^\"]+)\"")
+            val boundsPattern = Regex("bounds=\"(\\[\\d+,\\d+\\]\\[\\d+,\\d+\\])\"")
+            val labels = mutableListOf<String>()
+            for (line in xml.split("<node ")) {
+                val desc = labelPattern.find(line)?.groupValues?.get(1) ?: ""
+                val text = textPattern.find(line)?.groupValues?.get(1) ?: ""
+                val bounds = boundsPattern.find(line)?.groupValues?.get(1) ?: ""
+                val label = if (desc.isNotEmpty()) desc else text
+                if (label.isNotEmpty() && bounds.isNotEmpty() &&
+                    !label.contains("launcher", ignoreCase = true) &&
+                    !label.contains("systemui", ignoreCase = true)) {
+                    labels.add("$label|$bounds")
                 }
-                val sz = execShellBlocking("stat -c%s $destPath 2>/dev/null || echo 0")
-                println("A11y tree: $destPath ($sz bytes)")
             }
+            for ((i, entry) in labels.withIndex()) {
+                android.util.Log.i("AXE", "$name|${i + 1}|$entry")
+            }
+            android.util.Log.i("AXE_SUM", "$name|${labels.size}|${xml.length}")
+            println("A11y tree: $name - ${labels.size} labeled elements")
         } catch (e: Exception) {
             println("A11y tree dump failed: ${e.javaClass.simpleName}: ${e.message}")
         }
