@@ -85,28 +85,32 @@ class AccessibilityScreenshotTests {
         execShellBlocking("screencap -p $path")
 
         // Dump the accessibility/view hierarchy via UiDevice.
-        // Write to app's filesDir (test process = app user, can write there).
-        // Workflow pulls via: adb exec-out run-as PKG cat files/a11y_trees/...
+        // Log a11y element labels + bounds to logcat via android.util.Log.
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         try {
-            val context = InstrumentationRegistry.getInstrumentation().targetContext
-            val treeDir = java.io.File(context.filesDir, "a11y_trees")
-            treeDir.mkdirs()
-            val treeFile = java.io.File(treeDir, "android_a11y_$name.xml")
-
-            // Use OutputStream to avoid any File write permission issues
-            java.io.FileOutputStream(treeFile).use { fos ->
-                device.dumpWindowHierarchy(fos)
+            val baos = java.io.ByteArrayOutputStream()
+            device.dumpWindowHierarchy(baos)
+            val xml = baos.toString("UTF-8")
+            val labelPattern = Regex("content-desc=\"([^\"]+)\"")
+            val textPattern = Regex(" text=\"([^\"]+)\"")
+            val boundsPattern = Regex("bounds=\"(\\[\\d+,\\d+\\]\\[\\d+,\\d+\\])\"")
+            val labels = mutableListOf<String>()
+            for (line in xml.split("<node ")) {
+                val desc = labelPattern.find(line)?.groupValues?.get(1) ?: ""
+                val text = textPattern.find(line)?.groupValues?.get(1) ?: ""
+                val bounds = boundsPattern.find(line)?.groupValues?.get(1) ?: ""
+                val label = if (desc.isNotEmpty()) desc else text
+                if (label.isNotEmpty() && bounds.isNotEmpty() &&
+                    !label.contains("launcher", ignoreCase = true) &&
+                    !label.contains("systemui", ignoreCase = true)) {
+                    labels.add("$label|$bounds")
+                }
             }
-
-            // Log diagnostics
-            println("A11y tree: ${treeFile.absolutePath} (${treeFile.length()} bytes)")
-
-            // Make the file readable by adb shell user for extraction.
-            // execShellBlocking runs as shell user which can chmod.
-            execShellBlocking("chmod 644 ${treeFile.absolutePath}")
-            execShellBlocking("chmod 755 ${treeDir.absolutePath}")
-            execShellBlocking("chmod 755 ${context.filesDir.absolutePath}")
+            for ((i, entry) in labels.withIndex()) {
+                android.util.Log.i("AXE", "$name|${i + 1}|$entry")
+            }
+            android.util.Log.i("AXE_SUM", "$name|${labels.size}|${xml.length}")
+            println("A11y tree: $name - ${labels.size} labeled elements")
         } catch (e: Exception) {
             println("A11y tree dump failed: ${e.javaClass.simpleName}: ${e.message}")
         }

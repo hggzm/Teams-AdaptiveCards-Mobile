@@ -107,17 +107,21 @@ jobs:
         mkdir -p /tmp/a11y-recordings
         adb pull /data/local/tmp/a11y_recording.mp4 /tmp/a11y-recordings/android_a11y_talkback_recording.mp4 2>&1 || true
 
-        # Pull per-test a11y trees written by tests to app filesDir
-        PKG=io.adaptivecards.uitestapp
+        # Extract per-test a11y elements from logcat (logged by tests with tag AXE)
         mkdir -p /tmp/a11y-trees
-
-        # The test writes to /data/user/0/PKG/files/a11y_trees/
-        # Pull directly from full path (run-as unreliable on google_apis emulators)
-        APP_DATA=/data/user/0/$PKG/files/a11y_trees
-        echo "Pulling trees from: $APP_DATA"
-        adb pull $APP_DATA/ /tmp/a11y-trees/ 2>&1 || true
-        TREE_COUNT=$(find /tmp/a11y-trees -name '*.xml' -size +100c 2>/dev/null | wc -l)
-        echo "A11y trees pulled: $TREE_COUNT"
+        adb logcat -d -s AXE:I | grep 'AXE' | while IFS= read -r line; do
+          # Format: date time pid tid I AXE: scenario|index|label|bounds
+          PAYLOAD=$(echo "$line" | sed 's/.*AXE  *: //')
+          SCENARIO=$(echo "$PAYLOAD" | cut -d'|' -f1)
+          REST=$(echo "$PAYLOAD" | cut -d'|' -f2-)
+          if [ -n "$SCENARIO" ] && [ -n "$REST" ]; then
+            echo "$REST" >> "/tmp/a11y-trees/android_a11y_${SCENARIO}.txt"
+          fi
+        done
+        adb logcat -d -s AXE_SUMMARY:I > /tmp/a11y-trees/summary.txt 2>/dev/null || true
+        TREE_COUNT=$(find /tmp/a11y-trees -name '*.txt' -size +10c 2>/dev/null | wc -l)
+        echo "A11y element files: $TREE_COUNT"
+        cat /tmp/a11y-trees/summary.txt 2>/dev/null || true
 
         # Summary
         echo '=== Screenshots ==='
