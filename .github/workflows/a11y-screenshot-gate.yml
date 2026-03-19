@@ -107,18 +107,21 @@ jobs:
         mkdir -p /tmp/a11y-recordings
         adb pull /data/local/tmp/a11y_recording.mp4 /tmp/a11y-recordings/android_a11y_talkback_recording.mp4 2>&1 || true
 
-        # Extract per-test a11y elements from logcat (logged by tests)
+        # Extract per-test a11y elements from logcat (logged by tests with tag AXE)
         mkdir -p /tmp/a11y-trees
-        adb logcat -d | grep 'A11Y_ELEMENT_\|A11Y_TREE_SUMMARY' | while IFS= read -r line; do
-          TAG=$(echo "$line" | grep -oP 'A11Y_ELEMENT_\K[^:]+' || true)
-          if [ -n "$TAG" ]; then
-            DATA=$(echo "$line" | grep -oP 'A11Y_ELEMENT_[^:]+: \K.*' || true)
-            echo "$DATA" >> "/tmp/a11y-trees/android_a11y_${TAG}.txt"
+        adb logcat -d -s AXE:I | grep 'AXE' | while IFS= read -r line; do
+          # Format: date time pid tid I AXE: scenario|index|label|bounds
+          PAYLOAD=$(echo "$line" | sed 's/.*AXE  *: //')
+          SCENARIO=$(echo "$PAYLOAD" | cut -d'|' -f1)
+          REST=$(echo "$PAYLOAD" | cut -d'|' -f2-)
+          if [ -n "$SCENARIO" ] && [ -n "$REST" ]; then
+            echo "$REST" >> "/tmp/a11y-trees/android_a11y_${SCENARIO}.txt"
           fi
         done
-        adb logcat -d | grep 'A11Y_TREE_SUMMARY' > /tmp/a11y-trees/summary.txt 2>/dev/null || true
+        adb logcat -d -s AXE_SUMMARY:I > /tmp/a11y-trees/summary.txt 2>/dev/null || true
         TREE_COUNT=$(find /tmp/a11y-trees -name '*.txt' -size +10c 2>/dev/null | wc -l)
         echo "A11y element files: $TREE_COUNT"
+        cat /tmp/a11y-trees/summary.txt 2>/dev/null || true
 
         # Summary
         echo '=== Screenshots ==='
