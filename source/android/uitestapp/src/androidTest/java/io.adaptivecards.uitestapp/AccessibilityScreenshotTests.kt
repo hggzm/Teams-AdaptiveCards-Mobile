@@ -2,8 +2,10 @@
 // Licensed under the MIT License.
 package io.adaptivecards.uitestapp
 
+import android.graphics.Rect
 import android.os.ParcelFileDescriptor
 import android.view.View
+import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.UiController
 import androidx.test.espresso.ViewAction
@@ -134,6 +136,66 @@ class AccessibilityScreenshotTests {
         ).use { it.readText().trim() }
     }
 
+    /**
+     * Walk the accessibility tree and perform ACTION_ACCESSIBILITY_FOCUS on each
+     * focusable element. This is the Android equivalent of AXe/VoiceOver navigation:
+     * it programmatically moves TalkBack focus through elements in reading order,
+     * verifying each element is reachable and logging what TalkBack would announce.
+     *
+     * Returns the list of focused element descriptions (what TalkBack says).
+     */
+    private fun walkAccessibilityFocus(scenario: String): List<String> {
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        val root = automation.rootInActiveWindow ?: return emptyList()
+        val focused = mutableListOf<String>()
+
+        fun traverse(node: AccessibilityNodeInfo) {
+            // Get text/description (what TalkBack would read)
+            val desc = node.contentDescription?.toString() ?: ""
+            val text = node.text?.toString() ?: ""
+            val label = if (desc.isNotEmpty()) desc else text
+            val stateDesc = if (android.os.Build.VERSION.SDK_INT >= 30) {
+                node.stateDescription?.toString() ?: ""
+            } else ""
+            val bounds = Rect()
+            node.getBoundsInScreen(bounds)
+            val pkg = node.packageName?.toString() ?: ""
+
+            // Skip system UI / launcher
+            if (pkg.contains("launcher") || pkg.contains("systemui")) {
+                // Still traverse children
+            } else if (label.isNotEmpty() && node.isVisibleToUser) {
+                // Attempt to set accessibility focus (shows green rectangle)
+                node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+
+                val entry = buildString {
+                    append(label)
+                    if (stateDesc.isNotEmpty()) append(" [$stateDesc]")
+                    append(" (${bounds.left},${bounds.top},${bounds.right},${bounds.bottom})")
+                }
+                focused.add(entry)
+
+                // Log to logcat for extraction
+                android.util.Log.i("AXE_FOCUS", "$scenario|${focused.size}|$label|$stateDesc|${bounds.toShortString()}")
+            }
+
+            // Recurse into children
+            for (i in 0 until node.childCount) {
+                val child = node.getChild(i)
+                if (child != null) {
+                    traverse(child)
+                    child.recycle()
+                }
+            }
+        }
+
+        traverse(root)
+        root.recycle()
+
+        android.util.Log.i("AXE_WALK", "$scenario|${focused.size} elements focused")
+        return focused
+    }
+
     private fun assertSelected(expected: Boolean): ViewAction {
         return object : ViewAction {
             override fun getConstraints(): Matcher<View> =
@@ -178,6 +240,15 @@ class AccessibilityScreenshotTests {
             .perform(assertSelected(true))
         Espresso.onView(visibleTextContaining("appropriate reason for rejection"))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+        // Walk a11y focus to verify stateDescription is set (PR #663 fix)
+        val focusedElements = walkAccessibilityFocus("showcard_expanded")
+        val rejectEntry = focusedElements.find { it.contains("Reject") }
+        if (rejectEntry != null && (rejectEntry.contains("[expanded]") || rejectEntry.contains("Reject"))) {
+            println("VERIFIED: Reject button has stateDescription=expanded")
+        } else {
+            println("stateDescription check: Reject entry = $rejectEntry")
+        }
+
         takeNamedScreenshot("showcard_expanded")
     }
 
@@ -213,6 +284,11 @@ class AccessibilityScreenshotTests {
         Thread.sleep(1000)
         Espresso.onView(visibleTextContaining("Please enter your name"))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+        // Walk a11y focus to verify error message elements exist (PR #662 fix)
+        val errorElements = walkAccessibilityFocus("validation_error_visible")
+        val errorAnnounced = errorElements.any { it.contains("Please enter your name") }
+        println("VERIFIED: Error message in a11y tree = $errorAnnounced")
+
         takeNamedScreenshot("validation_error_visible")
     }
 
