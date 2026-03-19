@@ -55,15 +55,24 @@ jobs:
         gem install cocoapods 2>/dev/null || true
         pod install --repo-update 2>&1 | tail -10 || true
 
-        # Build for testing (includes UI test targets)
+        # Build for testing — capture full output and check exit code
         xcodebuild build-for-testing \
           -workspace AdaptiveCards.xcworkspace \
           -scheme ADCIOSVisualizer \
           -sdk iphonesimulator \
           -destination "platform=iOS Simulator,id=$SIM_UDID" \
           CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-          2>&1 | tail -10
-        echo "Build complete"
+          2>&1 | tee /tmp/xcode-build.log | tail -30
+        BUILD_EXIT=${PIPESTATUS[0]}
+        if [ "$BUILD_EXIT" -ne 0 ]; then
+          echo "::error::TEST BUILD FAILED (exit $BUILD_EXIT)"
+          echo "=== Last 50 lines of build log ==="
+          tail -50 /tmp/xcode-build.log
+          echo "=== Compile errors ==="
+          grep -i "error:" /tmp/xcode-build.log | head -20
+          exit 1
+        fi
+        echo "Build succeeded"
 
     - name: Run AXe a11y pipeline
       run: |
