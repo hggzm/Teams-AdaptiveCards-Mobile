@@ -1,0 +1,218 @@
+name: AXe A11y Overlay Pipeline
+
+on:
+  push:
+    branches: [ 'proxy/**' ]
+    paths:
+      - '.github/workflows/axe-a11y-pipeline.yml'
+      - '.github/scripts/a11y_axe_pipeline.py'
+      - 'source/ios/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: axe-pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  axe-pipeline:
+    name: 'AXe A11y Overlay Pipeline'
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install tools
+      run: |
+        brew tap cameroncooke/axe
+        brew install axe ffmpeg
+        axe --version 2>/dev/null || axe --help | head -1
+        ffmpeg -version | head -1
+
+    - name: Boot Simulator
+      run: |
+        SIM=$(xcrun simctl list devices available --json | python3 -c "
+        import json, sys
+        d = json.load(sys.stdin)['devices']
+        for r, devs in d.items():
+          if 'iOS' in r:
+            for dev in devs:
+              if 'iPhone' in dev['name']:
+                print(dev['udid']); sys.exit(0)
+        ")
+        echo "SIM_UDID=$SIM" >> $GITHUB_ENV
+        xcrun simctl boot "$SIM" 2>/dev/null || true
+        xcrun simctl bootstatus "$SIM" -b 2>/dev/null || sleep 5
+        echo "Booted: $SIM"
+
+    - name: Build and install ADCIOSVisualizer
+      run: |
+        cd source/ios/AdaptiveCards
+        gem install cocoapods 2>/dev/null || true
+        pod install --repo-update 2>&1 | tail -10 || true
+
+        # Build the app (not tests)
+        xcodebuild build \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme ADCIOSVisualizer \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          -derivedDataPath /tmp/axe-build \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tail -10
+
+        # Find and install the .app
+        APP_PATH=$(find /tmp/axe-build -name "ADCIOSVisualizer.app" -type d | head -1)
+        if [ -n "$APP_PATH" ]; then
+          xcrun simctl install "$SIM_UDID" "$APP_PATH"
+          echo "Installed: $APP_PATH"
+
+          # Get bundle ID
+          BUNDLE_ID=$(defaults read "$APP_PATH/Info.plist" CFBundleIdentifier 2>/dev/null || echo "")
+          echo "APP_BUNDLE=$BUNDLE_ID" >> $GITHUB_ENV
+          echo "Bundle ID: $BUNDLE_ID"
+        else
+          echo "::error::Could not find ADCIOSVisualizer.app"
+          exit 1
+        fi
+
+    - name: Run AXe a11y pipeline
+      run: |
+        python3 .github/scripts/a11y_axe_pipeline.py \
+          "$SIM_UDID" \
+          "$APP_BUNDLE" \
+          /tmp/axe-output \
+          2>&1 | tee /tmp/axe-output/pipeline.log
+
+    - name: Run snapshot tests (assertions)
+      run: |
+        cd source/ios/SnapshotTests
+        mkdir -p Snapshots/Baselines Snapshots/Failures Snapshots/Diffs
+        rm -f Snapshots/.record_mode
+
+        xcodebuild test \
+          -scheme "VisualSnapshotTests-Package" \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          -only-testing:VisualSnapshotTests/A11yInteractionSnapshotTests \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee /tmp/axe-output/snapshot-test.log || true
+
+        PASSED=$(grep -c "Test Case.*passed" /tmp/axe-output/snapshot-test.log 2>/dev/null || echo "0")
+        FAILED=$(grep -c "Test Case.*failed" /tmp/axe-output/snapshot-test.log 2>/dev/null || echo "0")
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Snapshot Test Results: $PASSED passed, $FAILED failed" >> $GITHUB_STEP_SUMMARY
+
+    - name: Validate results
+      if: always()
+      run: |
+        echo "### AXe A11y Pipeline Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        # Check video
+        VIDEO="/tmp/axe-output/voiceover_demo.mp4"
+        if [ -f "$VIDEO" ]; then
+          SIZE=$(wc -c < "$VIDEO")
+          DUR=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$VIDEO" 2>/dev/null || echo "?")
+          echo "#### Video" >> $GITHUB_STEP_SUMMARY
+          echo "- Size: $SIZE bytes" >> $GITHUB_STEP_SUMMARY
+          echo "- Duration: ${DUR}s" >> $GITHUB_STEP_SUMMARY
+
+          # Frame change check
+          ffmpeg -y -i "$VIDEO" -vf "select=eq(n\,5)" -frames:v 1 /tmp/fc_a.png 2>/dev/null
+          ffmpeg -y -i "$VIDEO" -vf "select=eq(n\,50)" -frames:v 1 /tmp/fc_b.png 2>/dev/null
+          if [ -f /tmp/fc_a.png ] && [ -f /tmp/fc_b.png ]; then
+            HA=$(md5 -q /tmp/fc_a.png); HB=$(md5 -q /tmp/fc_b.png)
+            if [ "$HA" = "$HB" ]; then
+              echo "- **STATIC** (frames identical)" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- **DYNAMIC** (frames differ)" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          rm -f /tmp/fc_a.png /tmp/fc_b.png
+        else
+          echo "#### Video: NONE" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        # Check annotated screenshots
+        ANN_COUNT=$(ls /tmp/axe-output/annotated/*.png 2>/dev/null | wc -l | tr -d ' ')
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Annotated Screenshots: $ANN_COUNT" >> $GITHUB_STEP_SUMMARY
+
+        # Check a11y tree captures
+        A11Y_COUNT=$(ls /tmp/axe-output/*_elements.json 2>/dev/null | wc -l | tr -d ' ')
+        echo "#### A11y Tree Captures: $A11Y_COUNT" >> $GITHUB_STEP_SUMMARY
+
+        # Show element summary from the card render step
+        if [ -f /tmp/axe-output/03_activity_card_rendered_elements.json ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### ActivityUpdate Card A11y Tree" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          python3 -c "
+import json
+with open('/tmp/axe-output/03_activity_card_rendered_elements.json') as f:
+    elems = json.load(f)
+for e in elems[:15]:
+    print('[{}] {} = {}'.format(e['role'], e['label'], e.get('value', '')))
+print('... {} total elements'.format(len(elems)))
+          " >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(parse error)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        fi
+
+        # Check timeline
+        if [ -f /tmp/axe-output/timeline.json ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Timeline" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          python3 -c "
+import json
+with open('/tmp/axe-output/timeline.json') as f:
+    data = json.load(f)
+for e in data.get('timeline', data):
+    ts = e.get('timestamp', 0)
+    desc = e.get('description', '')
+    action = e.get('action', '')
+    print('[{:5.1f}s] {} ({})'.format(ts, desc, action))
+          " >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Deploy to GitHub Pages
+      if: always()
+      run: |
+        PAGES_DIR=/tmp/axe-pages
+        mkdir -p "$PAGES_DIR"
+
+        # Copy all outputs
+        cp /tmp/axe-output/*.mp4 "$PAGES_DIR/" 2>/dev/null || true
+        cp /tmp/axe-output/*.png "$PAGES_DIR/" 2>/dev/null || true
+        cp /tmp/axe-output/*.json "$PAGES_DIR/" 2>/dev/null || true
+        cp /tmp/axe-output/annotated/*.png "$PAGES_DIR/" 2>/dev/null || true
+        cp source/ios/SnapshotTests/Snapshots/Baselines/*.png "$PAGES_DIR/" 2>/dev/null || true
+
+        # Simple HTML gallery
+        python3 .github/scripts/a11y_gallery.py "$PAGES_DIR" 2>/dev/null || true
+
+        cd "$PAGES_DIR"
+        git init
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add -A
+        git commit -m "Deploy AXe a11y pipeline for run ${{ github.run_id }}"
+        git push --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:gh-pages
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        P="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+        echo "#### [Gallery]($P)" >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload all artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: axe-a11y-pipeline
+        path: /tmp/axe-output/
+        retention-days: 30
