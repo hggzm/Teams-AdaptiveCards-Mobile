@@ -875,30 +875,28 @@
 }
 
 
-#pragma mark - A11y Tree Dump Tests
+#pragma mark - A11y Tree Dump for Accessibility Verification
 
-- (NSArray *)dumpA11yTree:(XCUIElement *)root
+- (void)testA11yDumpActivityUpdateShowCard
 {
+    [self openCardForVersion:@"v1.5" forCardType:@"Scenarios" withCardName:@"ActivityUpdate.json"];
+    [NSThread sleepForTimeInterval:1.0];
+
+    // Dump accessibility tree
     NSMutableArray *elements = [NSMutableArray array];
-
-    // Query specific VoiceOver-relevant element types (fast targeted queries)
-    NSDictionary *typeMap = @{
-        @(XCUIElementTypeButton): @"button",
-        @(XCUIElementTypeStaticText): @"text",
-        @(XCUIElementTypeTextField): @"textField",
-        @(XCUIElementTypeTextView): @"textView",
-        @(XCUIElementTypeImage): @"image",
-        @(XCUIElementTypeSwitch): @"switch",
-        @(XCUIElementTypeSlider): @"slider",
+    XCUIElementType scanTypes[] = {
+        XCUIElementTypeButton, XCUIElementTypeStaticText,
+        XCUIElementTypeTextField, XCUIElementTypeTextView,
+        XCUIElementTypeImage, XCUIElementTypeSwitch, XCUIElementTypeSlider,
     };
+    NSString *roleNames[] = {@"button", @"text", @"textField", @"textView", @"image", @"switch", @"slider"};
 
-    for (NSNumber *typeNum in typeMap) {
-        NSString *role = typeMap[typeNum];
-        XCUIElementQuery *query = [root descendantsMatchingType:[typeNum unsignedIntegerValue]];
-        NSUInteger count = query.count;
+    for (int t = 0; t < 7; t++) {
+        XCUIElementQuery *q = [testApp descendantsMatchingType:scanTypes[t]];
+        NSUInteger count = q.count;
         for (NSUInteger i = 0; i < count && i < 30; i++) {
             @try {
-                XCUIElement *elem = [query elementBoundByIndex:i];
+                XCUIElement *elem = [q elementBoundByIndex:i];
                 if (!elem.exists) continue;
                 NSString *label = elem.label ?: @"";
                 if (label.length == 0) continue;
@@ -906,109 +904,27 @@
                 CGRect frame = elem.frame;
                 if (frame.size.width < 5 || frame.size.height < 5) continue;
                 if (frame.size.width > 390 && frame.size.height > 800) continue;
-
                 [elements addObject:@{
-                    @"label": label, @"value": value, @"role": role,
+                    @"label": label, @"value": value, @"role": roleNames[t],
                     @"frame": @{@"x": @(frame.origin.x), @"y": @(frame.origin.y),
                                 @"width": @(frame.size.width), @"height": @(frame.size.height)},
                 }];
             } @catch (NSException *e) { continue; }
         }
     }
-    NSLog(@"A11Y_SCAN: Found %lu VoiceOver elements", (unsigned long)elements.count);
-    return elements;
-}
 
-- (void)walkA11yElement:(XCUIElement *)element depth:(int)depth into:(NSMutableArray *)elements
-{
-    if (!element.exists || depth > 6) return;
+    NSLog(@"A11Y_RESULT: activity_card %lu elements", (unsigned long)elements.count);
 
-    NSString *label = element.label ?: @"";
-    NSString *value = element.value ? [NSString stringWithFormat:@"%@", element.value] : @"";
-    CGRect frame = element.frame;
-    NSString *role = @"other";
-
-    switch (element.elementType) {
-        case XCUIElementTypeButton: role = @"button"; break;
-        case XCUIElementTypeStaticText: role = @"text"; break;
-        case XCUIElementTypeTextField: role = @"textField"; break;
-        case XCUIElementTypeTextView: role = @"textView"; break;
-        case XCUIElementTypeImage: role = @"image"; break;
-        case XCUIElementTypeCell: role = @"cell"; break;
-        case XCUIElementTypeTable: role = @"table"; break;
-        case XCUIElementTypeSwitch: role = @"switch"; break;
-        case XCUIElementTypeSlider: role = @"slider"; break;
-        default: break;
-    }
-
-    if (label.length > 0 && ![role isEqualToString:@"other"]) {
-        [elements addObject:@{
-            @"label": label,
-            @"value": value,
-            @"role": role,
-            @"frame": @{
-                @"x": @(frame.origin.x),
-                @"y": @(frame.origin.y),
-                @"width": @(frame.size.width),
-                @"height": @(frame.size.height)
-            },
-        }];
-    }
-
-    // Recurse into child elements
-    XCUIElementType types[] = {
-        XCUIElementTypeButton, XCUIElementTypeStaticText,
-        XCUIElementTypeTextField, XCUIElementTypeTextView,
-        XCUIElementTypeImage, XCUIElementTypeCell,
-        XCUIElementTypeOther, XCUIElementTypeGroup,
-    };
-    for (int t = 0; t < 8; t++) {
-        XCUIElementQuery *q = [element childrenMatchingType:types[t]];
-        NSUInteger count = q.count;
-        for (NSUInteger i = 0; i < count && i < 30; i++) {
-            XCUIElement *child = [q elementBoundByIndex:i];
-            if (child.exists) {
-                [self walkA11yElement:child depth:depth + 1 into:elements];
-            }
-        }
-    }
-}
-
-- (void)writeA11yDump:(NSArray *)elements named:(NSString *)name
-{
-    // Write to host filesystem /tmp/a11y-xcui/
+    // Write to /tmp/a11y-xcui/
     NSString *dir = @"/tmp/a11y-xcui";
-    [[NSFileManager defaultManager] createDirectoryAtPath:dir
-                              withIntermediateDirectories:YES attributes:nil error:nil];
+    [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
 
-    NSString *path = [NSString stringWithFormat:@"%@/%@_elements.json", dir, name];
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:elements
-                                                       options:NSJSONWritingPrettyPrinted error:nil];
-    [jsonData writeToFile:path atomically:YES];
-    NSLog(@"A11Y_DUMP: %@ (%lu elements) -> %@", name, (unsigned long)elements.count, path);
-}
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:elements options:NSJSONWritingPrettyPrinted error:nil];
+    [jsonData writeToFile:[NSString stringWithFormat:@"%@/activity_card_rendered_elements.json", dir] atomically:YES];
 
-- (void)saveScreenshot:(NSString *)name withElements:(NSArray *)elements
-{
+    // Screenshot
     XCUIScreenshot *screenshot = [XCUIScreen.mainScreen screenshot];
-    NSString *dir = @"/tmp/a11y-xcui";
-    [[NSFileManager defaultManager] createDirectoryAtPath:dir
-                              withIntermediateDirectories:YES attributes:nil error:nil];
-    NSString *path = [NSString stringWithFormat:@"%@/%@.png", dir, name];
-    [screenshot.PNGRepresentation writeToFile:path atomically:YES];
-    NSLog(@"A11Y_SCREENSHOT: %@ -> %@", name, path);
-}
-
-- (void)testA11yDumpActivityUpdateShowCard
-{
-    [self openCardForVersion:@"v1.5" forCardType:@"Scenarios" withCardName:@"ActivityUpdate.json"];
-    [NSThread sleepForTimeInterval:1.0];
-
-    // Dump card rendered state
-    NSArray *tree1 = [self dumpA11yTree:testApp];
-    [self writeA11yDump:tree1 named:@"activity_card_rendered"];
-    [self saveScreenshot:@"activity_card_rendered" withElements:tree1];
-    NSLog(@"A11Y: ActivityUpdate card has %lu elements", (unsigned long)tree1.count);
+    [screenshot.PNGRepresentation writeToFile:[NSString stringWithFormat:@"%@/activity_card_rendered.png", dir] atomically:YES];
 
     // Tap Comment ShowCard
     XCUIElementQuery *buttons = testApp.buttons;
@@ -1016,22 +932,38 @@
         [buttons[@"Comment"] tap];
         [NSThread sleepForTimeInterval:1.5];
 
-        NSArray *tree2 = [self dumpA11yTree:testApp];
-        [self writeA11yDump:tree2 named:@"showcard_comment_expanded"];
-        [self saveScreenshot:@"showcard_comment_expanded" withElements:tree2];
-        NSLog(@"A11Y: ShowCard expanded has %lu elements", (unsigned long)tree2.count);
+        // Re-scan after ShowCard expand
+        NSMutableArray *expanded = [NSMutableArray array];
+        for (int t = 0; t < 7; t++) {
+            XCUIElementQuery *q2 = [testApp descendantsMatchingType:scanTypes[t]];
+            NSUInteger c2 = q2.count;
+            for (NSUInteger i = 0; i < c2 && i < 30; i++) {
+                @try {
+                    XCUIElement *e2 = [q2 elementBoundByIndex:i];
+                    if (!e2.exists) continue;
+                    NSString *l2 = e2.label ?: @"";
+                    if (l2.length == 0) continue;
+                    NSString *v2 = e2.value ? [NSString stringWithFormat:@"%@", e2.value] : @"";
+                    CGRect f2 = e2.frame;
+                    if (f2.size.width < 5 || f2.size.height < 5) continue;
+                    if (f2.size.width > 390 && f2.size.height > 800) continue;
+                    [expanded addObject:@{
+                        @"label": l2, @"value": v2, @"role": roleNames[t],
+                        @"frame": @{@"x": @(f2.origin.x), @"y": @(f2.origin.y),
+                                    @"width": @(f2.size.width), @"height": @(f2.size.height)},
+                    }];
+                } @catch (NSException *e) { continue; }
+            }
+        }
+
+        NSLog(@"A11Y_RESULT: showcard_expanded %lu elements", (unsigned long)expanded.count);
+
+        NSData *json2 = [NSJSONSerialization dataWithJSONObject:expanded options:NSJSONWritingPrettyPrinted error:nil];
+        [json2 writeToFile:[NSString stringWithFormat:@"%@/showcard_comment_expanded_elements.json", dir] atomically:YES];
+
+        XCUIScreenshot *ss2 = [XCUIScreen.mainScreen screenshot];
+        [ss2.PNGRepresentation writeToFile:[NSString stringWithFormat:@"%@/showcard_comment_expanded.png", dir] atomically:YES];
     }
-}
-
-- (void)testA11yDumpExpenseReportCard
-{
-    [self openCardForVersion:@"v1.5" forCardType:@"Scenarios" withCardName:@"ExpenseReport.json"];
-    [NSThread sleepForTimeInterval:1.0];
-
-    NSArray *tree = [self dumpA11yTree:testApp];
-    [self writeA11yDump:tree named:@"expense_card_rendered"];
-    [self saveScreenshot:@"expense_card_rendered" withElements:tree];
-    NSLog(@"A11Y: ExpenseReport card has %lu elements", (unsigned long)tree.count);
 }
 
 @end
