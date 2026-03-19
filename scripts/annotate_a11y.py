@@ -341,10 +341,14 @@ if tts_segments:
             f.write("file '{}'\n".format(seg))
 
     combined_audio = os.path.join(output_dir, "combined_narration.wav")
-    subprocess.run([
-        "ffmpeg", "-y", "-f", "concat", "-safe", "0",
-        "-i", concat_list, "-c", "copy", combined_audio
-    ], capture_output=True, timeout=30)
+    try:
+        subprocess.run([
+            "ffmpeg", "-y", "-f", "concat", "-safe", "0",
+            "-i", concat_list, "-c", "copy", combined_audio
+        ], capture_output=True, timeout=30)
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        print("ffmpeg not found for WAV concat, skipping narrated video")
+        combined_audio = None
 
     # Find the video file
     video_candidates = [
@@ -357,7 +361,7 @@ if tts_segments:
             video_path = vc
             break
 
-    if video_path and os.path.exists(combined_audio):
+    if video_path and combined_audio and os.path.exists(combined_audio):
         narrated_video = os.path.join(output_dir, "android_a11y_talkback_narrated.mp4")
         merge_audio_with_video(video_path, combined_audio, narrated_video)
 
