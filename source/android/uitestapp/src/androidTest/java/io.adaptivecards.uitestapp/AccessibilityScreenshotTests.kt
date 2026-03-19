@@ -85,28 +85,34 @@ class AccessibilityScreenshotTests {
         execShellBlocking("screencap -p $path")
 
         // Dump the accessibility/view hierarchy via UiDevice.
-        // Write to app's filesDir (test process = app user, can write there).
-        // Workflow pulls via: adb exec-out run-as PKG cat files/a11y_trees/...
+        // Dump to ByteArray in memory, then write to /data/local/tmp/ via
+        // shell in compressed chunks. This bypasses app-private dir permission
+        // issues (adb pull can't read from /data/user/0/PKG/ and run-as is
+        // unreliable on google_apis emulators).
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         try {
-            val context = InstrumentationRegistry.getInstrumentation().targetContext
-            val treeDir = java.io.File(context.filesDir, "a11y_trees")
-            treeDir.mkdirs()
-            val treeFile = java.io.File(treeDir, "android_a11y_$name.xml")
-
-            // Use OutputStream to avoid any File write permission issues
-            java.io.FileOutputStream(treeFile).use { fos ->
-                device.dumpWindowHierarchy(fos)
+            val baos = java.io.ByteArrayOutputStream()
+            device.dumpWindowHierarchy(baos)
+            val xmlBytes = baos.toByteArray()
+            if (xmlBytes.size > 100) {
+                val destPath = "$A11Y_TREE_DIR/android_a11y_$name.xml"
+                execShellBlocking("mkdir -p $A11Y_TREE_DIR")
+                // Truncate the file first
+                execShellBlocking("true > $destPath")
+                // Write in chunks via printf to avoid shell arg length limits
+                val chunkSize = 4000
+                var offset = 0
+                while (offset < xmlBytes.size) {
+                    val end = minOf(offset + chunkSize, xmlBytes.size)
+                    val chunk = String(xmlBytes, offset, end - offset, Charsets.UTF_8)
+                    // Escape single quotes for shell
+                    val escaped = chunk.replace("'", "'\"'\"'")
+                    execShellBlocking("printf '%s' '$escaped' >> $destPath")
+                    offset = end
+                }
+                val sz = execShellBlocking("stat -c%s $destPath 2>/dev/null || echo 0")
+                println("A11y tree: $destPath ($sz bytes)")
             }
-
-            // Log diagnostics
-            println("A11y tree: ${treeFile.absolutePath} (${treeFile.length()} bytes)")
-
-            // Make the file readable by adb shell user for extraction.
-            // execShellBlocking runs as shell user which can chmod.
-            execShellBlocking("chmod 644 ${treeFile.absolutePath}")
-            execShellBlocking("chmod 755 ${treeDir.absolutePath}")
-            execShellBlocking("chmod 755 ${context.filesDir.absolutePath}")
         } catch (e: Exception) {
             println("A11y tree dump failed: ${e.javaClass.simpleName}: ${e.message}")
         }

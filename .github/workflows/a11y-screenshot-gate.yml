@@ -107,15 +107,11 @@ jobs:
         mkdir -p /tmp/a11y-recordings
         adb pull /data/local/tmp/a11y_recording.mp4 /tmp/a11y-recordings/android_a11y_talkback_recording.mp4 2>&1 || true
 
-        # Pull per-test a11y trees written by tests to app filesDir
-        PKG=io.adaptivecards.uitestapp
+        # Pull per-test a11y trees written by tests to /data/local/tmp/
         mkdir -p /tmp/a11y-trees
-
-        # The test writes to /data/user/0/PKG/files/a11y_trees/
-        # Pull directly from full path (run-as unreliable on google_apis emulators)
-        APP_DATA=/data/user/0/$PKG/files/a11y_trees
-        echo "Pulling trees from: $APP_DATA"
-        adb pull $APP_DATA/ /tmp/a11y-trees/ 2>&1 || true
+        adb pull /data/local/tmp/a11y_trees/ /tmp/a11y-trees/ 2>&1 || true
+        # Flatten if nested
+        find /tmp/a11y-trees -mindepth 2 -name '*.xml' -exec cp '{}' /tmp/a11y-trees/ \; 2>/dev/null || true
         TREE_COUNT=$(find /tmp/a11y-trees -name '*.xml' -size +100c 2>/dev/null | wc -l)
         echo "A11y trees pulled: $TREE_COUNT"
 
