@@ -82,7 +82,12 @@ class AccessibilityScreenshotTests {
         // Ensure output directories exist
         execShellBlocking("mkdir -p $SCREENSHOT_DIR")
 
-        // Take screencap while the card is still on screen
+        // Walk a11y focus to make TalkBack render green rectangles on screen.
+        // Visible in both video recording and screenshot.
+        walkAccessibilityFocus(name)
+        Thread.sleep(300) // let final focus rectangle render
+
+        // Take screencap while the card is still on screen (with a11y overlay)
         val path = "$SCREENSHOT_DIR/android_a11y_$name.png"
         execShellBlocking("screencap -p $path")
 
@@ -167,6 +172,7 @@ class AccessibilityScreenshotTests {
             } else if (label.isNotEmpty() && node.isVisibleToUser) {
                 // Attempt to set accessibility focus (shows green rectangle)
                 node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                Thread.sleep(80) // pause so video captures each focus rectangle
 
                 val entry = buildString {
                     append(label)
@@ -240,15 +246,6 @@ class AccessibilityScreenshotTests {
             .perform(assertSelected(true))
         Espresso.onView(visibleTextContaining("appropriate reason for rejection"))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-        // Walk a11y focus to verify stateDescription is set (PR #663 fix)
-        val focusedElements = walkAccessibilityFocus("showcard_expanded")
-        val rejectEntry = focusedElements.find { it.contains("Reject") }
-        if (rejectEntry != null && (rejectEntry.contains("[expanded]") || rejectEntry.contains("Reject"))) {
-            println("VERIFIED: Reject button has stateDescription=expanded")
-        } else {
-            println("stateDescription check: Reject entry = $rejectEntry")
-        }
-
         takeNamedScreenshot("showcard_expanded")
     }
 
@@ -284,11 +281,6 @@ class AccessibilityScreenshotTests {
         Thread.sleep(1000)
         Espresso.onView(visibleTextContaining("Please enter your name"))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-        // Walk a11y focus to verify error message elements exist (PR #662 fix)
-        val errorElements = walkAccessibilityFocus("validation_error_visible")
-        val errorAnnounced = errorElements.any { it.contains("Please enter your name") }
-        println("VERIFIED: Error message in a11y tree = $errorAnnounced")
-
         takeNamedScreenshot("validation_error_visible")
     }
 
