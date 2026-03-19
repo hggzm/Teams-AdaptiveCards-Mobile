@@ -87,11 +87,18 @@ class AccessibilityScreenshotTests {
         execShellBlocking("screencap -p $path")
 
         // Dump the accessibility/view hierarchy via UiDevice
-        // (uiautomator dump can't run while instrumented tests are active)
+        // Write to app-private dir first (app user can write there),
+        // then copy to /data/local/tmp/ via shell (shell user has access)
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val appTreeDir = File(context.filesDir, "a11y_trees")
+        appTreeDir.mkdirs()
+        val appTreeFile = File(appTreeDir, "android_a11y_$name.xml")
+        device.dumpWindowHierarchy(appTreeFile)
+        // Copy to pullable path
         execShellBlocking("mkdir -p $A11Y_TREE_DIR")
-        val treeFile = File("$A11Y_TREE_DIR/android_a11y_$name.xml")
-        device.dumpWindowHierarchy(treeFile)
+        val destPath = "$A11Y_TREE_DIR/android_a11y_$name.xml"
+        execShellBlocking("cp ${appTreeFile.absolutePath} $destPath")
 
         // Log for CI pipeline to find
         execShellBlocking("log -t A11Y_SCREENSHOT $name")
