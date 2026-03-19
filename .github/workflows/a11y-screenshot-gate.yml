@@ -206,7 +206,7 @@ jobs:
       if: always()
       run: |
         pip install Pillow
-        sudo apt-get update -qq && sudo apt-get install -y -qq espeak-ng fonts-dejavu-core > /dev/null 2>&1 || true
+        sudo apt-get update -qq && sudo apt-get install -y -qq espeak-ng ffmpeg fonts-dejavu-core > /dev/null 2>&1 || true
 
     - name: Annotate screenshots with a11y overlays + generate TTS
       if: always()
