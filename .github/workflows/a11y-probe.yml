@@ -1,0 +1,260 @@
+name: A11y Simulator Probe
+
+# Quick diagnostic: what accessibility features actually work on CI simulators?
+# Tests: VoiceOver enable, audio capture, Accessibility Inspector, focus rects
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: 'Probe Simulator A11y Capabilities'
+    runs-on: macos-15
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Environment info
+      run: |
+        echo "### Simulator A11y Probe" >> $GITHUB_STEP_SUMMARY
+        sw_vers
+        xcodebuild -version
+        echo "---"
+        echo "=== simctl io help ==="
+        xcrun simctl io --help 2>&1 || true
+        echo "=== recordVideo help ==="
+        xcrun simctl io booted recordVideo --help 2>&1 || true
+
+    - name: Boot simulator
+      run: |
+        SIM=$(xcrun simctl list devices available --json | python3 -c "
+        import json, sys
+        d = json.load(sys.stdin)['devices']
+        for r, devs in d.items():
+          if 'iOS' in r:
+            for dev in devs:
+              if 'iPhone' in dev['name']:
+                print(dev['udid']); sys.exit(0)
+        ")
+        echo "SIM_UDID=$SIM" >> $GITHUB_ENV
+        xcrun simctl boot "$SIM" 2>/dev/null || true
+        xcrun simctl bootstatus "$SIM" -b 2>/dev/null || sleep 5
+        echo "Booted: $SIM"
+
+    - name: 'Probe 1: recordVideo --help (check audio flag)'
+      run: |
+        echo "=== recordVideo help ===" 
+        xcrun simctl io "$SIM_UDID" recordVideo --help 2>&1 | tee /tmp/recordvideo-help.txt || true
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### recordVideo flags" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cat /tmp/recordvideo-help.txt >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+
+    - name: 'Probe 2: Available audio devices'
+      run: |
+        echo "=== Audio devices ==="
+        system_profiler SPAudioDataType 2>/dev/null | head -30 || true
+        echo "---"
+        echo "=== CoreAudio devices ==="
+        python3 -c "
+        import subprocess
+        r = subprocess.run(['system_profiler', 'SPAudioDataType', '-json'], capture_output=True, text=True)
+        print(r.stdout[:2000])
+        " 2>/dev/null || true
+
+    - name: 'Probe 3: Enable VoiceOver on simulator'
+      run: |
+        echo "=== Current accessibility state ==="
+        xcrun simctl spawn "$SIM_UDID" defaults read com.apple.Accessibility 2>/dev/null || echo "(no defaults yet)"
+        
+        echo "=== Enabling VoiceOver ==="
+        # Method 1: defaults write
+        xcrun simctl spawn "$SIM_UDID" defaults write com.apple.Accessibility VoiceOverTouchEnabled -bool true
+        xcrun simctl spawn "$SIM_UDID" defaults write com.apple.Accessibility AccessibilityEnabled -bool true
+        
+        echo "=== Verify settings ==="
+        xcrun simctl spawn "$SIM_UDID" defaults read com.apple.Accessibility VoiceOverTouchEnabled 2>/dev/null || echo "FAILED"
+        xcrun simctl spawn "$SIM_UDID" defaults read com.apple.Accessibility AccessibilityEnabled 2>/dev/null || echo "FAILED"
+        
+        echo "=== Try keyboard shortcut via simctl ==="
+        # Cmd+F5 toggles VoiceOver in Simulator
+        # simctl doesn't have keyboard input, but we can try via AppleScript
+        osascript -e '
+          tell application "Simulator" to activate
+          delay 1
+          tell application "System Events"
+            keystroke "F5" using {command down}
+          end tell
+        ' 2>&1 || echo "(AppleScript VoiceOver toggle failed - expected on CI)"
+        
+        sleep 3
+        
+        echo "=== Check if VoiceOver process is running ==="
+        ps aux | grep -i voiceover | grep -v grep || echo "No VoiceOver process found"
+        
+        echo "=== Check simulator accessibility prefs after toggle ==="
+        xcrun simctl spawn "$SIM_UDID" defaults read com.apple.Accessibility 2>/dev/null | head -20 || true
+
+    - name: 'Probe 4: Accessibility Inspector CLI'
+      run: |
+        echo "=== Accessibility Inspector location ==="
+        INSPECTOR_APP=$(find /Applications/Xcode*.app -name "Accessibility Inspector.app" -maxdepth 5 2>/dev/null | head -1)
+        echo "Found: $INSPECTOR_APP"
+        
+        if [ -n "$INSPECTOR_APP" ]; then
+          echo "=== Inspector contents ==="
+          ls "$INSPECTOR_APP/Contents/MacOS/" 2>/dev/null || true
+          
+          echo "=== Try launching Inspector ==="
+          open -a "Accessibility Inspector" 2>&1 || echo "Failed to open"
+          sleep 3
+          
+          echo "=== Inspector process ==="
+          ps aux | grep -i "Accessibility Inspector" | grep -v grep || echo "Not running"
+          
+          # Check if it has CLI args
+          "$INSPECTOR_APP/Contents/MacOS/Accessibility Inspector" --help 2>&1 | head -10 || echo "(no CLI help)"
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Accessibility Inspector" >> $GITHUB_STEP_SUMMARY
+        echo "Location: ${INSPECTOR_APP:-NOT FOUND}" >> $GITHUB_STEP_SUMMARY
+
+    - name: 'Probe 5: Test recording WITH audio flag'
+      run: |
+        mkdir -p /tmp/probe-recordings
+        
+        echo "=== Test 1: recordVideo without audio ==="
+        xcrun simctl io "$SIM_UDID" recordVideo --codec h264 --force /tmp/probe-recordings/no-audio.mp4 &
+        PID1=$!
+        sleep 5
+        kill -INT $PID1 2>/dev/null; wait $PID1 2>/dev/null || true
+        sleep 2
+        ls -la /tmp/probe-recordings/no-audio.mp4 2>/dev/null || echo "FAILED"
+        
+        echo "=== Test 2: recordVideo WITH --audio flag ==="
+        xcrun simctl io "$SIM_UDID" recordVideo --codec h264 --force --audio /tmp/probe-recordings/with-audio.mp4 2>&1 &
+        PID2=$!
+        sleep 5
+        kill -INT $PID2 2>/dev/null; wait $PID2 2>/dev/null || true
+        sleep 2
+        ls -la /tmp/probe-recordings/with-audio.mp4 2>/dev/null || echo "FAILED (--audio may not be supported)"
+        
+        echo "=== Test 3: macOS screencapture -V (screen recording with audio) ==="
+        # screencapture -V records video of the screen with audio
+        screencapture -V /tmp/probe-recordings/screencapture.mp4 &
+        PID3=$!
+        sleep 5
+        kill $PID3 2>/dev/null; wait $PID3 2>/dev/null || true
+        ls -la /tmp/probe-recordings/screencapture.mp4 2>/dev/null || echo "FAILED"
+        
+        echo "=== Test 4: ffmpeg screen capture with audio ==="
+        if command -v ffmpeg &>/dev/null; then
+          echo "ffmpeg available"
+        else
+          brew install --quiet ffmpeg 2>&1 | tail -3
+        fi
+        
+        # List available ffmpeg input devices on macOS
+        ffmpeg -f avfoundation -list_devices true -i "" 2>&1 | head -30 || true
+        
+        echo "=== Results ==="
+        echo "Files captured:"
+        ls -la /tmp/probe-recordings/ 2>/dev/null
+        
+        for f in /tmp/probe-recordings/*.mp4; do
+          if [ -f "$f" ]; then
+            echo "--- $(basename $f) ---"
+            ffprobe -v error -show_entries format=duration -show_entries stream=codec_type,codec_name -of default=noprint_wrappers=1 "$f" 2>/dev/null || true
+          fi
+        done
+
+    - name: 'Probe 6: XCUITest accessibility queries'
+      run: |
+        echo "=== What XCUITest can tell us about accessibility ==="
+        echo "XCUITest can query:"
+        echo "  - element.accessibilityLabel"
+        echo "  - element.accessibilityValue"  
+        echo "  - element.accessibilityTraits"
+        echo "  - element.frame (position on screen)"
+        echo "  - element.isAccessibilityElement"
+        echo ""
+        echo "We can use XCUITest to DUMP the accessibility tree and element"
+        echo "positions, then draw overlays at those coordinates in the video."
+        echo ""
+        echo "This is how RocketSim works - it reads the a11y tree and draws"
+        echo "numbered overlays at element coordinates."
+
+    - name: 'Probe 7: xcrun simctl ui appearance & accessibility features'
+      run: |
+        echo "=== simctl accessibility subcommands ==="
+        xcrun simctl help 2>&1 | grep -i "access\|voice\|ui\|appear" || echo "(no accessibility commands)"
+        
+        echo "=== simctl spawn accessibility audit ==="
+        xcrun simctl spawn "$SIM_UDID" /usr/bin/defaults domains 2>/dev/null | tr ',' '\n' | grep -i access || echo "(no matching domains)"
+        
+        echo "=== Check for accessibility testing frameworks ==="
+        find /Applications/Xcode*.app -name "*AccessibilityAudit*" -o -name "*A11y*" 2>/dev/null | head -10 || true
+
+    - name: 'Probe 8: Screenshot with Accessibility Inspector open'
+      run: |
+        # Open Accessibility Inspector
+        open -a "Accessibility Inspector" 2>/dev/null || true
+        sleep 3
+        
+        # Take a screenshot of the whole Mac screen (shows Inspector + Simulator)
+        screencapture -x /tmp/probe-recordings/mac-screen-with-inspector.png 2>/dev/null || true
+        
+        # Take simulator screenshot
+        xcrun simctl io "$SIM_UDID" screenshot /tmp/probe-recordings/sim-screenshot.png 2>/dev/null || true
+        
+        echo "Screenshots:"
+        ls -la /tmp/probe-recordings/*.png 2>/dev/null || echo "none"
+        
+        # Close Inspector
+        osascript -e 'quit app "Accessibility Inspector"' 2>/dev/null || true
+
+    - name: Summary
+      run: |
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "#### Key Findings" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Check what worked
+        if [ -f /tmp/probe-recordings/with-audio.mp4 ]; then
+          SZ=$(wc -c < /tmp/probe-recordings/with-audio.mp4)
+          echo "- **recordVideo --audio**: YES ($SZ bytes)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- **recordVideo --audio**: NO (flag not supported)" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if ps aux | grep -q "[V]oiceOver"; then
+          echo "- **VoiceOver enabled**: YES" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- **VoiceOver enabled**: NO (could not activate on CI)" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ -f /tmp/probe-recordings/mac-screen-with-inspector.png ]; then
+          echo "- **Accessibility Inspector**: LAUNCHED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- **Accessibility Inspector**: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Recommended Approach" >> $GITHUB_STEP_SUMMARY
+        echo "Based on probe results, the best approach for a11y video evidence is:" >> $GITHUB_STEP_SUMMARY
+        echo "1. If recordVideo --audio works: use it for real VoiceOver audio" >> $GITHUB_STEP_SUMMARY
+        echo "2. If VoiceOver can be enabled: record with focus rectangles visible" >> $GITHUB_STEP_SUMMARY
+        echo "3. Fallback: XCUITest dumps a11y tree + coordinates, draw overlays in post-processing" >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload probe results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: a11y-probe-results
+        path: /tmp/probe-recordings/
+        retention-days: 7
