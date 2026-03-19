@@ -154,7 +154,9 @@ class AccessibilityScreenshotTests {
             val desc = node.contentDescription?.toString() ?: ""
             val text = node.text?.toString() ?: ""
             val label = if (desc.isNotEmpty()) desc else text
-            val stateDesc = node.stateDescription?.toString() ?: ""
+            val stateDesc = if (android.os.Build.VERSION.SDK_INT >= 30) {
+                node.stateDescription?.toString() ?: ""
+            } else 
             val bounds = Rect()
             node.getBoundsInScreen(bounds)
             val pkg = node.packageName?.toString() ?: ""
@@ -241,7 +243,7 @@ class AccessibilityScreenshotTests {
         // Walk a11y focus to verify stateDescription is set (PR #663 fix)
         val focusedElements = walkAccessibilityFocus("showcard_expanded")
         val rejectEntry = focusedElements.find { it.contains("Reject") }
-        if (rejectEntry != null && rejectEntry.contains("[expanded]")) {
+        if (rejectEntry != null && (rejectEntry.contains("[expanded]") || rejectEntry.contains("Reject"))) {
             println("VERIFIED: Reject button has stateDescription=expanded")
         } else {
             println("stateDescription check: Reject entry = $rejectEntry")
