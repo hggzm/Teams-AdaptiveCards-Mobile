@@ -26,7 +26,6 @@ import org.junit.rules.RuleChain
 import org.junit.rules.Timeout
 import org.junit.runner.RunWith
 import java.io.BufferedReader
-import java.io.File
 import java.io.InputStreamReader
 
 /**
@@ -80,25 +79,32 @@ class AccessibilityScreenshotTests {
 
         // Ensure output directories exist
         execShellBlocking("mkdir -p $SCREENSHOT_DIR")
-        execShellBlocking("mkdir -p $A11Y_TREE_DIR")
 
         // Take screencap while the card is still on screen
         val path = "$SCREENSHOT_DIR/android_a11y_$name.png"
         execShellBlocking("screencap -p $path")
 
         // Dump the accessibility/view hierarchy via UiDevice
-        // Write to app-private dir first (app user can write there),
-        // then copy to /data/local/tmp/ via shell (shell user has access)
+        // Use dumpWindowHierarchy(OutputStream) to write to a ByteArray,
+        // then write via shell to a pullable path
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val appTreeDir = File(context.filesDir, "a11y_trees")
-        appTreeDir.mkdirs()
-        val appTreeFile = File(appTreeDir, "android_a11y_$name.xml")
-        device.dumpWindowHierarchy(appTreeFile)
-        // Copy to pullable path
-        execShellBlocking("mkdir -p $A11Y_TREE_DIR")
-        val destPath = "$A11Y_TREE_DIR/android_a11y_$name.xml"
-        execShellBlocking("cp ${appTreeFile.absolutePath} $destPath")
+        try {
+            val baos = java.io.ByteArrayOutputStream()
+            device.dumpWindowHierarchy(baos)
+            val xml = baos.toString("UTF-8")
+            if (xml.isNotEmpty()) {
+                // Write XML via shell to pullable path
+                execShellBlocking("mkdir -p $A11Y_TREE_DIR")
+                val destPath = "$A11Y_TREE_DIR/android_a11y_$name.xml"
+                // Use base64 to safely transfer XML content via shell
+                val b64 = android.util.Base64.encodeToString(
+                    xml.toByteArray(), android.util.Base64.NO_WRAP)
+                execShellBlocking("echo '$b64' | base64 -d > $destPath")
+                println("A11y tree: $destPath (${xml.length} chars)")
+            }
+        } catch (e: Exception) {
+            println("A11y tree dump failed: ${e.message}")
+        }
 
         // Log for CI pipeline to find
         execShellBlocking("log -t A11Y_SCREENSHOT $name")
