@@ -155,6 +155,49 @@ except ImportError:
 except Exception as ex:
     print("  Overlay error: {}".format(ex))
 
+# 5.6 Generate a11y_transcript.json (matching Android format)
+print("\n[TRANSCRIPT] Generating accessibility transcript")
+all_transcripts = []
+for f in sorted(os.listdir(OUT_DIR)):
+    if not f.endswith("_elements.json"):
+        continue
+    name = f.replace("_elements.json", "")
+    with open(os.path.join(OUT_DIR, f)) as fh:
+        elems = json.load(fh)
+    transcript_entry = {
+        "scenario": name,
+        "platform": "ios",
+        "source": "XCUIElement (UIAccessibility API)",
+        "nodes": [
+            {
+                "index": i + 1,
+                "label": e.get("label", ""),
+                "value": e.get("value", ""),
+                "role": e.get("role", ""),
+                "bounds": [
+                    int(e["frame"].get("x", 0)),
+                    int(e["frame"].get("y", 0)),
+                    int(e["frame"].get("x", 0)) + int(e["frame"].get("width", 0)),
+                    int(e["frame"].get("y", 0)) + int(e["frame"].get("height", 0)),
+                ],
+                "voiceover_reads": "{}{}.  {}".format(
+                    e.get("label", ""),
+                    (", " + e["value"]) if e.get("value") else "",
+                    e.get("role", "")
+                ),
+            }
+            for i, e in enumerate(elems)
+        ]
+    }
+    all_transcripts.append(transcript_entry)
+    print("  {}: {} elements".format(name, len(elems)))
+
+transcript_path = os.path.join(OUT_DIR, "a11y_transcript.json")
+with open(transcript_path, "w") as f:
+    json.dump(all_transcripts, f, indent=2)
+print("[TRANSCRIPT] Saved: {} scenarios, {} total nodes".format(
+    len(all_transcripts), sum(len(t["nodes"]) for t in all_transcripts)))
+
 # 6. Generate narration from elements
 print("\n[NARRATE] Generating VoiceOver speech")
 narr_count = 0

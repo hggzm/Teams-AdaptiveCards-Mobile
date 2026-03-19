@@ -75,7 +75,7 @@ jobs:
         echo "Build succeeded"
 
     - name: Install Pillow for overlay drawing
-      run: pip3 install Pillow
+      run: pip3 install --break-system-packages Pillow
 
     - name: Run AXe a11y pipeline
       run: |
