@@ -2,11 +2,10 @@ name: A11y Screenshot Gate
 
 # ==============================================================================
 # Accessibility Screenshot Validation
-# - Runs each a11y test individually on Android emulator with TalkBack enabled
-# - Captures per-test screenshots via adb screencap
-# - Records screen with TalkBack focus overlay visible
-# - Validates artifacts are real (not static/corrupt)
-# - Deploys to GitHub Pages and posts inline images in PR comment
+# - Screenshots taken INSIDE tests (card visible) via executeShellCommand
+# - Single gradle run so video captures continuous card interactions
+# - Recording with TalkBack enabled for focus overlay visibility
+# - Deterministic validation of screenshots and video content
 # ==============================================================================
 
 on:
@@ -37,7 +36,7 @@ jobs:
   a11y-screenshots:
     name: 'A11y Screenshot Validation'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
 
     steps:
     - uses: actions/checkout@v4
@@ -77,144 +76,81 @@ jobs:
         WORKSPACE="${1:-.}"
         GRADLEW="$WORKSPACE/source/android/gradlew"
         PROJECT="$WORKSPACE/source/android"
-        SCREENSHOTS="/tmp/a11y-screenshots"
-        RECORDINGS="/tmp/a11y-recordings"
-        mkdir -p "$SCREENSHOTS" "$RECORDINGS"
 
-        # ── Enable TalkBack so focus rectangles appear on screen ──
-        echo "=== Enabling TalkBack accessibility service ==="
+        # Enable TalkBack for focus overlay rectangles
+        echo "=== Enabling TalkBack ==="
         adb shell settings put secure enabled_accessibility_services com.google.android.marvin.talkback/com.google.android.marvin.talkback.TalkBackService 2>/dev/null || true
         adb shell settings put secure accessibility_enabled 1 2>/dev/null || true
         sleep 3
+        TB=$(adb shell settings get secure accessibility_enabled | tr -d '\r')
+        echo "TalkBack enabled: $TB"
 
-        # Verify TalkBack status
-        TB_STATUS=$(adb shell settings get secure enabled_accessibility_services 2>/dev/null)
-        A11Y_ON=$(adb shell settings get secure accessibility_enabled 2>/dev/null)
-        echo "TalkBack service: $TB_STATUS"
-        echo "Accessibility enabled: $A11Y_ON"
-
-        # ── Start screen recording on the device ──
+        # Start screen recording BEFORE tests
         echo "=== Starting screen recording ==="
-        # Check if screenrecord exists on this emulator image
-        adb shell which screenrecord || echo "WARNING: screenrecord not found on emulator"
-        # Start screenrecord via a separate adb shell in background on the HOST
-        # This keeps the adb connection open and stable
-        adb shell screenrecord --time-limit 180 --size 720x1280 /data/local/tmp/a11y_recording.mp4 > /tmp/screenrecord-host.log 2>&1 &
-        RECORD_HOST_PID=$!
-        sleep 3
-        # Verify it started on the device
-        SR_PID=$(adb shell "pidof screenrecord" 2>/dev/null | tr -d '\r')
-        echo "screenrecord device PID: ${SR_PID:-NOT_RUNNING}"
-        echo "screenrecord host PID: $RECORD_HOST_PID"
-        # If screenrecord didn't start, check for errors
-        if [ -z "$SR_PID" ]; then
-          echo "ERROR: screenrecord did not start. Host log:"
-          cat /tmp/screenrecord-host.log 2>/dev/null || true
-        fi
+        adb shell screenrecord --time-limit 180 --size 720x1280 /data/local/tmp/a11y_recording.mp4 &
+        RECORD_PID=$!
+        sleep 2
+        SR=$(adb shell pidof screenrecord | tr -d '\r')
+        echo "screenrecord PID: $SR"
 
-        # ── Run each test individually with screencap after each ──
-        echo "--- Running a11y_showcard_collapsed ---"
-        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_showcard_collapsed --stacktrace 2>&1 | tail -5 || true
-        sleep 1
-        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_showcard_collapsed.png" 2>/dev/null || true
-        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_showcard_collapsed.png" 2>/dev/null || echo 0)
-        echo "Captured android_a11y_showcard_collapsed.png ($SZ bytes)"
+        # Run ALL tests in a SINGLE gradle invocation
+        # Screenshots are taken INSIDE each test via executeShellCommand("screencap")
+        # to /data/local/tmp/a11y_screenshots/ while the card is on screen
+        echo "=== Running all a11y tests ==="
+        "$GRADLEW" -p "$PROJECT" \
+          :uitestapp:connectedDebugAndroidTest \
+          -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests \
+          --stacktrace 2>&1 | tee /tmp/a11y-test.log | tail -20
+        TEST_EXIT=$?
+        echo "Test exit code: $TEST_EXIT"
 
-        echo "--- Running a11y_showcard_expanded ---"
-        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_showcard_expanded --stacktrace 2>&1 | tail -5 || true
-        sleep 1
-        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_showcard_expanded.png" 2>/dev/null || true
-        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_showcard_expanded.png" 2>/dev/null || echo 0)
-        echo "Captured android_a11y_showcard_expanded.png ($SZ bytes)"
-
-        echo "--- Running a11y_showcard_collapsed_again ---"
-        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_showcard_collapsed_again --stacktrace 2>&1 | tail -5 || true
-        sleep 1
-        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_showcard_collapsed_again.png" 2>/dev/null || true
-        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_showcard_collapsed_again.png" 2>/dev/null || echo 0)
-        echo "Captured android_a11y_showcard_collapsed_again.png ($SZ bytes)"
-
-        echo "--- Running a11y_validation_empty_form ---"
-        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_validation_empty_form --stacktrace 2>&1 | tail -5 || true
-        sleep 1
-        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_validation_empty_form.png" 2>/dev/null || true
-        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_validation_empty_form.png" 2>/dev/null || echo 0)
-        echo "Captured android_a11y_validation_empty_form.png ($SZ bytes)"
-
-        echo "--- Running a11y_validation_error_visible ---"
-        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_validation_error_visible --stacktrace 2>&1 | tail -5 || true
-        sleep 1
-        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_validation_error_visible.png" 2>/dev/null || true
-        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_validation_error_visible.png" 2>/dev/null || echo 0)
-        echo "Captured android_a11y_validation_error_visible.png ($SZ bytes)"
-
-        echo "--- Running a11y_toggle_visibility_hidden ---"
-        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_toggle_visibility_hidden --stacktrace 2>&1 | tail -5 || true
-        sleep 1
-        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_toggle_visibility_hidden.png" 2>/dev/null || true
-        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_toggle_visibility_hidden.png" 2>/dev/null || echo 0)
-        echo "Captured android_a11y_toggle_visibility_hidden.png ($SZ bytes)"
-
-        echo "--- Running a11y_toggle_visibility_revealed ---"
-        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_toggle_visibility_revealed --stacktrace 2>&1 | tail -5 || true
-        sleep 1
-        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_toggle_visibility_revealed.png" 2>/dev/null || true
-        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_toggle_visibility_revealed.png" 2>/dev/null || echo 0)
-        echo "Captured android_a11y_toggle_visibility_revealed.png ($SZ bytes)"
-
-        echo "--- Running a11y_activity_showcard_buttons ---"
-        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_activity_showcard_buttons --stacktrace 2>&1 | tail -5 || true
-        sleep 1
-        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_activity_showcard_buttons.png" 2>/dev/null || true
-        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_activity_showcard_buttons.png" 2>/dev/null || echo 0)
-        echo "Captured android_a11y_activity_showcard_buttons.png ($SZ bytes)"
-
-        echo "--- Running a11y_activity_showcard_expanded ---"
-        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests#a11y_activity_showcard_expanded --stacktrace 2>&1 | tail -5 || true
-        sleep 1
-        adb exec-out screencap -p > "$SCREENSHOTS/android_a11y_activity_showcard_expanded.png" 2>/dev/null || true
-        SZ=$(wc -c < "$SCREENSHOTS/android_a11y_activity_showcard_expanded.png" 2>/dev/null || echo 0)
-        echo "Captured android_a11y_activity_showcard_expanded.png ($SZ bytes)"
-
-
-        # ── Finalize recording ──
-        echo "=== Finalizing screen recording ==="
-        SR_PID=$(adb shell "pidof screenrecord" 2>/dev/null | tr -d '\r')
-        echo "screenrecord PID at finalize: ${SR_PID:-NOT_RUNNING}"
-        if [ -n "$SR_PID" ]; then
-          # SIGINT lets screenrecord write the moov atom for a playable MP4
-          adb shell "kill -2 $SR_PID" 2>/dev/null || true
-          echo "Sent SIGINT, waiting 5s for moov atom finalization..."
+        # Stop recording gracefully (SIGINT writes moov atom)
+        echo "=== Stopping screen recording ==="
+        SR=$(adb shell pidof screenrecord | tr -d '\r')
+        if [ -n "$SR" ]; then
+          adb shell kill -2 $SR
+          echo "Sent SIGINT to screenrecord PID $SR"
           sleep 5
         else
-          echo "WARNING: screenrecord was not running at finalize time"
-          # Try to kill via host PID if still alive
-          kill $RECORD_HOST_PID 2>/dev/null || true
-          sleep 2
+          echo "screenrecord already stopped (time limit reached)"
         fi
+        # Also kill the host adb process
+        kill $RECORD_PID 2>/dev/null || true
+        wait $RECORD_PID 2>/dev/null || true
 
-        # Check host log for errors
-        echo "Host screenrecord log:"
-        cat /tmp/screenrecord-host.log 2>/dev/null || true
-
-        # Check file on device
-        adb shell "ls -la /data/local/tmp/a11y_recording.mp4" 2>/dev/null || echo "File not found on device"
-
-        # Pull recording
-        adb pull /data/local/tmp/a11y_recording.mp4 "$RECORDINGS/android_a11y_talkback_recording.mp4" 2>&1 || true
-        RECSZ=$(wc -c < "$RECORDINGS/android_a11y_talkback_recording.mp4" 2>/dev/null || echo 0)
-        echo "Recording: $RECSZ bytes"
-
-        # ── Disable TalkBack ──
+        # Disable TalkBack
         adb shell settings put secure enabled_accessibility_services "" 2>/dev/null || true
         adb shell settings put secure accessibility_enabled 0 2>/dev/null || true
 
-        # ── Summary ──
-        echo "=== Screenshot files ==="
-        ls -la "$SCREENSHOTS"/android_*.png 2>/dev/null
-        PNG_COUNT=$(find "$SCREENSHOTS" -name "android_*.png" -size +1k | wc -l)
-        echo "Valid PNGs (>1KB): $PNG_COUNT / 9"
+        # List screenshots taken by tests (saved to /data/local/tmp/a11y_screenshots/)
+        echo "=== Screenshots on device ==="
+        adb shell ls -la /data/local/tmp/a11y_screenshots/ 2>/dev/null || echo "No screenshots directory"
+        DEVICE_COUNT=$(adb shell "ls /data/local/tmp/a11y_screenshots/*.png 2>/dev/null | wc -l" | tr -d '\r')
+        echo "Screenshots on device: $DEVICE_COUNT"
+
+        # Pull screenshots to host
+        mkdir -p /tmp/a11y-screenshots
+        adb pull /data/local/tmp/a11y_screenshots/ /tmp/a11y-screenshots/ 2>&1 || true
+        # Flatten: move files from subdirectory to parent if needed
+        find /tmp/a11y-screenshots -name "*.png" -not -path "/tmp/a11y-screenshots/*.png" -exec mv {} /tmp/a11y-screenshots/ \;
+
+        # Pull recording
+        mkdir -p /tmp/a11y-recordings
+        adb shell ls -la /data/local/tmp/a11y_recording.mp4 2>/dev/null
+        adb pull /data/local/tmp/a11y_recording.mp4 /tmp/a11y-recordings/android_a11y_talkback_recording.mp4 2>&1 || true
+
+        # Summary
+        echo "=== Host files ==="
+        ls -la /tmp/a11y-screenshots/*.png 2>/dev/null
+        PNG_COUNT=$(find /tmp/a11y-screenshots -name "*.png" -size +1k | wc -l)
+        echo "Valid screenshots (>1KB): $PNG_COUNT"
+        VID_SIZE=$(wc -c < /tmp/a11y-recordings/android_a11y_talkback_recording.mp4 2>/dev/null || echo 0)
+        echo "Recording size: $VID_SIZE bytes"
+
+        # Write counts for later steps
         echo "$PNG_COUNT" > /tmp/a11y-png-count.txt
+        echo "$VID_SIZE" > /tmp/a11y-vid-size.txt
+        echo "$TEST_EXIT" > /tmp/a11y-test-exit.txt
         EMUSCRIPT
         chmod +x /tmp/run-a11y-tests.sh
 
@@ -231,68 +167,71 @@ jobs:
         script: |
           bash /tmp/run-a11y-tests.sh "${{ github.workspace }}"
 
-    - name: Validate artifacts
+    - name: Validate artifacts deterministically
       if: always()
       run: |
-        echo "### Artifact Validation" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Artifact Validation" >> $GITHUB_STEP_SUMMARY
 
-        # Validate screenshots
-        PNG_COUNT=$(find /tmp/a11y-screenshots -name "android_*.png" -size +1k 2>/dev/null | wc -l)
-        echo "Screenshots found (>1KB): $PNG_COUNT / 9"
-        echo "- Screenshots: **$PNG_COUNT / 9** captured" >> $GITHUB_STEP_SUMMARY
+        # ── Screenshot validation ──
+        PNG_COUNT=$(find /tmp/a11y-screenshots -name "android_a11y_*.png" -size +1k 2>/dev/null | wc -l)
+        echo "- Screenshots captured (>1KB): **$PNG_COUNT / 9**" >> $GITHUB_STEP_SUMMARY
 
-        # Validate screenshots are different (not all identical)
         if [ "$PNG_COUNT" -gt 1 ]; then
-          UNIQUE=$(md5sum /tmp/a11y-screenshots/android_*.png 2>/dev/null | awk '{print $1}' | sort -u | wc -l)
-          echo "- Unique screenshots: **$UNIQUE** (should be >1)" >> $GITHUB_STEP_SUMMARY
+          UNIQUE=$(md5sum /tmp/a11y-screenshots/android_a11y_*.png 2>/dev/null | awk '{print $1}' | sort -u | wc -l)
+          echo "- Unique screenshots: **$UNIQUE** (same=static, different=real card states)" >> $GITHUB_STEP_SUMMARY
           if [ "$UNIQUE" -le 1 ]; then
-            echo "::warning::All screenshots are identical - tests may not have changed card state"
+            echo "::error::All $PNG_COUNT screenshots are identical - tests did not capture different card states"
+            exit 1
           fi
+          echo "  - :white_check_mark: Screenshots show **$UNIQUE different card states**" >> $GITHUB_STEP_SUMMARY
+        elif [ "$PNG_COUNT" -eq 0 ]; then
+          echo "::error::No screenshots captured. The in-test screencap may have failed."
+          exit 1
         fi
 
-        # Validate video is playable (has moov atom)
+        # ── Video validation ──
         VID="/tmp/a11y-recordings/android_a11y_talkback_recording.mp4"
-        if [ -f "$VID" ]; then
-          VIDSZ=$(wc -c < "$VID")
-          echo "- Recording: **$(echo "scale=1; $VIDSZ / 1048576" | bc) MB**" >> $GITHUB_STEP_SUMMARY
+        if [ -f "$VID" ] && [ "$(wc -c < "$VID")" -gt 10000 ]; then
+          VID_MB=$(echo "scale=1; $(wc -c < "$VID") / 1048576" | bc)
+          echo "- Recording: **$VID_MB MB**" >> $GITHUB_STEP_SUMMARY
 
-          # Check for moov atom (required for playable MP4)
-          if python3 -c "
-          with open('$VID', 'rb') as f:
-              data = f.read()
-          has_moov = b'moov' in data
-          has_ftyp = data[4:8] == b'ftyp'
-          print('ftyp:', has_ftyp, '| moov:', has_moov)
-          exit(0 if has_moov and has_ftyp else 1)
-          "; then
-            echo "- Video: **playable** (moov atom present) :white_check_mark:" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- Video: **NOT playable** (moov atom missing) :x:" >> $GITHUB_STEP_SUMMARY
-            echo "::warning::Video recording is corrupt (no moov atom). screenrecord may have been killed before finalizing."
-          fi
+          # Check for moov atom
+          python3 -c "
+import sys
+with open('$VID', 'rb') as f:
+    data = f.read()
+has_ftyp = data[4:8] == b'ftyp'
+has_moov = b'moov' in data
+print('ftyp:', has_ftyp, '| moov:', has_moov)
+sys.exit(0 if (has_ftyp and has_moov) else 1)
+" && echo "  - :white_check_mark: Video is **playable** (moov atom present)" >> $GITHUB_STEP_SUMMARY \
+          || echo "  - :x: Video is **corrupt** (missing moov atom)" >> $GITHUB_STEP_SUMMARY
 
-          # Check frame diversity (video is not static)
+          # Check frame diversity
           mkdir -p /tmp/a11y-frames
-          ffmpeg -y -loglevel error -i "$VID" -vf "fps=1/10" /tmp/a11y-frames/f_%03d.png 2>/dev/null || true
-          FRAME_COUNT=$(ls /tmp/a11y-frames/f_*.png 2>/dev/null | wc -l)
-          if [ "$FRAME_COUNT" -gt 1 ]; then
-            UNIQUE_FRAMES=$(md5sum /tmp/a11y-frames/f_*.png 2>/dev/null | awk '{print $1}' | sort -u | wc -l)
-            echo "- Video frames: **$UNIQUE_FRAMES unique** out of $FRAME_COUNT sampled" >> $GITHUB_STEP_SUMMARY
-            if [ "$UNIQUE_FRAMES" -le 1 ]; then
+          ffmpeg -y -loglevel error -i "$VID" -vf "fps=1/5" /tmp/a11y-frames/f_%03d.png 2>/dev/null || true
+          FRAMES=$(ls /tmp/a11y-frames/f_*.png 2>/dev/null | wc -l)
+          if [ "$FRAMES" -gt 1 ]; then
+            UNIQUE_F=$(md5sum /tmp/a11y-frames/f_*.png 2>/dev/null | awk '{print $1}' | sort -u | wc -l)
+            echo "  - Video frames: **$UNIQUE_F unique** / $FRAMES sampled" >> $GITHUB_STEP_SUMMARY
+            if [ "$UNIQUE_F" -le 1 ]; then
               echo "::warning::Video appears to be a static image (all frames identical)"
             fi
           fi
         else
-          echo "- Recording: **MISSING** :x:" >> $GITHUB_STEP_SUMMARY
+          echo "- Recording: **missing or empty**" >> $GITHUB_STEP_SUMMARY
+          echo "::warning::Screen recording not captured"
         fi
 
     - name: Merge artifacts for upload
       if: always()
       run: |
         mkdir -p /tmp/a11y-artifacts
-        cp /tmp/a11y-screenshots/android_*.png /tmp/a11y-artifacts/ 2>/dev/null || true
+        cp /tmp/a11y-screenshots/android_a11y_*.png /tmp/a11y-artifacts/ 2>/dev/null || true
         cp /tmp/a11y-recordings/*.mp4 /tmp/a11y-artifacts/ 2>/dev/null || true
+        echo "Artifact files:"
+        ls -la /tmp/a11y-artifacts/
 
     - name: Upload a11y artifacts
       if: always()
