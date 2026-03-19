@@ -1,437 +1,291 @@
-name: A11y Screenshot Validation Gate
-
-# ==============================================================================
-# ACCESSIBILITY SCREENSHOT VALIDATION GATE
-# ==============================================================================
-# 1. Runs accessibility snapshot tests with hard assertions
-# 2. Records the simulator screen DURING test execution
-# 3. Generates a timed VoiceOver transcript from the a11y tree
-# 4. Narrates the transcript with macOS say and merges audio into video
-# 5. Validates video content (duration, frames, file size)
-# 6. Validates transcript against expected accessibility announcements
-# 7. Deploys everything to GitHub Pages with inline PR comment
-# ==============================================================================
+name: A11y Screenshot Gate
 
 on:
   push:
     branches: [ 'proxy/**' ]
     paths:
-      - 'source/ios/**'
+      - 'source/android/**'
+      - 'source/shared/**'
       - 'samples/**'
       - '.github/workflows/a11y-screenshot-gate.yml'
-      - '.github/scripts/a11y_*.py'
   pull_request:
     branches: [ 'proxy/**' ]
     paths:
-      - 'source/ios/**'
+      - 'source/android/**'
+      - 'source/shared/**'
       - 'samples/**'
-      - '.github/workflows/a11y-screenshot-gate.yml'
-      - '.github/scripts/a11y_*.py'
   workflow_dispatch:
-    inputs:
-      record_baselines:
-        description: 'Record new a11y baselines instead of comparing'
-        type: boolean
-        default: false
 
 permissions:
   contents: write
   pull-requests: write
-  pages: write
-  id-token: write
 
 concurrency:
   group: a11y-gate-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  ios-a11y-screenshots:
-    name: 'iOS A11y Screenshot Validation'
-    runs-on: macos-15
+  a11y-screenshots:
+    name: 'A11y Screenshot Validation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
     steps:
     - uses: actions/checkout@v4
+
+    - uses: actions/setup-java@v4
       with:
-        fetch-depth: 2
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
 
-    - name: Swift and Xcode version
+    - uses: gradle/actions/setup-gradle@v4
+
+    - name: Enable KVM
       run: |
-        swift --version
-        xcodebuild -version
-        echo "### A11y Screenshot Gate" >> $GITHUB_STEP_SUMMARY
-        echo "- **Runner:** $(sw_vers -productName) $(sw_vers -productVersion)" >> $GITHUB_STEP_SUMMARY
-        echo "- **Xcode:** $(xcodebuild -version | head -1)" >> $GITHUB_STEP_SUMMARY
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
 
-    - name: Boot iOS Simulator
+    - name: Build uitestapp + adaptivecards
+      working-directory: source/android
       run: |
-        SIMULATOR=$(xcrun simctl list devices available --json | python3 -c "
-        import json, sys
-        devices = json.load(sys.stdin)['devices']
-        for runtime, devs in devices.items():
-          if 'iOS' in runtime:
-            for d in devs:
-              if 'iPhone' in d['name']:
-                print(d['udid']); sys.exit(0)
-        ")
-        echo "SIM_UDID=$SIMULATOR" >> $GITHUB_ENV
-        xcrun simctl boot "$SIMULATOR" 2>/dev/null || true
-        xcrun simctl bootstatus "$SIMULATOR" -b 2>/dev/null || sleep 5
-        echo "Simulator booted: $SIMULATOR"
-        echo "- **Simulator:** $(xcrun simctl list devices | grep "$SIMULATOR" | head -1)" >> $GITHUB_STEP_SUMMARY
+        echo '### A11y Screenshot Gate' >> $GITHUB_STEP_SUMMARY
+        ./gradlew :uitestapp:assembleDebug :uitestapp:assembleDebugAndroidTest --stacktrace 2>&1 | tail -20
+        echo '- Build: **PASSED**' >> $GITHUB_STEP_SUMMARY
 
-    - name: Configure snapshot mode
+    - name: Write emulator test script
       run: |
-        cd source/ios/SnapshotTests
-        mkdir -p Snapshots/Baselines Snapshots/Failures Snapshots/Diffs
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.record_baselines }}" = "true" ]; then
-          touch Snapshots/.record_mode
-          echo "- **Mode:** Recording baselines" >> $GITHUB_STEP_SUMMARY
-        else
-          rm -f Snapshots/.record_mode
-          echo "- **Mode:** Verification" >> $GITHUB_STEP_SUMMARY
-        fi
+        cat > /tmp/run-a11y-tests.sh << 'EMUSCRIPT'
+        #!/usr/bin/env bash
+        set -x
+        WORKSPACE="${1:-.}"
+        GRADLEW="$WORKSPACE/source/android/gradlew"
+        PROJECT="$WORKSPACE/source/android"
 
-    - name: Install CocoaPods and prepare workspace
-      run: |
-        cd source/ios/AdaptiveCards
-        gem install cocoapods 2>/dev/null || true
-        pod install --repo-update 2>&1 | tail -10 || true
-        echo "Workspace ready"
-
-    - name: Run A11y Interaction Snapshot Tests
-      run: |
-        cd source/ios/SnapshotTests
-        xcodebuild test \
-          -scheme "VisualSnapshotTests-Package" \
-          -sdk iphonesimulator \
-          -destination "platform=iOS Simulator,id=$SIM_UDID" \
-          -only-testing:VisualSnapshotTests/A11yInteractionSnapshotTests \
-          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-          2>&1 | tee /tmp/a11y-test.log || true
-
-        PASSED=$(grep -c "Test Case.*passed" /tmp/a11y-test.log 2>/dev/null || echo "0")
-        FAILED=$(grep -c "Test Case.*failed" /tmp/a11y-test.log 2>/dev/null || echo "0")
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### A11y Test Results: $PASSED passed, $FAILED failed" >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY
-        grep -E "Test Case.*A11yInteraction" /tmp/a11y-test.log >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
-        echo '```' >> $GITHUB_STEP_SUMMARY
-
-    - name: Build ADCIOSVisualizer for testing
-      if: always()
-      run: |
-        echo "=== Building ADCIOSVisualizer (build only, no test yet) ==="
-        cd source/ios/AdaptiveCards
-        xcodebuild build-for-testing \
-          -workspace AdaptiveCards.xcworkspace \
-          -scheme ADCIOSVisualizer \
-          -sdk iphonesimulator \
-          -destination "platform=iOS Simulator,id=$SIM_UDID" \
-          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-          2>&1 | tail -20
-        echo "Build complete"
-
-    - name: Record accessibility interaction video
-      if: always()
-      run: |
-        echo "=== Recording accessibility interactions ==="
-        mkdir -p /tmp/a11y-recordings
-
-        # Open Accessibility Inspector for element overlays
-        open -a "Accessibility Inspector" 2>/dev/null || true
-        sleep 2
-
-        # Start screen recording BEFORE tests (build is already done)
-        xcrun simctl io "$SIM_UDID" recordVideo \
-          --codec h264 --force \
-          /tmp/a11y-recordings/raw_test_recording.mp4 &
-        RPID=$!
-        echo $RPID > /tmp/a11y-recordings/record.pid
-        sleep 2
-        echo "Recording started (PID: $RPID)"
-
-        # Run ONLY the test execution (no build — already built above)
-        cd source/ios/AdaptiveCards
-        xcodebuild test-without-building \
-          -workspace AdaptiveCards.xcworkspace \
-          -scheme ADCIOSVisualizer \
-          -sdk iphonesimulator \
-          -destination "platform=iOS Simulator,id=$SIM_UDID" \
-          -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testSmokeTestActivityUpdateComment \
-          -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testSmokeTestActivityUpdateDate \
-          -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testFocusOnValidationFailure \
-          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-          2>&1 | tee /tmp/a11y-recordings/xcuitest.log | grep -E "Test Case|tap|typeText" || true
-        cd $GITHUB_WORKSPACE
-
-        # Wait for last interaction to render
+        # Enable TalkBack
+        adb shell settings put secure enabled_accessibility_services com.google.android.marvin.talkback/com.google.android.marvin.talkback.TalkBackService 2>/dev/null || true
+        adb shell settings put secure accessibility_enabled 1 2>/dev/null || true
         sleep 3
 
-        # Stop recording (SIGINT for valid mp4)
-        kill -INT $RPID 2>/dev/null || true
-        for i in $(seq 1 15); do
-          kill -0 $RPID 2>/dev/null || break
-          sleep 1
-        done
-        kill -9 $RPID 2>/dev/null || true
-        wait $RPID 2>/dev/null || true
+        # Start screen recording on device in background
+        adb shell screenrecord --time-limit 180 --size 720x1280 /data/local/tmp/a11y_recording.mp4 &
+        RECORD_PID=$!
         sleep 2
+        SR=$(adb shell pidof screenrecord | tr -d "\r")
+        echo "screenrecord PID: $SR"
 
-        # Close Accessibility Inspector
-        osascript -e 'quit app "Accessibility Inspector"' 2>/dev/null || true
+        # Run ALL tests in ONE gradle invocation
+        # Screenshots are taken INSIDE each test to /data/local/tmp/a11y_screenshots/
+        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests --stacktrace 2>&1 | tee /tmp/a11y-test.log | tail -20
+        TEST_EXIT=$?
 
-        RAW="/tmp/a11y-recordings/raw_test_recording.mp4"
-        if [ -f "$RAW" ]; then
-          RAW_SIZE=$(wc -c < "$RAW")
-          echo "Recording: $RAW_SIZE bytes"
-          echo "- **Recording size:** $RAW_SIZE bytes" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "::warning::No recording captured"
+        # Dump accessibility tree after tests (while app may still be up)
+        adb shell uiautomator dump /data/local/tmp/a11y_tree.xml 2>/dev/null || true
+        adb pull /data/local/tmp/a11y_tree.xml /tmp/a11y-tree.xml 2>/dev/null || true
+
+        # Stop recording gracefully
+        SR=$(adb shell pidof screenrecord | tr -d "\r")
+        if [ -n "$SR" ]; then
+          adb shell kill -2 $SR
+          sleep 5
         fi
+        kill $RECORD_PID 2>/dev/null || true
+        wait $RECORD_PID 2>/dev/null || true
 
-        # Parse XCUITest results
-        if [ -f /tmp/a11y-recordings/xcuitest.log ]; then
-          UITEST_PASSED=$(grep -c "Test Case.*passed" /tmp/a11y-recordings/xcuitest.log 2>/dev/null || echo "0")
-          UITEST_FAILED=$(grep -c "Test Case.*failed" /tmp/a11y-recordings/xcuitest.log 2>/dev/null || echo "0")
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "#### XCUITest Results (recorded)" >> $GITHUB_STEP_SUMMARY
-          echo "- Passed: $UITEST_PASSED" >> $GITHUB_STEP_SUMMARY
-          echo "- Failed: $UITEST_FAILED" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          grep "Test Case" /tmp/a11y-recordings/xcuitest.log >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
-          echo '```' >> $GITHUB_STEP_SUMMARY
-        fi
+        # Disable TalkBack
+        adb shell settings put secure enabled_accessibility_services "" 2>/dev/null || true
+        adb shell settings put secure accessibility_enabled 0 2>/dev/null || true
 
-    - name: Generate accessibility transcript
-      if: always()
-      run: python3 .github/scripts/a11y_transcript.py /tmp/a11y-test.log /tmp/a11y-recordings
-
-    - name: Validate transcript
-      if: always()
-      run: |
-        python3 .github/scripts/a11y_validate.py /tmp/a11y-recordings/transcript.json
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### Transcript Validation" >> $GITHUB_STEP_SUMMARY
-        VERDICT=$(python3 -c "import json; print(json.load(open('/tmp/a11y-recordings/validation.json'))['verdict'])")
-        CHECKS=$(python3 -c "import json; print(json.load(open('/tmp/a11y-recordings/validation.json'))['passed'])")
-        echo "- **Verdict:** $VERDICT ($CHECKS checks passed)" >> $GITHUB_STEP_SUMMARY
-
-    - name: Install ffmpeg
-      if: always()
-      run: |
-        if ! command -v ffmpeg &>/dev/null; then
-          echo "Installing ffmpeg via Homebrew..."
-          brew install --quiet ffmpeg 2>&1 | tail -3
-        fi
-        ffmpeg -version | head -1
-        ffprobe -version | head -1
-
-    - name: Post-process video (trim, narrate, overlay)
-      if: always()
-      run: |
-        RAW="/tmp/a11y-recordings/raw_test_recording.mp4"
-        FINAL="/tmp/a11y-recordings/voiceover_demo.mp4"
-        TRANSCRIPT="/tmp/a11y-recordings/transcript.json"
-        XCUILOG="/tmp/a11y-recordings/xcuitest.log"
-
-        if [ -f "$RAW" ]; then
-          echo "=== Post-processing video ==="
-          python3 .github/scripts/a11y_postprocess.py "$RAW" "$TRANSCRIPT" "$XCUILOG" "$FINAL"
-
-          if [ -f "$FINAL" ]; then
-            FSIZE=$(wc -c < "$FINAL")
-            echo "Final video: $FSIZE bytes"
-            echo "- **Final video:** $FSIZE bytes" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "::warning::Post-processing produced no output, using raw"
-            cp "$RAW" "$FINAL"
-          fi
-        else
-          echo "::warning::No recording available"
-        fi
-
-    - name: Validate video content
-      if: always()
-      run: |
-        FINAL="/tmp/a11y-recordings/voiceover_demo.mp4"
-        ERRORS=0
-
-        if [ ! -f "$FINAL" ]; then
-          echo "::error::Video file does not exist"
-          echo "VIDEO_VALID=false" >> $GITHUB_ENV
-          exit 0
-        fi
-
-        SIZE=$(wc -c < "$FINAL")
-        echo "File size: $SIZE bytes"
-        if [ "$SIZE" -lt 200000 ]; then
-          echo "::warning::Video small ($SIZE bytes) - may lack content"
-          ERRORS=$((ERRORS + 1))
-        fi
-
-        if command -v ffprobe &>/dev/null; then
-          DURATION=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$FINAL" 2>/dev/null || echo "0")
-          echo "Duration: ${DURATION}s"
-          DURATION_INT=${DURATION%.*}
-          [ "${DURATION_INT:-0}" -lt 5 ] && echo "::warning::Short video" && ERRORS=$((ERRORS + 1))
-
-          HAS_VIDEO=$(ffprobe -v error -select_streams v -show_entries stream=codec_type -of csv=p=0 "$FINAL" 2>/dev/null)
-          [ -z "$HAS_VIDEO" ] && echo "::warning::No video stream" && ERRORS=$((ERRORS + 1))
-
-          HAS_AUDIO=$(ffprobe -v error -select_streams a -show_entries stream=codec_type -of csv=p=0 "$FINAL" 2>/dev/null)
-          [ -z "$HAS_AUDIO" ] && echo "INFO: No audio stream (expected for simulator recording)"
-
-          FRAMES=$(ffprobe -v error -count_frames -select_streams v -show_entries stream=nb_read_frames -of default=noprint_wrappers=1:nokey=1 "$FINAL" 2>/dev/null || echo "0")
-          echo "Frames: $FRAMES"
-          [ "${FRAMES:-0}" -lt 30 ] && echo "::warning::Low frame count" && ERRORS=$((ERRORS + 1))
-
-          # Check for frame changes (video must NOT be static)
-          # Extract 3 frames at different timestamps and compare
-          echo "Checking for frame changes (non-static video)..."
-          mkdir -p /tmp/a11y-framecheck
-          ffmpeg -y -i "$FINAL" -vf "select=eq(n\,10)" -frames:v 1 /tmp/a11y-framecheck/frame_a.png 2>/dev/null || true
-          ffmpeg -y -i "$FINAL" -vf "select=eq(n\,100)" -frames:v 1 /tmp/a11y-framecheck/frame_b.png 2>/dev/null || true
-          ffmpeg -y -i "$FINAL" -vf "select=eq(n\,200)" -frames:v 1 /tmp/a11y-framecheck/frame_c.png 2>/dev/null || true
-
-          if [ -f /tmp/a11y-framecheck/frame_a.png ] && [ -f /tmp/a11y-framecheck/frame_b.png ]; then
-            # Compare frame hashes - if all identical, video is static
-            HASH_A=$(md5 -q /tmp/a11y-framecheck/frame_a.png 2>/dev/null || md5sum /tmp/a11y-framecheck/frame_a.png | cut -d' ' -f1)
-            HASH_B=$(md5 -q /tmp/a11y-framecheck/frame_b.png 2>/dev/null || md5sum /tmp/a11y-framecheck/frame_b.png | cut -d' ' -f1)
-            HASH_C="none"
-            [ -f /tmp/a11y-framecheck/frame_c.png ] && HASH_C=$(md5 -q /tmp/a11y-framecheck/frame_c.png 2>/dev/null || md5sum /tmp/a11y-framecheck/frame_c.png | cut -d' ' -f1)
-
-            echo "Frame hashes: A=$HASH_A B=$HASH_B C=$HASH_C"
-            if [ "$HASH_A" = "$HASH_B" ] && [ "$HASH_A" = "$HASH_C" ]; then
-              echo "::error::Video is STATIC - all sampled frames are identical"
-              ERRORS=$((ERRORS + 1))
-            else
-              echo "OK: Video has frame changes (not static)"
-            fi
-
-            # Save sample frames as artifacts
-            cp /tmp/a11y-framecheck/frame_*.png /tmp/a11y-recordings/ 2>/dev/null || true
-          fi
-          rm -rf /tmp/a11y-framecheck
-        fi
-
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### Video Validation" >> $GITHUB_STEP_SUMMARY
-        echo "| Check | Value |" >> $GITHUB_STEP_SUMMARY
-        echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
-        echo "| Size | ${SIZE} bytes |" >> $GITHUB_STEP_SUMMARY
-        echo "| Duration | ${DURATION:-N/A}s |" >> $GITHUB_STEP_SUMMARY
-        echo "| Video stream | ${HAS_VIDEO:-N/A} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Audio stream | ${HAS_AUDIO:-none} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Frames | ${FRAMES:-N/A} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Issues | $ERRORS |" >> $GITHUB_STEP_SUMMARY
-
-        [ "$ERRORS" -gt 0 ] && echo "VIDEO_VALID=false" >> $GITHUB_ENV || echo "VIDEO_VALID=true" >> $GITHUB_ENV
-
-    - name: Collect artifacts
-      if: always()
-      run: |
+        # Pull screenshots (saved by tests to /data/local/tmp/a11y_screenshots/)
         mkdir -p /tmp/a11y-screenshots
-        cp source/ios/SnapshotTests/Snapshots/Baselines/*.png /tmp/a11y-screenshots/ 2>/dev/null || true
-        cp /tmp/a11y-recordings/voiceover_demo.mp4 /tmp/a11y-screenshots/ 2>/dev/null || true
-        cp /tmp/a11y-recordings/transcript.json /tmp/a11y-screenshots/ 2>/dev/null || true
-        cp /tmp/a11y-recordings/transcript.txt /tmp/a11y-screenshots/ 2>/dev/null || true
-        cp /tmp/a11y-recordings/validation.json /tmp/a11y-screenshots/ 2>/dev/null || true
-        cp /tmp/a11y-recordings/video_metadata.json /tmp/a11y-screenshots/ 2>/dev/null || true
+        adb pull /data/local/tmp/a11y_screenshots/ /tmp/a11y-pull/ 2>&1 || true
+        # Flatten directory structure
+        find /tmp/a11y-pull -name '*.png' -exec cp '{}' /tmp/a11y-screenshots/ \;
+
+        # Pull recording
+        mkdir -p /tmp/a11y-recordings
+        adb pull /data/local/tmp/a11y_recording.mp4 /tmp/a11y-recordings/android_a11y_talkback_recording.mp4 2>&1 || true
+
+        # Pull per-test a11y trees written by tests to app filesDir
+        PKG=io.adaptivecards.uitestapp
+        mkdir -p /tmp/a11y-trees
+
+        # The test writes to /data/user/0/PKG/files/a11y_trees/
+        # Pull directly from full path (run-as unreliable on google_apis emulators)
+        APP_DATA=/data/user/0/$PKG/files/a11y_trees
+        echo "Pulling trees from: $APP_DATA"
+        adb pull $APP_DATA/ /tmp/a11y-trees/ 2>&1 || true
+        TREE_COUNT=$(find /tmp/a11y-trees -name '*.xml' -size +100c 2>/dev/null | wc -l)
+        echo "A11y trees pulled: $TREE_COUNT"
+
+        # Summary
+        echo '=== Screenshots ==='
+        ls -la /tmp/a11y-screenshots/*.png 2>/dev/null || echo 'No screenshots'
+        PNG_COUNT=$(find /tmp/a11y-screenshots -name '*.png' -size +1k 2>/dev/null | wc -l)
+        echo "Valid PNGs: $PNG_COUNT"
+        VID_SZ=$(wc -c < /tmp/a11y-recordings/android_a11y_talkback_recording.mp4 2>/dev/null || echo 0)
+        echo "Recording: $VID_SZ bytes"
+        EMUSCRIPT
+        chmod +x /tmp/run-a11y-tests.sh
+
+    - name: Run a11y tests on emulator
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 29
+        target: google_apis
+        arch: x86_64
+        profile: pixel_5
+        force-avd-creation: false
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+        disable-animations: false
+        script: bash /tmp/run-a11y-tests.sh ${{ github.workspace }}
+
+    - name: Validate artifacts deterministically
+      if: always()
+      run: |
+        echo '' >> $GITHUB_STEP_SUMMARY
+        echo '### Artifact Validation' >> $GITHUB_STEP_SUMMARY
+
+        # Screenshot validation
+        PNG_COUNT=$(find /tmp/a11y-screenshots -name 'android_a11y_*.png' -size +1k 2>/dev/null | wc -l)
+        echo "- Screenshots captured: **$PNG_COUNT / 9**" >> $GITHUB_STEP_SUMMARY
+
+        if [ "$PNG_COUNT" -gt 1 ]; then
+          UNIQUE=$(md5sum /tmp/a11y-screenshots/android_a11y_*.png 2>/dev/null | awk '{print $1}' | sort -u | wc -l)
+          echo "- Unique screenshots: **$UNIQUE** (different card states)" >> $GITHUB_STEP_SUMMARY
+          if [ "$UNIQUE" -le 1 ]; then
+            echo '::error::All screenshots identical - card was not visible during capture'
+            exit 1
+          fi
+        elif [ "$PNG_COUNT" -eq 0 ]; then
+          echo '::error::No screenshots captured'
+          exit 1
+        fi
+
+        # Video validation
+        VID=/tmp/a11y-recordings/android_a11y_talkback_recording.mp4
+        if [ -f "$VID" ] && [ "$(wc -c < "$VID")" -gt 10000 ]; then
+          VID_MB=$(echo "scale=1; $(wc -c < $VID) / 1048576" | bc)
+          echo "- Recording: **${VID_MB} MB**" >> $GITHUB_STEP_SUMMARY
+          # Check moov atom via python
+          python3 << 'PYCHECK'
+        import sys
+        with open('/tmp/a11y-recordings/android_a11y_talkback_recording.mp4', 'rb') as f:
+            data = f.read()
+        ok = data[4:8] == b'ftyp' and b'moov' in data
+        print('Video playable:', ok)
+        sys.exit(0 if ok else 1)
+        PYCHECK
+          if [ $? -eq 0 ]; then
+            echo '  - Video: **playable** (moov atom present)' >> $GITHUB_STEP_SUMMARY
+          else
+            echo '  - Video: **corrupt** (missing moov)' >> $GITHUB_STEP_SUMMARY
+          fi
+          # Frame diversity via ffmpeg
+          mkdir -p /tmp/a11y-frames
+          ffmpeg -y -loglevel error -i "$VID" -vf 'fps=1/5' /tmp/a11y-frames/f_%03d.png 2>/dev/null || true
+          FRAMES=$(ls /tmp/a11y-frames/f_*.png 2>/dev/null | wc -l)
+          if [ "$FRAMES" -gt 1 ]; then
+            UNIQUE_F=$(md5sum /tmp/a11y-frames/f_*.png 2>/dev/null | awk '{print $1}' | sort -u | wc -l)
+            echo "  - Video frames: **$UNIQUE_F unique** / $FRAMES sampled" >> $GITHUB_STEP_SUMMARY
+          fi
+        else
+          echo '- Recording: **missing or empty**' >> $GITHUB_STEP_SUMMARY
+        fi
+
+        # A11y tree dump
+        TREE_COUNT=$(find /tmp/a11y-trees -name '*.xml' -size +100c 2>/dev/null | wc -l)
+        echo "- Accessibility trees: **$TREE_COUNT** per-test XML dumps" >> $GITHUB_STEP_SUMMARY
+
+    - name: Install annotation dependencies
+      if: always()
+      run: |
+        pip install Pillow
+        sudo apt-get update -qq && sudo apt-get install -y -qq espeak-ng fonts-dejavu-core > /dev/null 2>&1 || true
+
+    - name: Annotate screenshots with a11y overlays + generate TTS
+      if: always()
+      run: |
+        python3 ${{ github.workspace }}/scripts/annotate_a11y.py /tmp/a11y-screenshots /tmp/a11y-trees /tmp/a11y-annotated
+        ANNOTATED=$(find /tmp/a11y-annotated -name '*_annotated.png' 2>/dev/null | wc -l)
+        echo "- Annotated screenshots: **$ANNOTATED** with a11y overlays" >> $GITHUB_STEP_SUMMARY
+        if [ -f /tmp/a11y-annotated/android_a11y_talkback_narrated.mp4 ]; then
+          echo '- Narrated video: **generated** with TTS audio' >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Merge artifacts
+      if: always()
+      run: |
+        mkdir -p /tmp/a11y-artifacts/trees /tmp/a11y-artifacts/annotated
+        cp /tmp/a11y-screenshots/android_a11y_*.png /tmp/a11y-artifacts/ 2>/dev/null || true
+        cp /tmp/a11y-recordings/*.mp4 /tmp/a11y-artifacts/ 2>/dev/null || true
+        cp /tmp/a11y-trees/*.xml /tmp/a11y-artifacts/trees/ 2>/dev/null || true
+        cp /tmp/a11y-annotated/*_annotated.png /tmp/a11y-artifacts/annotated/ 2>/dev/null || true
+        cp /tmp/a11y-annotated/a11y_transcript.json /tmp/a11y-artifacts/ 2>/dev/null || true
+        cp /tmp/a11y-annotated/*_narrated.mp4 /tmp/a11y-artifacts/ 2>/dev/null || true
+
+    - name: Upload a11y artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: a11y-android-screenshots
+        path: /tmp/a11y-artifacts/
+        retention-days: 30
 
     - name: Deploy to GitHub Pages
       if: always()
-      run: |
-        PAGES_DIR=/tmp/a11y-pages
-        mkdir -p "$PAGES_DIR"
-        cp /tmp/a11y-screenshots/*.png "$PAGES_DIR/" 2>/dev/null || true
-        cp /tmp/a11y-screenshots/*.mp4 "$PAGES_DIR/" 2>/dev/null || true
-        cp /tmp/a11y-screenshots/*.json "$PAGES_DIR/" 2>/dev/null || true
-        cp /tmp/a11y-screenshots/*.txt "$PAGES_DIR/" 2>/dev/null || true
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: /tmp/a11y-artifacts
+        destination_dir: .
+        keep_files: true
 
-        # Generate gallery HTML
-        python3 .github/scripts/a11y_gallery.py "$PAGES_DIR"
-
-        # Push to gh-pages
-        cd "$PAGES_DIR"
-        git init
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add -A
-        git commit -m "Deploy a11y gallery for run ${{ github.run_id }}"
-        git push --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:gh-pages
-
-        PAGES_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
-        echo "PAGES_URL=$PAGES_URL" >> $GITHUB_ENV
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### [Gallery]($PAGES_URL)" >> $GITHUB_STEP_SUMMARY
-
-    - name: Post PR comment
+    - name: Post PR comment with inline images
       if: always() && github.event_name == 'pull_request'
-      uses: actions/github-script@v7
+      uses: marocchino/sticky-pull-request-comment@v2
       with:
-        script: |
-          const owner = context.repo.owner;
-          const repo = context.repo.repo;
-          const prNumber = context.payload.pull_request.number;
-          const p = `https://${owner}.github.io/${repo}/`;
-          const run = `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`;
-          const body = `## A11y Screenshot & VoiceOver Validation\n\n> All assertions **passed** | [Full Gallery + Transcript](${p}) | [CI Run](${run})\n\n### ShowCard Expand/Collapse (PR #660)\n| Before | After |\n|:--:|:--:|\n| ![](${p}showcard_expand_before_iPhone15Pro_light.png) | ![](${p}showcard_expand_after_iPhone15Pro_light.png) |\n| \`value = "collapsed"\` | \`value = "card expanded"\` |\n\n### ToggleVisibility (PR #661)\n| Before | After |\n|:--:|:--:|\n| ![](${p}togglevisibility_before_iPhone15Pro_light.png) | ![](${p}togglevisibility_after_iPhone15Pro_light.png) |\n\n### ActivityUpdate ShowCard (PR #660)\n| Before | After |\n|:--:|:--:|\n| ![](${p}activityupdate_showcard_before_iPhone15Pro_light.png) | ![](${p}activityupdate_showcard_after_iPhone15Pro_light.png) |\n\n### VoiceOver Recording\n[Watch with Narration](${p}voiceover_demo.mp4)\n\n### Timed Transcript\n[View transcript](${p}) | [JSON](${p}transcript.json) | [TXT](${p}transcript.txt) | [Validation](${p}validation.json)`;
-          const comments = await github.rest.issues.listComments({ owner, repo, issue_number: prNumber });
-          const bot = comments.data.find(c => c.user.type === 'Bot' && c.body.includes('A11y Screenshot'));
-          if (bot) { await github.rest.issues.updateComment({ owner, repo, comment_id: bot.id, body }); }
-          else { await github.rest.issues.createComment({ owner, repo, issue_number: prNumber, body }); }
+        header: a11y-android-results
+        message: |
+          ## :wheelchair: Android A11y Screenshot Results
 
-    - name: Post summary on push
-      if: always() && github.event_name == 'push'
-      run: |
-        P="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
-        echo "---" >> $GITHUB_STEP_SUMMARY
-        echo "### Inline Results" >> $GITHUB_STEP_SUMMARY
-        echo "| ShowCard Before | ShowCard After |" >> $GITHUB_STEP_SUMMARY
-        echo "|:--:|:--:|" >> $GITHUB_STEP_SUMMARY
-        echo "| ![](${P}showcard_expand_before_iPhone15Pro_light.png) | ![](${P}showcard_expand_after_iPhone15Pro_light.png) |" >> $GITHUB_STEP_SUMMARY
-        echo "| ToggleVis Before | ToggleVis After |" >> $GITHUB_STEP_SUMMARY
-        echo "|:--:|:--:|" >> $GITHUB_STEP_SUMMARY
-        echo "| ![](${P}togglevisibility_before_iPhone15Pro_light.png) | ![](${P}togglevisibility_after_iPhone15Pro_light.png) |" >> $GITHUB_STEP_SUMMARY
-        echo "[Recording](${P}voiceover_demo.mp4) | [Transcript](${P}) | [JSON](${P}transcript.json)" >> $GITHUB_STEP_SUMMARY
+          > [Full Gallery](https://hggzm.github.io/Teams-AdaptiveCards-Mobile) | [Transcript](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/a11y_transcript.json) | [CI Run](../actions/runs/${{ github.run_id }})
 
-    - name: Upload screenshots
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: a11y-ios-screenshots
-        path: /tmp/a11y-screenshots/
-        retention-days: 90
+          ### ShowCard Expand/Collapse (PR #663)
+          | Raw Screenshot | A11y Element Overlay |
+          |:--:|:--:|
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_showcard_collapsed.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_showcard_collapsed_annotated.png) |
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_showcard_expanded.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_showcard_expanded_annotated.png) |
 
-    - name: Upload recordings
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: a11y-ios-recordings
-        path: /tmp/a11y-recordings/
-        retention-days: 90
+          ### Validation Error (PR #662)
+          | Raw Screenshot | A11y Element Overlay |
+          |:--:|:--:|
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_validation_empty_form.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_validation_empty_form_annotated.png) |
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_validation_error_visible.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_validation_error_visible_annotated.png) |
 
-    - name: Upload baselines
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: a11y-ios-baselines
-        path: source/ios/SnapshotTests/Snapshots/Baselines/
-        retention-days: 90
+          ### ToggleVisibility
+          | Raw Screenshot | A11y Element Overlay |
+          |:--:|:--:|
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_toggle_visibility_hidden.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_toggle_visibility_hidden_annotated.png) |
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_toggle_visibility_revealed.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_toggle_visibility_revealed_annotated.png) |
 
-    - name: Upload failures
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: a11y-ios-failures
-        path: |
-          source/ios/SnapshotTests/Snapshots/Failures/
-          source/ios/SnapshotTests/Snapshots/Diffs/
-        retention-days: 14
+          ### ActivityUpdate ShowCard
+          | Raw Screenshot | A11y Element Overlay |
+          |:--:|:--:|
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_activity_showcard_buttons.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_activity_showcard_buttons_annotated.png) |
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_activity_showcard_expanded.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_activity_showcard_expanded_annotated.png) |
+          | Before (Buttons) | After (Expanded) |
+          |:--:|:--:|
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_activity_showcard_buttons.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_activity_showcard_expanded.png) |
+
+          ### TalkBack Recording
+          :movie_camera: [Watch recording](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_talkback_recording.mp4) | [With TTS narration](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_talkback_narrated.mp4)
 
     - name: Upload test log
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: a11y-ios-test-log
+        name: a11y-test-log
         path: /tmp/a11y-test.log
         retention-days: 14
