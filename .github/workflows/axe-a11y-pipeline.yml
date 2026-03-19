@@ -119,19 +119,14 @@ jobs:
           SIZE=$(wc -c < "$VIDEO")
           DUR=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$VIDEO" 2>/dev/null || echo "?")
           echo "#### Video" >> $GITHUB_STEP_SUMMARY
-          echo "- Size: $SIZE bytes" >> $GITHUB_STEP_SUMMARY
-          echo "- Duration: ${DUR}s" >> $GITHUB_STEP_SUMMARY
+          echo "- Size: $SIZE bytes, Duration: ${DUR}s" >> $GITHUB_STEP_SUMMARY
 
           # Frame change check
           ffmpeg -y -i "$VIDEO" -vf "select=eq(n\,5)" -frames:v 1 /tmp/fc_a.png 2>/dev/null
           ffmpeg -y -i "$VIDEO" -vf "select=eq(n\,50)" -frames:v 1 /tmp/fc_b.png 2>/dev/null
           if [ -f /tmp/fc_a.png ] && [ -f /tmp/fc_b.png ]; then
             HA=$(md5 -q /tmp/fc_a.png); HB=$(md5 -q /tmp/fc_b.png)
-            if [ "$HA" = "$HB" ]; then
-              echo "- **STATIC** (frames identical)" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "- **DYNAMIC** (frames differ)" >> $GITHUB_STEP_SUMMARY
-            fi
+            [ "$HA" != "$HB" ] && echo "- **DYNAMIC** (frames differ)" >> $GITHUB_STEP_SUMMARY || echo "- **STATIC**" >> $GITHUB_STEP_SUMMARY
           fi
           rm -f /tmp/fc_a.png /tmp/fc_b.png
         else
@@ -140,44 +135,25 @@ jobs:
 
         # Check annotated screenshots
         ANN_COUNT=$(ls /tmp/axe-output/annotated/*.png 2>/dev/null | wc -l | tr -d ' ')
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### Annotated Screenshots: $ANN_COUNT" >> $GITHUB_STEP_SUMMARY
-
-        # Check a11y tree captures
         A11Y_COUNT=$(ls /tmp/axe-output/*_elements.json 2>/dev/null | wc -l | tr -d ' ')
-        echo "#### A11y Tree Captures: $A11Y_COUNT" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Annotated Screenshots: $ANN_COUNT | A11y Captures: $A11Y_COUNT" >> $GITHUB_STEP_SUMMARY
 
-        # Show element summary from the card render step
+        # Show a11y elements using the pipeline script
         if [ -f /tmp/axe-output/03_activity_card_rendered_elements.json ]; then
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "#### ActivityUpdate Card A11y Tree" >> $GITHUB_STEP_SUMMARY
-          echo '```json' >> $GITHUB_STEP_SUMMARY
-          python3 -c "
-import json
-with open('/tmp/axe-output/03_activity_card_rendered_elements.json') as f:
-    elems = json.load(f)
-for e in elems[:15]:
-    print('[{}] {} = {}'.format(e['role'], e['label'], e.get('value', '')))
-print('... {} total elements'.format(len(elems)))
-          " >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(parse error)" >> $GITHUB_STEP_SUMMARY
+          echo "#### ActivityUpdate A11y Tree" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          python3 .github/scripts/a11y_print_elements.py /tmp/axe-output/03_activity_card_rendered_elements.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(no data)" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
         fi
 
-        # Check timeline
+        # Show timeline
         if [ -f /tmp/axe-output/timeline.json ]; then
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "#### Timeline" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          python3 -c "
-import json
-with open('/tmp/axe-output/timeline.json') as f:
-    data = json.load(f)
-for e in data.get('timeline', data):
-    ts = e.get('timestamp', 0)
-    desc = e.get('description', '')
-    action = e.get('action', '')
-    print('[{:5.1f}s] {} ({})'.format(ts, desc, action))
-          " >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+          python3 .github/scripts/a11y_print_timeline.py /tmp/axe-output/timeline.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(no data)" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
         fi
 
