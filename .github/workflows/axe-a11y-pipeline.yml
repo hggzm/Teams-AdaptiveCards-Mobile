@@ -49,36 +49,21 @@ jobs:
         xcrun simctl bootstatus "$SIM" -b 2>/dev/null || sleep 5
         echo "Booted: $SIM"
 
-    - name: Build and install ADCIOSVisualizer
+    - name: Build ADCIOSVisualizer for testing
       run: |
         cd source/ios/AdaptiveCards
         gem install cocoapods 2>/dev/null || true
         pod install --repo-update 2>&1 | tail -10 || true
 
-        # Build the app (not tests)
-        xcodebuild build \
+        # Build for testing (includes UI test targets)
+        xcodebuild build-for-testing \
           -workspace AdaptiveCards.xcworkspace \
           -scheme ADCIOSVisualizer \
           -sdk iphonesimulator \
           -destination "platform=iOS Simulator,id=$SIM_UDID" \
-          -derivedDataPath /tmp/axe-build \
           CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
           2>&1 | tail -10
-
-        # Find and install the .app
-        APP_PATH=$(find /tmp/axe-build -name "ADCIOSVisualizer.app" -type d | head -1)
-        if [ -n "$APP_PATH" ]; then
-          xcrun simctl install "$SIM_UDID" "$APP_PATH"
-          echo "Installed: $APP_PATH"
-
-          # Get bundle ID
-          BUNDLE_ID=$(defaults read "$APP_PATH/Info.plist" CFBundleIdentifier 2>/dev/null || echo "")
-          echo "APP_BUNDLE=$BUNDLE_ID" >> $GITHUB_ENV
-          echo "Bundle ID: $BUNDLE_ID"
-        else
-          echo "::error::Could not find ADCIOSVisualizer.app"
-          exit 1
-        fi
+        echo "Build complete"
 
     - name: Run AXe a11y pipeline
       run: |
