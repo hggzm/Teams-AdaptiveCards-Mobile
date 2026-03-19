@@ -107,13 +107,18 @@ jobs:
         mkdir -p /tmp/a11y-recordings
         adb pull /data/local/tmp/a11y_recording.mp4 /tmp/a11y-recordings/android_a11y_talkback_recording.mp4 2>&1 || true
 
-        # Pull per-test a11y trees written by tests to /data/local/tmp/
+        # Extract per-test a11y elements from logcat (logged by tests)
         mkdir -p /tmp/a11y-trees
-        adb pull /data/local/tmp/a11y_trees/ /tmp/a11y-trees/ 2>&1 || true
-        # Flatten if nested
-        find /tmp/a11y-trees -mindepth 2 -name '*.xml' -exec cp '{}' /tmp/a11y-trees/ \; 2>/dev/null || true
-        TREE_COUNT=$(find /tmp/a11y-trees -name '*.xml' -size +100c 2>/dev/null | wc -l)
-        echo "A11y trees pulled: $TREE_COUNT"
+        adb logcat -d | grep 'A11Y_ELEMENT_\|A11Y_TREE_SUMMARY' | while IFS= read -r line; do
+          TAG=$(echo "$line" | grep -oP 'A11Y_ELEMENT_\K[^:]+' || true)
+          if [ -n "$TAG" ]; then
+            DATA=$(echo "$line" | grep -oP 'A11Y_ELEMENT_[^:]+: \K.*' || true)
+            echo "$DATA" >> "/tmp/a11y-trees/android_a11y_${TAG}.txt"
+          fi
+        done
+        adb logcat -d | grep 'A11Y_TREE_SUMMARY' > /tmp/a11y-trees/summary.txt 2>/dev/null || true
+        TREE_COUNT=$(find /tmp/a11y-trees -name '*.txt' -size +10c 2>/dev/null | wc -l)
+        echo "A11y element files: $TREE_COUNT"
 
         # Summary
         echo '=== Screenshots ==='

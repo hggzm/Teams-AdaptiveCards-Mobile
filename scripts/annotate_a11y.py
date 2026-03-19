@@ -43,16 +43,63 @@ def parse_bounds(bounds_str):
     return None
 
 
-def extract_a11y_nodes(xml_path):
-    """Extract accessibility-relevant nodes from uiautomator/UiDevice XML dump."""
+def extract_a11y_nodes(data_path):
+    """Extract accessibility nodes from either XML dump or logcat-extracted txt file.
+
+    Supports two formats:
+    - XML: standard UiDevice dumpWindowHierarchy output
+    - TXT: logcat-extracted format with lines like: index|label|[x1,y1][x2,y2]
+    """
+    if not os.path.exists(data_path):
+        return []
+
+    nodes = []
+
+    # Try TXT format first (logcat extraction)
+    if data_path.endswith('.txt'):
+        try:
+            with open(data_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    parts = line.split('|')
+                    if len(parts) >= 3:
+                        # Format: index|label|[x1,y1][x2,y2]
+                        idx = parts[0]
+                        label = parts[1]
+                        bounds_str = parts[2]
+                    elif len(parts) == 2:
+                        # Format: label|[x1,y1][x2,y2]
+                        label = parts[0]
+                        bounds_str = parts[1]
+                    else:
+                        continue
+
+                    rect = parse_bounds(bounds_str)
+                    if rect and label:
+                        w = rect[2] - rect[0]
+                        h = rect[3] - rect[1]
+                        if w > 5 and h > 5:
+                            nodes.append({
+                                "label": label,
+                                "class": "View",
+                                "bounds": rect,
+                                "focusable": True,
+                                "clickable": False,
+                            })
+        except Exception as e:
+            print("  WARNING: Could not parse TXT: {} ({})".format(data_path, e))
+        return nodes
+
+    # Fall back to XML format
     try:
-        tree = ET.parse(xml_path)
+        tree = ET.parse(data_path)
     except ET.ParseError:
-        print("  WARNING: Could not parse XML: {}".format(xml_path))
+        print("  WARNING: Could not parse XML: {}".format(data_path))
         return []
 
     root = tree.getroot()
-    nodes = []
     for node in root.iter("node"):
         text = node.get("text", "").strip()
         desc = node.get("content-desc", "").strip()
@@ -62,11 +109,9 @@ def extract_a11y_nodes(xml_path):
         clickable = node.get("clickable", "false") == "true"
         pkg = node.get("package", "")
 
-        # Skip system UI elements
         if "systemui" in pkg.lower() or "launcher" in pkg.lower():
             continue
 
-        # Only include nodes that TalkBack would announce
         label = desc if desc else text
         if not label:
             continue
@@ -228,7 +273,14 @@ tts_segments = []
 for scenario in SCENARIOS:
     prefix = "android_a11y_" + scenario
     img_path = os.path.join(screenshots_dir, prefix + ".png")
+    # Try .txt (logcat-extracted), then .xml
+    data_path = None
+    txt_path = os.path.join(trees_dir, prefix + ".txt")
     xml_path = os.path.join(trees_dir, prefix + ".xml")
+    if os.path.exists(txt_path) and os.path.getsize(txt_path) > 10:
+        data_path = txt_path
+    elif os.path.exists(xml_path):
+        data_path = xml_path
 
     if not os.path.exists(img_path):
         print("SKIP {}: no screenshot".format(scenario))
@@ -238,11 +290,11 @@ for scenario in SCENARIOS:
 
     # Parse a11y tree if available
     nodes = []
-    if os.path.exists(xml_path):
-        nodes = extract_a11y_nodes(xml_path)
-        print("  A11y nodes: {} elements with labels".format(len(nodes)))
+    if data_path:
+        nodes = extract_a11y_nodes(data_path)
+        print("  A11y nodes: {} elements from {}".format(len(nodes), os.path.basename(data_path)))
     else:
-        print("  No XML tree for this scenario")
+        print("  No a11y data for this scenario")
 
     # Create annotated screenshot
     annotated_path = os.path.join(output_dir, prefix + "_annotated.png")
