@@ -198,6 +198,11 @@ with open(transcript_path, "w") as f:
 print("[TRANSCRIPT] Saved: {} scenarios, {} total nodes".format(
     len(all_transcripts), sum(len(t["nodes"]) for t in all_transcripts)))
 
+# 5.7 Count annotated files  
+annotated_files = [f for f in os.listdir(OUT_DIR) if f.startswith("annotated_") and f.endswith(".png")]
+annotated_count = len(annotated_files)
+print("[OVERLAY] {} annotated screenshots produced".format(annotated_count))
+
 # 6. Generate narration from elements
 print("\n[NARRATE] Generating VoiceOver speech")
 narr_count = 0

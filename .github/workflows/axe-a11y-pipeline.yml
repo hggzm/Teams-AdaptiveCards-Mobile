@@ -136,6 +136,17 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "#### Annotated Screenshots: $ANN_COUNT | A11y Captures: $A11Y_COUNT" >> $GITHUB_STEP_SUMMARY
 
+        # List annotated screenshots
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Annotated Screenshots (with a11y overlays)" >> $GITHUB_STEP_SUMMARY
+        for f in /tmp/axe-output/annotated_*.png; do
+          if [ -f "$f" ]; then
+            NAME=$(basename "$f")
+            SZ=$(wc -c < "$f")
+            echo "- **$NAME**: $SZ bytes" >> $GITHUB_STEP_SUMMARY
+          fi
+        done
+
         # Show a11y elements using the pipeline script
         if [ -f /tmp/axe-output/03_activity_card_rendered_elements.json ]; then
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -164,6 +175,7 @@ jobs:
         cp /tmp/axe-output/*.mp4 "$PAGES_DIR/" 2>/dev/null || true
         cp /tmp/axe-output/*.png "$PAGES_DIR/" 2>/dev/null || true
         cp /tmp/axe-output/*.json "$PAGES_DIR/" 2>/dev/null || true
+        cp /tmp/axe-output/annotated_*.png "$PAGES_DIR/" 2>/dev/null || true
         cp /tmp/axe-output/annotated/*.png "$PAGES_DIR/" 2>/dev/null || true
         cp source/ios/SnapshotTests/Snapshots/Baselines/*.png "$PAGES_DIR/" 2>/dev/null || true
 
