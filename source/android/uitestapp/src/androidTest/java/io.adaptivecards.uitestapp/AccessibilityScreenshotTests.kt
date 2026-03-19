@@ -101,6 +101,12 @@ class AccessibilityScreenshotTests {
 
             // Log diagnostics
             println("A11y tree: ${treeFile.absolutePath} (${treeFile.length()} bytes)")
+
+            // Make the file readable by adb shell user for extraction.
+            // execShellBlocking runs as shell user which can chmod.
+            execShellBlocking("chmod 644 ${treeFile.absolutePath}")
+            execShellBlocking("chmod 755 ${treeDir.absolutePath}")
+            execShellBlocking("chmod 755 ${context.filesDir.absolutePath}")
         } catch (e: Exception) {
             println("A11y tree dump failed: ${e.javaClass.simpleName}: ${e.message}")
         }
