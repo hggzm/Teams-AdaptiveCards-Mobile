@@ -99,7 +99,7 @@ jobs:
         adb shell which screenrecord || echo "WARNING: screenrecord not found on emulator"
         # Start screenrecord via a separate adb shell in background on the HOST
         # This keeps the adb connection open and stable
-        adb shell screenrecord --time-limit 300 --size 720x1280 /data/local/tmp/a11y_recording.mp4 > /tmp/screenrecord-host.log 2>&1 &
+        adb shell screenrecord --time-limit 180 --size 720x1280 /data/local/tmp/a11y_recording.mp4 > /tmp/screenrecord-host.log 2>&1 &
         RECORD_HOST_PID=$!
         sleep 3
         # Verify it started on the device
