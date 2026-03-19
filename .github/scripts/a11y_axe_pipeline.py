@@ -107,12 +107,17 @@ for f in sorted(os.listdir(XCUI_DIR)):
     elif f.endswith(".png"):
         print("  SCREENSHOT: {} ({} bytes)".format(f, sz))
 
-# 5.5 Draw overlays with Pillow
+# 5.5 Draw overlays with Pillow (matching Android TalkBack style)
 print("\n[OVERLAY] Drawing accessibility overlays")
 try:
     from PIL import Image, ImageDraw, ImageFont
-    COLORS = [(0,122,255), (52,199,89), (255,149,0), (255,59,48),
-              (175,82,222), (88,86,214), (255,45,85), (0,199,190)]
+
+    # TalkBack-style green colors
+    FOCUS_FILL = (0, 200, 0, 40)       # Semi-transparent green fill
+    FOCUS_BORDER = (0, 220, 0, 220)    # Green border
+    BADGE_BG = (0, 150, 0, 240)        # Dark green badge
+    TEXT_BG = (0, 0, 0, 180)           # Dark background for text readability
+
     for f in sorted(os.listdir(OUT_DIR)):
         if not f.endswith("_elements.json"):
             continue
@@ -124,36 +129,85 @@ try:
             elems = json.load(fh)
         if not elems:
             continue
-        img = Image.open(shot)
-        draw = ImageDraw.Draw(img, "RGBA")
-        sc = img.width / 393.0
-        for i, e in enumerate(elems[:25]):
+
+        img = Image.open(shot).convert("RGBA")
+        overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        draw = ImageDraw.Draw(overlay)
+        sc = img.width / 393.0  # @3x retina scale
+        img_h = img.height
+
+        # Filter: skip elements that overlap heavily (off-screen table cells)
+        # and elements outside visible area
+        seen_rects = set()
+        visible_elems = []
+        for e in elems:
             fr = e.get("frame", {})
-            x, y = int(fr.get("x",0)*sc), int(fr.get("y",0)*sc)
-            w, h = int(fr.get("width",50)*sc), int(fr.get("height",30)*sc)
-            if w < 5 or h < 5: continue
-            c = COLORS[i % len(COLORS)]
-            draw.rectangle([x,y,x+w,y+h], fill=c+(30,), outline=c+(200,), width=max(2,int(3*sc)))
-            r = int(12*sc)
-            draw.ellipse([x,y,x+r*2,y+r*2], fill=c+(255,))
+            x = int(fr.get("x", 0) * sc)
+            y = int(fr.get("y", 0) * sc)
+            w = int(fr.get("width", 0) * sc)
+            h = int(fr.get("height", 0) * sc)
+            if w < 10 or h < 10: continue
+            if y + h < 0 or y > img_h: continue  # Off screen
+            if w > img.width * 0.95: continue      # Full-width containers
+            rect_key = (x // 20, y // 20, w // 20, h // 20)
+            if rect_key in seen_rects: continue    # Dedupe overlapping
+            seen_rects.add(rect_key)
+            visible_elems.append((e, x, y, w, h))
+
+        try:
+            font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", int(14 * sc))
+            small_font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", int(10 * sc))
+        except:
+            font = ImageFont.load_default()
+            small_font = font
+
+        for i, (e, x, y, w, h) in enumerate(visible_elems[:25]):
+            # Green semi-transparent fill (like TalkBack focus rectangle)
+            draw.rectangle([x, y, x + w, y + h], fill=FOCUS_FILL, outline=FOCUS_BORDER, width=max(2, int(2 * sc)))
+
+            # Number badge (top-left, above the box)
+            badge_sz = int(18 * sc)
+            badge_y = max(0, y - badge_sz - 2)
+            draw.ellipse([x, badge_y, x + badge_sz, badge_y + badge_sz], fill=BADGE_BG)
+            num = str(i + 1)
+            # Center number in badge
             try:
-                fnt = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", int(13*sc))
+                bbox = font.getbbox(num)
+                nw = bbox[2] - bbox[0]
+                nh = bbox[3] - bbox[1]
             except:
-                fnt = ImageFont.load_default()
-            draw.text((x+r//2, y+2), str(i+1), fill=(255,255,255), font=fnt)
-            tag = "[{}] {}".format(e.get("role","")[:6], e.get("label","")[:25])
+                nw, nh = 10, 10
+            draw.text((x + (badge_sz - nw) // 2, badge_y + (badge_sz - nh) // 2 - 2),
+                      num, fill=(255, 255, 255, 255), font=font)
+
+            # Label with dark background for readability
+            label = e.get("label", "")[:35]
+            role = e.get("role", "")
+            tag = "[{}] {}".format(role, label)
             try:
-                sfnt = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", int(10*sc))
+                tbbox = small_font.getbbox(tag)
+                tw = tbbox[2] - tbbox[0]
+                th = tbbox[3] - tbbox[1]
             except:
-                sfnt = ImageFont.load_default()
-            draw.text((x, y+h+2), tag, fill=(255,255,255), font=sfnt)
+                tw, th = len(tag) * 6, 12
+            text_y = min(y + h + 2, img_h - th - 4)
+            # Dark background pill
+            draw.rectangle([x, text_y, x + tw + 8, text_y + th + 4], fill=TEXT_BG)
+            draw.text((x + 4, text_y + 1), tag, fill=(255, 255, 255, 255), font=small_font)
+
+        # Composite overlay onto original
+        result = Image.alpha_composite(img, overlay)
         out = os.path.join(OUT_DIR, "annotated_" + name + ".png")
-        img.save(out)
-        print("  ANNOTATED: {} ({} elements)".format(name, len(elems)))
+        result.convert("RGB").save(out)
+        print("  ANNOTATED: {} ({} visible / {} total elements)".format(
+            name, len(visible_elems), len(elems)))
+
 except ImportError:
     print("  Pillow not available, skipping overlays")
 except Exception as ex:
+    import traceback
     print("  Overlay error: {}".format(ex))
+    traceback.print_exc()
 
 # 5.6 Generate a11y_transcript.json (matching Android format)
 print("\n[TRANSCRIPT] Generating accessibility transcript")
