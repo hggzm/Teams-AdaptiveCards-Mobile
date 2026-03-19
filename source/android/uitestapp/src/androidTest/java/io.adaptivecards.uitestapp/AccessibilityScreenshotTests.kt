@@ -110,10 +110,9 @@ class AccessibilityScreenshotTests {
         // Log for CI pipeline to find
         execShellBlocking("log -t A11Y_SCREENSHOT $name")
 
-        // Verify the files were written
+        // Verify the screenshot was written
         val imgSize = execShellBlocking("stat -c%s $path 2>/dev/null || echo 0")
-        val treeSize = treeFile.length()
-        println("Screenshot: $path ($imgSize bytes) | A11y tree: ${treeFile.path} ($treeSize bytes)")
+        println("Screenshot: $path ($imgSize bytes)")
     }
 
     /**
