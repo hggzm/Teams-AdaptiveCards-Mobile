@@ -880,7 +880,39 @@
 - (NSArray *)dumpA11yTree:(XCUIElement *)root
 {
     NSMutableArray *elements = [NSMutableArray array];
-    [self walkA11yElement:root depth:0 into:elements];
+    XCUIElementQuery *allElements = [root descendantsMatchingType:XCUIElementTypeAny];
+    NSUInteger count = allElements.count;
+    NSLog(@"A11Y_SCAN: Found %lu total descendant elements", (unsigned long)count);
+    for (NSUInteger i = 0; i < count && i < 200; i++) {
+        XCUIElement *elem = [allElements elementBoundByIndex:i];
+        @try {
+            if (!elem.exists) continue;
+            NSString *label = elem.label ?: @"";
+            if (label.length == 0) continue;
+            NSString *value = elem.value ? [NSString stringWithFormat:@"%@", elem.value] : @"";
+            CGRect frame = elem.frame;
+            if (frame.size.width < 5 || frame.size.height < 5) continue;
+            if (frame.size.width > 390 && frame.size.height > 800) continue;
+            NSString *role = @"other";
+            switch (elem.elementType) {
+                case XCUIElementTypeButton: role = @"button"; break;
+                case XCUIElementTypeStaticText: role = @"text"; break;
+                case XCUIElementTypeTextField: role = @"textField"; break;
+                case XCUIElementTypeTextView: role = @"textView"; break;
+                case XCUIElementTypeImage: role = @"image"; break;
+                case XCUIElementTypeCell: role = @"cell"; break;
+                case XCUIElementTypeTable: role = @"table"; break;
+                case XCUIElementTypeSwitch: role = @"switch"; break;
+                case XCUIElementTypeSlider: role = @"slider"; break;
+                default: role = @"other"; break;
+            }
+            [elements addObject:@{
+                @"label": label, @"value": value, @"role": role,
+                @"frame": @{@"x": @(frame.origin.x), @"y": @(frame.origin.y),
+                            @"width": @(frame.size.width), @"height": @(frame.size.height)},
+            }];
+        } @catch (NSException *e) { continue; }
+    }
     return elements;
 }
 
