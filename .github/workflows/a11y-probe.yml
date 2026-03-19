@@ -4,6 +4,10 @@ name: A11y Simulator Probe
 # Tests: VoiceOver enable, audio capture, Accessibility Inspector, focus rects
 
 on:
+  push:
+    branches: [ 'proxy/**' ]
+    paths:
+      - '.github/workflows/a11y-probe.yml'
   workflow_dispatch:
 
 permissions:
