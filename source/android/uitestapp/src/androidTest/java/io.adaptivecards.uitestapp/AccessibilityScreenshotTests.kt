@@ -91,7 +91,7 @@ class AccessibilityScreenshotTests {
         try {
             val context = InstrumentationRegistry.getInstrumentation().targetContext
             val treeDir = java.io.File(context.filesDir, "a11y_trees")
-            val mkdirOk = treeDir.mkdirs() || treeDir.exists()
+            treeDir.mkdirs()
             val treeFile = java.io.File(treeDir, "android_a11y_$name.xml")
 
             // Use OutputStream to avoid any File write permission issues
@@ -100,13 +100,7 @@ class AccessibilityScreenshotTests {
             }
 
             // Log diagnostics
-            val exists = treeFile.exists()
-            val size = if (exists) treeFile.length() else 0
-            println("A11y tree: path=${treeFile.absolutePath} exists=$exists size=$size mkdirOk=$mkdirOk")
-
-            // Also verify via shell ls (different user perspective)
-            val lsResult = execShellBlocking("run-as ${context.packageName} ls -la ${treeFile.absolutePath} 2>&1 || echo NOT_FOUND")
-            println("A11y tree ls: $lsResult")
+            println("A11y tree: ${treeFile.absolutePath} (${treeFile.length()} bytes)")
         } catch (e: Exception) {
             println("A11y tree dump failed: ${e.javaClass.simpleName}: ${e.message}")
         }

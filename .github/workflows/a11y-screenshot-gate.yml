@@ -107,33 +107,17 @@ jobs:
         mkdir -p /tmp/a11y-recordings
         adb pull /data/local/tmp/a11y_recording.mp4 /tmp/a11y-recordings/android_a11y_talkback_recording.mp4 2>&1 || true
 
-        # Also pull per-test a11y trees saved by tests to app filesDir
+        # Pull per-test a11y trees written by tests to app filesDir
         PKG=io.adaptivecards.uitestapp
         mkdir -p /tmp/a11y-trees
 
-        # Debug: show test output about tree dumps from logcat
-        echo '=== Test a11y tree diagnostics from logcat ==='
-        adb logcat -d | grep -i 'a11y tree\|dump failed' | tail -20
-
-        # Debug: list what's in the app's filesDir
-        echo '=== App files listing ==='
-        adb shell run-as $PKG ls -laR files/ 2>/dev/null || echo 'Cannot list app files'
-
-        # Try pulling from app internal storage via run-as
-        TREE_FILES=$(adb shell "run-as $PKG find files/a11y_trees -name '*.xml' 2>/dev/null" | tr -d '\r' || true)
-        echo "A11y tree files in app: ${TREE_FILES:-none}"
-        for tf in $TREE_FILES; do
-          BN=$(basename "$tf")
-          adb exec-out run-as $PKG cat "$tf" > "/tmp/a11y-trees/$BN" 2>/dev/null || true
-          SZ=$(wc -c < "/tmp/a11y-trees/$BN" 2>/dev/null || echo 0)
-          echo "Pulled: $BN ($SZ bytes)"
-        done
-
-        # Also try pulling from /data/local/tmp/ (fallback)
-        adb pull /data/local/tmp/a11y_trees/ /tmp/a11y-trees-alt/ 2>&1 || true
-        find /tmp/a11y-trees-alt -name '*.xml' -exec cp '{}' /tmp/a11y-trees/ \; 2>/dev/null || true
+        # The test writes to /data/user/0/PKG/files/a11y_trees/
+        # Pull directly from full path (run-as unreliable on google_apis emulators)
+        APP_DATA=/data/user/0/$PKG/files/a11y_trees
+        echo "Pulling trees from: $APP_DATA"
+        adb pull $APP_DATA/ /tmp/a11y-trees/ 2>&1 || true
         TREE_COUNT=$(find /tmp/a11y-trees -name '*.xml' -size +100c 2>/dev/null | wc -l)
-        echo "Total a11y trees: $TREE_COUNT"
+        echo "A11y trees pulled: $TREE_COUNT"
 
         # Summary
         echo '=== Screenshots ==='
