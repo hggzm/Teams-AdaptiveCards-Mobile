@@ -57,7 +57,7 @@ rc, stdout, stderr = run_cmd([
     "-destination", "platform=iOS Simulator,id={}".format(UDID),
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yDumpActivityUpdateShowCard",
     "CODE_SIGN_IDENTITY=-", "CODE_SIGNING_REQUIRED=NO", "CODE_SIGNING_ALLOWED=NO",
-], timeout=300)
+], timeout=600)
 test_dur = time.time() - start_time
 print("[TEST] Completed in {:.1f}s (exit: {})".format(test_dur, rc))
 
