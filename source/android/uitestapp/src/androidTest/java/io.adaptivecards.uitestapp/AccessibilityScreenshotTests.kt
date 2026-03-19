@@ -3,6 +3,7 @@
 package io.adaptivecards.uitestapp
 
 import android.os.ParcelFileDescriptor
+import android.util.Base64
 import android.view.View
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.UiController
@@ -97,8 +98,8 @@ class AccessibilityScreenshotTests {
                 execShellBlocking("mkdir -p $A11Y_TREE_DIR")
                 val destPath = "$A11Y_TREE_DIR/android_a11y_$name.xml"
                 // Use base64 to safely transfer XML content via shell
-                val b64 = android.util.Base64.encodeToString(
-                    xml.toByteArray(), android.util.Base64.NO_WRAP)
+                val b64 = Base64.encodeToString(
+                    xml.toByteArray(), Base64.NO_WRAP)
                 execShellBlocking("echo '$b64' | base64 -d > $destPath")
                 println("A11y tree: $destPath (${xml.length} chars)")
             }
