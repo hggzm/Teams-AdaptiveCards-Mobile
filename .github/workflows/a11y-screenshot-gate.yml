@@ -186,19 +186,35 @@ jobs:
         fi
 
         # A11y tree dump
-        if [ -f /tmp/a11y-tree.xml ]; then
-          NODES=$(grep -c 'node' /tmp/a11y-tree.xml 2>/dev/null || echo 0)
-          echo "- Accessibility tree: **$NODES nodes** dumped" >> $GITHUB_STEP_SUMMARY
+        TREE_COUNT=$(find /tmp/a11y-trees -name '*.xml' -size +100c 2>/dev/null | wc -l)
+        echo "- Accessibility trees: **$TREE_COUNT** per-test XML dumps" >> $GITHUB_STEP_SUMMARY
+
+    - name: Install annotation dependencies
+      if: always()
+      run: |
+        pip install Pillow
+        sudo apt-get update -qq && sudo apt-get install -y -qq espeak-ng fonts-dejavu-core > /dev/null 2>&1 || true
+
+    - name: Annotate screenshots with a11y overlays + generate TTS
+      if: always()
+      run: |
+        python3 ${{ github.workspace }}/scripts/annotate_a11y.py /tmp/a11y-screenshots /tmp/a11y-trees /tmp/a11y-annotated
+        ANNOTATED=$(find /tmp/a11y-annotated -name '*_annotated.png' 2>/dev/null | wc -l)
+        echo "- Annotated screenshots: **$ANNOTATED** with a11y overlays" >> $GITHUB_STEP_SUMMARY
+        if [ -f /tmp/a11y-annotated/android_a11y_talkback_narrated.mp4 ]; then
+          echo '- Narrated video: **generated** with TTS audio' >> $GITHUB_STEP_SUMMARY
         fi
 
     - name: Merge artifacts
       if: always()
       run: |
-        mkdir -p /tmp/a11y-artifacts/trees
+        mkdir -p /tmp/a11y-artifacts/trees /tmp/a11y-artifacts/annotated
         cp /tmp/a11y-screenshots/android_a11y_*.png /tmp/a11y-artifacts/ 2>/dev/null || true
         cp /tmp/a11y-recordings/*.mp4 /tmp/a11y-artifacts/ 2>/dev/null || true
-        cp /tmp/a11y-tree.xml /tmp/a11y-artifacts/trees/ 2>/dev/null || true
         cp /tmp/a11y-trees/*.xml /tmp/a11y-artifacts/trees/ 2>/dev/null || true
+        cp /tmp/a11y-annotated/*_annotated.png /tmp/a11y-artifacts/annotated/ 2>/dev/null || true
+        cp /tmp/a11y-annotated/a11y_transcript.json /tmp/a11y-artifacts/ 2>/dev/null || true
+        cp /tmp/a11y-annotated/*_narrated.mp4 /tmp/a11y-artifacts/ 2>/dev/null || true
 
     - name: Upload a11y artifacts
       if: always()
@@ -225,30 +241,37 @@ jobs:
         message: |
           ## :wheelchair: Android A11y Screenshot Results
 
-          > [Full Gallery](https://hggzm.github.io/Teams-AdaptiveCards-Mobile) | [CI Run](../actions/runs/${{ github.run_id }})
+          > [Full Gallery](https://hggzm.github.io/Teams-AdaptiveCards-Mobile) | [Transcript](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/a11y_transcript.json) | [CI Run](../actions/runs/${{ github.run_id }})
 
           ### ShowCard Expand/Collapse (PR #663)
-          | Before (Collapsed) | After (Expanded) |
+          | Raw Screenshot | A11y Element Overlay |
           |:--:|:--:|
-          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_showcard_collapsed.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_showcard_expanded.png) |
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_showcard_collapsed.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_showcard_collapsed_annotated.png) |
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_showcard_expanded.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_showcard_expanded_annotated.png) |
 
           ### Validation Error (PR #662)
-          | Before (Empty Form) | After (Errors Visible) |
+          | Raw Screenshot | A11y Element Overlay |
           |:--:|:--:|
-          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_validation_empty_form.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_validation_error_visible.png) |
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_validation_empty_form.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_validation_empty_form_annotated.png) |
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_validation_error_visible.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_validation_error_visible_annotated.png) |
 
           ### ToggleVisibility
-          | Before (Hidden) | After (Revealed) |
+          | Raw Screenshot | A11y Element Overlay |
           |:--:|:--:|
-          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_toggle_visibility_hidden.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_toggle_visibility_revealed.png) |
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_toggle_visibility_hidden.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_toggle_visibility_hidden_annotated.png) |
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_toggle_visibility_revealed.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_toggle_visibility_revealed_annotated.png) |
 
           ### ActivityUpdate ShowCard
+          | Raw Screenshot | A11y Element Overlay |
+          |:--:|:--:|
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_activity_showcard_buttons.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_activity_showcard_buttons_annotated.png) |
+          | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_activity_showcard_expanded.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/annotated/android_a11y_activity_showcard_expanded_annotated.png) |
           | Before (Buttons) | After (Expanded) |
           |:--:|:--:|
           | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_activity_showcard_buttons.png) | ![](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_activity_showcard_expanded.png) |
 
           ### TalkBack Recording
-          :movie_camera: [Watch with TalkBack voiceover](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_talkback_recording.mp4)
+          :movie_camera: [Watch recording](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_talkback_recording.mp4) | [With TTS narration](https://hggzm.github.io/Teams-AdaptiveCards-Mobile/android_a11y_talkback_narrated.mp4)
 
     - name: Upload test log
       if: always()

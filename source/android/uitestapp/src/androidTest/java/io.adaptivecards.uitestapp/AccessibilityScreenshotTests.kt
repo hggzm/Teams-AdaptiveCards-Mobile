@@ -26,6 +26,7 @@ import org.junit.rules.RuleChain
 import org.junit.rules.Timeout
 import org.junit.runner.RunWith
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 
 /**
@@ -85,17 +86,20 @@ class AccessibilityScreenshotTests {
         val path = "$SCREENSHOT_DIR/android_a11y_$name.png"
         execShellBlocking("screencap -p $path")
 
-        // Dump the accessibility node tree (contentDescription, text, bounds)
-        val treePath = "$A11Y_TREE_DIR/android_a11y_$name.xml"
-        execShellBlocking("uiautomator dump $treePath")
+        // Dump the accessibility/view hierarchy via UiDevice
+        // (uiautomator dump can't run while instrumented tests are active)
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        execShellBlocking("mkdir -p $A11Y_TREE_DIR")
+        val treeFile = File("$A11Y_TREE_DIR/android_a11y_$name.xml")
+        device.dumpWindowHierarchy(treeFile)
 
         // Log for CI pipeline to find
         execShellBlocking("log -t A11Y_SCREENSHOT $name")
 
         // Verify the files were written
         val imgSize = execShellBlocking("stat -c%s $path 2>/dev/null || echo 0")
-        val treeSize = execShellBlocking("stat -c%s $treePath 2>/dev/null || echo 0")
-        println("Screenshot: $path ($imgSize bytes) | A11y tree: $treePath ($treeSize bytes)")
+        val treeSize = treeFile.length()
+        println("Screenshot: $path ($imgSize bytes) | A11y tree: ${treeFile.path} ($treeSize bytes)")
     }
 
     /**
