@@ -116,18 +116,31 @@ jobs:
         grep -E "Test Case.*A11yInteraction" /tmp/a11y-test.log >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
         echo '```' >> $GITHUB_STEP_SUMMARY
 
+    - name: Build ADCIOSVisualizer for testing
+      if: always()
+      run: |
+        echo "=== Building ADCIOSVisualizer (build only, no test yet) ==="
+        cd source/ios/AdaptiveCards
+        xcodebuild build-for-testing \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme ADCIOSVisualizer \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tail -20
+        echo "Build complete"
+
     - name: Record accessibility interaction video
       if: always()
       run: |
-        echo "=== Recording real accessibility interactions ==="
+        echo "=== Recording accessibility interactions ==="
         mkdir -p /tmp/a11y-recordings
 
-        # Open Accessibility Inspector pointed at the simulator
-        # This shows element overlays, focus rings, and a11y properties
+        # Open Accessibility Inspector for element overlays
         open -a "Accessibility Inspector" 2>/dev/null || true
         sleep 2
 
-        # Start screen recording of the simulator
+        # Start screen recording BEFORE tests (build is already done)
         xcrun simctl io "$SIM_UDID" recordVideo \
           --codec h264 --force \
           /tmp/a11y-recordings/raw_test_recording.mp4 &
@@ -136,10 +149,9 @@ jobs:
         sleep 2
         echo "Recording started (PID: $RPID)"
 
-        # Run the real XCUITests that interact with actual cards on screen
-        # These drive: navigate to card -> tap ShowCard -> type text -> submit
+        # Run ONLY the test execution (no build — already built above)
         cd source/ios/AdaptiveCards
-        xcodebuild test \
+        xcodebuild test-without-building \
           -workspace AdaptiveCards.xcworkspace \
           -scheme ADCIOSVisualizer \
           -sdk iphonesimulator \
@@ -148,13 +160,13 @@ jobs:
           -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testSmokeTestActivityUpdateDate \
           -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testFocusOnValidationFailure \
           CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-          2>&1 | tee /tmp/a11y-recordings/xcuitest.log | tail -30 || true
+          2>&1 | tee /tmp/a11y-recordings/xcuitest.log | grep -E "Test Case|tap|typeText" || true
         cd $GITHUB_WORKSPACE
 
-        # Give a moment for the last interaction to display
+        # Wait for last interaction to render
         sleep 3
 
-        # Stop recording cleanly (SIGINT for valid mp4)
+        # Stop recording (SIGINT for valid mp4)
         kill -INT $RPID 2>/dev/null || true
         for i in $(seq 1 15); do
           kill -0 $RPID 2>/dev/null || break
