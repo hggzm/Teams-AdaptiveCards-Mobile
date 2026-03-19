@@ -107,8 +107,16 @@ jobs:
         mkdir -p /tmp/a11y-recordings
         adb pull /data/local/tmp/a11y_recording.mp4 /tmp/a11y-recordings/android_a11y_talkback_recording.mp4 2>&1 || true
 
-        # Also dump per-test a11y trees saved by tests
-        adb pull /data/local/tmp/a11y_trees/ /tmp/a11y-trees/ 2>&1 || true
+        # Also pull per-test a11y trees saved by tests to app filesDir
+        PKG=io.adaptivecards.uitestapp
+        mkdir -p /tmp/a11y-trees
+        TREE_FILES=$(adb shell "run-as $PKG find files/a11y_trees -name '*.xml' 2>/dev/null" | tr -d '\r' || true)
+        echo "A11y tree files in app: $TREE_FILES"
+        for tf in $TREE_FILES; do
+          BN=$(basename "$tf")
+          adb exec-out run-as $PKG cat "$tf" > "/tmp/a11y-trees/$BN" 2>/dev/null || true
+          echo "Pulled: $BN"
+        done
 
         # Summary
         echo '=== Screenshots ==='

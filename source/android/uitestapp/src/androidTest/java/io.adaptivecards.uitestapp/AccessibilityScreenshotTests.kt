@@ -3,7 +3,6 @@
 package io.adaptivecards.uitestapp
 
 import android.os.ParcelFileDescriptor
-import android.util.Base64
 import android.view.View
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.UiController
@@ -86,23 +85,16 @@ class AccessibilityScreenshotTests {
         execShellBlocking("screencap -p $path")
 
         // Dump the accessibility/view hierarchy via UiDevice
-        // Use dumpWindowHierarchy(OutputStream) to write to a ByteArray,
-        // then write via shell to a pullable path
+        // Write to app's filesDir (app user can always write there).
+        // Workflow pulls via: adb exec-out run-as PKG cat files/a11y_trees/...
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         try {
-            val baos = java.io.ByteArrayOutputStream()
-            device.dumpWindowHierarchy(baos)
-            val xml = baos.toString("UTF-8")
-            if (xml.isNotEmpty()) {
-                // Write XML via shell to pullable path
-                execShellBlocking("mkdir -p $A11Y_TREE_DIR")
-                val destPath = "$A11Y_TREE_DIR/android_a11y_$name.xml"
-                // Use base64 to safely transfer XML content via shell
-                val b64 = Base64.encodeToString(
-                    xml.toByteArray(), Base64.NO_WRAP)
-                execShellBlocking("echo '$b64' | base64 -d > $destPath")
-                println("A11y tree: $destPath (${xml.length} chars)")
-            }
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val treeDir = java.io.File(context.filesDir, "a11y_trees")
+            treeDir.mkdirs()
+            val treeFile = java.io.File(treeDir, "android_a11y_$name.xml")
+            device.dumpWindowHierarchy(treeFile)
+            println("A11y tree: ${treeFile.absolutePath} (${treeFile.length()} bytes)")
         } catch (e: Exception) {
             println("A11y tree dump failed: ${e.message}")
         }
