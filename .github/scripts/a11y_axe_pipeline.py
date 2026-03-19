@@ -1,7 +1,10 @@
+import subprocess
 #!/usr/bin/env python3
 """Simplified pipeline: XCUITest draws overlays natively via CoreGraphics.
 This script just orchestrates: record video, run tests, collect outputs."""
 import subprocess, json, os, sys, time, shutil
+
+subprocess.run([sys.executable, "-m", "pip", "install", "-q", "Pillow"], capture_output=True)
 
 UDID = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("SIM_UDID", "")
 OUT_DIR = sys.argv[2] if len(sys.argv) > 2 else "/tmp/axe-output"
@@ -104,6 +107,54 @@ for f in sorted(os.listdir(XCUI_DIR)):
         print("  ELEMENTS: {} ({} elements)".format(f, len(elems)))
     elif f.endswith(".png"):
         print("  SCREENSHOT: {} ({} bytes)".format(f, sz))
+
+# 5.5 Draw overlays with Pillow
+print("\n[OVERLAY] Drawing accessibility overlays")
+try:
+    from PIL import Image, ImageDraw, ImageFont
+    COLORS = [(0,122,255), (52,199,89), (255,149,0), (255,59,48),
+              (175,82,222), (88,86,214), (255,45,85), (0,199,190)]
+    for f in sorted(os.listdir(OUT_DIR)):
+        if not f.endswith("_elements.json"):
+            continue
+        name = f.replace("_elements.json", "")
+        shot = os.path.join(OUT_DIR, name + ".png")
+        if not os.path.exists(shot):
+            continue
+        with open(os.path.join(OUT_DIR, f)) as fh:
+            elems = json.load(fh)
+        if not elems:
+            continue
+        img = Image.open(shot)
+        draw = ImageDraw.Draw(img, "RGBA")
+        sc = img.width / 393.0
+        for i, e in enumerate(elems[:25]):
+            fr = e.get("frame", {})
+            x, y = int(fr.get("x",0)*sc), int(fr.get("y",0)*sc)
+            w, h = int(fr.get("width",50)*sc), int(fr.get("height",30)*sc)
+            if w < 5 or h < 5: continue
+            c = COLORS[i % len(COLORS)]
+            draw.rectangle([x,y,x+w,y+h], fill=c+(30,), outline=c+(200,), width=max(2,int(3*sc)))
+            r = int(12*sc)
+            draw.ellipse([x,y,x+r*2,y+r*2], fill=c+(255,))
+            try:
+                fnt = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", int(13*sc))
+            except:
+                fnt = ImageFont.load_default()
+            draw.text((x+r//2, y+2), str(i+1), fill=(255,255,255), font=fnt)
+            tag = "[{}] {}".format(e.get("role","")[:6], e.get("label","")[:25])
+            try:
+                sfnt = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", int(10*sc))
+            except:
+                sfnt = ImageFont.load_default()
+            draw.text((x, y+h+2), tag, fill=(255,255,255), font=sfnt)
+        out = os.path.join(OUT_DIR, "annotated_" + name + ".png")
+        img.save(out)
+        print("  ANNOTATED: {} ({} elements)".format(name, len(elems)))
+except ImportError:
+    print("  Pillow not available, skipping overlays")
+except Exception as ex:
+    print("  Overlay error: {}".format(ex))
 
 # 6. Generate narration from elements
 print("\n[NARRATE] Generating VoiceOver speech")
