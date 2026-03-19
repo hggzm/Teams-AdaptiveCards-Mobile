@@ -156,7 +156,7 @@ class AccessibilityScreenshotTests {
             val label = if (desc.isNotEmpty()) desc else text
             val stateDesc = if (android.os.Build.VERSION.SDK_INT >= 30) {
                 node.stateDescription?.toString() ?: ""
-            } else 
+            } else ""
             val bounds = Rect()
             node.getBoundsInScreen(bounds)
             val pkg = node.packageName?.toString() ?: ""
