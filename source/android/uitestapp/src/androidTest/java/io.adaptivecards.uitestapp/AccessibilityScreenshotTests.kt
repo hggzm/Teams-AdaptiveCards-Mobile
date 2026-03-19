@@ -84,19 +84,31 @@ class AccessibilityScreenshotTests {
         val path = "$SCREENSHOT_DIR/android_a11y_$name.png"
         execShellBlocking("screencap -p $path")
 
-        // Dump the accessibility/view hierarchy via UiDevice
-        // Write to app's filesDir (app user can always write there).
+        // Dump the accessibility/view hierarchy via UiDevice.
+        // Write to app's filesDir (test process = app user, can write there).
         // Workflow pulls via: adb exec-out run-as PKG cat files/a11y_trees/...
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         try {
             val context = InstrumentationRegistry.getInstrumentation().targetContext
             val treeDir = java.io.File(context.filesDir, "a11y_trees")
-            treeDir.mkdirs()
+            val mkdirOk = treeDir.mkdirs() || treeDir.exists()
             val treeFile = java.io.File(treeDir, "android_a11y_$name.xml")
-            device.dumpWindowHierarchy(treeFile)
-            println("A11y tree: ${treeFile.absolutePath} (${treeFile.length()} bytes)")
+
+            // Use OutputStream to avoid any File write permission issues
+            java.io.FileOutputStream(treeFile).use { fos ->
+                device.dumpWindowHierarchy(fos)
+            }
+
+            // Log diagnostics
+            val exists = treeFile.exists()
+            val size = if (exists) treeFile.length() else 0
+            println("A11y tree: path=${treeFile.absolutePath} exists=$exists size=$size mkdirOk=$mkdirOk")
+
+            // Also verify via shell ls (different user perspective)
+            val lsResult = execShellBlocking("run-as ${context.packageName} ls -la ${treeFile.absolutePath} 2>&1 || echo NOT_FOUND")
+            println("A11y tree ls: $lsResult")
         } catch (e: Exception) {
-            println("A11y tree dump failed: ${e.message}")
+            println("A11y tree dump failed: ${e.javaClass.simpleName}: ${e.message}")
         }
 
         // Log for CI pipeline to find
