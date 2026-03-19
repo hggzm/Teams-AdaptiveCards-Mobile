@@ -1,31 +1,27 @@
 #!/usr/bin/env python3
 """
-AXe-driven accessibility overlay pipeline with point-grid scanning.
+Option 2: Parallel describe-ui capture during XCUITest execution.
 
-Drives the ADCIOSVisualizer app using AXe CLI, then scans a grid of
-screen coordinates with `axe describe-ui --point X,Y` to discover
-every accessibility element and its exact bounding box. Draws numbered
-overlays onto screenshots (RocketSim-style).
+Runs axe describe-ui in a loop every 2 seconds while XCUITests drive
+real card interactions. The describe-ui captures happen while the app
+is alive and showing card content.
+
+After tests complete, finds the richest a11y tree snapshots (most elements),
+pairs them with screenshots, and draws overlays.
 
 Usage:
-  python3 a11y_axe_pipeline.py <sim_udid> <app_bundle_id> <output_dir>
+  python3 a11y_axe_pipeline.py <sim_udid> <output_dir>
 """
-import subprocess, json, os, sys, time, shutil, hashlib
+import subprocess, json, os, sys, time, shutil, threading, hashlib
 from pathlib import Path
 
 UDID = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("SIM_UDID", "")
-APP_BUNDLE = sys.argv[2] if len(sys.argv) > 2 else "com.test.ADCIOSVisualizer"
-OUT_DIR = sys.argv[3] if len(sys.argv) > 3 else "/tmp/axe-pipeline"
+OUT_DIR = sys.argv[2] if len(sys.argv) > 2 else "/tmp/axe-output"
 os.makedirs(OUT_DIR, exist_ok=True)
 
-# Simulator screen dimensions (iPhone 15 Pro logical)
 SCREEN_W = 393
 SCREEN_H = 852
-# Grid step for point scanning (smaller = more elements found, slower)
-GRID_STEP = 30
-# Card content area (exclude status bar and nav bar)
-SCAN_Y_START = 100
-SCAN_Y_END = 800
+
 
 def run_cmd(cmd, timeout=15):
     try:
@@ -37,106 +33,96 @@ def run_cmd(cmd, timeout=15):
         return -1, "", str(e)
 
 
-def axe_describe_point(udid, x, y):
-    """Get accessibility element at a specific screen point."""
-    rc, stdout, stderr = run_cmd(
-        ["axe", "describe-ui", "--point", "{},{}".format(x, y), "--udid", udid], timeout=5)
-    if rc == 0 and stdout.strip():
-        try:
-            data = json.loads(stdout)
-            # describe-ui --point returns a single element or array
-            if isinstance(data, list) and len(data) > 0:
-                return data[0]
-            elif isinstance(data, dict):
-                return data
-        except json.JSONDecodeError:
-            pass
-    return None
+def parse_elements(tree_data):
+    """Recursively extract all labeled elements with frames from an a11y tree."""
+    elements = []
+
+    def walk(node, depth=0):
+        label = node.get("AXLabel") or ""
+        value = node.get("AXValue")
+        role = node.get("role_description") or node.get("role", "")
+        frame = node.get("frame", {})
+        uid = node.get("AXUniqueId") or ""
+
+        # Keep elements that have a label and aren't the root app/window
+        if label and role not in ("application", "window", ""):
+            w = frame.get("width", frame.get("w", 0))
+            h = frame.get("height", frame.get("h", 0))
+            # Skip elements that span the full screen (containers)
+            if w < SCREEN_W * 0.9 or h < SCREEN_H * 0.5:
+                elements.append({
+                    "label": label,
+                    "value": value if value else "",
+                    "role": role,
+                    "frame": frame,
+                    "uid": uid,
+                    "depth": depth,
+                    "help": node.get("help") or "",
+                })
+
+        for child in node.get("children", []):
+            walk(child, depth + 1)
+
+    if isinstance(tree_data, list):
+        for node in tree_data:
+            walk(node)
+    elif isinstance(tree_data, dict):
+        walk(tree_data)
+
+    # Sort by position (reading order)
+    elements.sort(key=lambda e: (e["frame"].get("y", 0), e["frame"].get("x", 0)))
+    return elements
 
 
-def scan_grid(udid, name, step=GRID_STEP):
-    """Scan a grid of points to discover all accessibility elements."""
-    print("    Scanning {}x{} grid (step={})...".format(
-        (SCREEN_W // step), ((SCAN_Y_END - SCAN_Y_START) // step), step))
+# ═══════════════════════════════════════════════════════════════
+# Background describe-ui capture thread
+# ═══════════════════════════════════════════════════════════════
 
-    elements = {}  # keyed by unique_id or label+frame hash
-    scan_count = 0
-
-    for y in range(SCAN_Y_START, SCAN_Y_END, step):
-        for x in range(20, SCREEN_W - 20, step):
-            elem = axe_describe_point(udid, x, y)
-            if elem:
-                # Build unique key
-                uid = elem.get("AXUniqueId") or ""
-                label = elem.get("AXLabel") or ""
-                frame = elem.get("frame", {})
-                role = elem.get("role_description") or elem.get("role", "")
-
-                # Skip empty/application-level elements
-                if not label or role in ("application", "window", ""):
-                    continue
-
-                key = uid if uid else hashlib.md5(
-                    "{}:{}:{}".format(label, role, json.dumps(frame, sort_keys=True)).encode()
-                ).hexdigest()
-
-                if key not in elements:
-                    elements[key] = {
-                        "label": label,
-                        "value": elem.get("AXValue") or "",
-                        "role": role,
-                        "frame": frame,
-                        "uid": uid,
-                        "help": elem.get("help") or "",
-                        "enabled": elem.get("enabled", True),
-                    }
-            scan_count += 1
-
-    # Sort by position (top-left to bottom-right, reading order)
-    sorted_elems = sorted(elements.values(),
-        key=lambda e: (e["frame"].get("y", 0), e["frame"].get("x", 0)))
-
-    # Save
-    out_path = os.path.join(OUT_DIR, "{}_elements.json".format(name))
-    with open(out_path, "w") as f:
-        json.dump(sorted_elems, f, indent=2)
-
-    print("    Found {} unique elements from {} points".format(len(sorted_elems), scan_count))
-    for i, e in enumerate(sorted_elems[:12]):
-        fr = e["frame"]
-        print("      {:2d}. [{}] {} = {} ({},{} {}x{})".format(
-            i + 1, e["role"][:8], e["label"][:25],
-            (e["value"] or "")[:15],
-            int(fr.get("x", 0)), int(fr.get("y", 0)),
-            int(fr.get("width", 0)), int(fr.get("height", 0))))
-    if len(sorted_elems) > 12:
-        print("      ... and {} more".format(len(sorted_elems) - 12))
-
-    return sorted_elems
+capture_running = True
+captures = []  # [{timestamp, elements, raw_json_path}]
+capture_lock = threading.Lock()
 
 
-def axe_screenshot(udid, name):
-    """Capture screenshot via AXe."""
-    out_path = os.path.join(OUT_DIR, "{}.png".format(name))
-    rc, stdout, stderr = run_cmd(
-        ["axe", "screenshot", "--output", out_path, "--udid", udid])
-    if rc == 0 and os.path.exists(out_path):
-        print("    screenshot: {} bytes".format(os.path.getsize(out_path)))
-        return out_path
-    else:
-        print("    screenshot failed: {}".format(stderr[:80]))
-        return None
+def describe_ui_loop():
+    """Run describe-ui every 2 seconds in background, save results."""
+    idx = 0
+    while capture_running:
+        ts = time.time()
+        rc, stdout, stderr = run_cmd(
+            ["axe", "describe-ui", "--udid", UDID], timeout=8)
 
+        if rc == 0 and stdout.strip():
+            try:
+                tree = json.loads(stdout)
+                elements = parse_elements(tree)
 
-def axe_tap(udid, label):
-    """Tap element by accessibility label."""
-    rc, stdout, stderr = run_cmd(
-        ["axe", "tap", "--label", label, "--udid", udid], timeout=10)
-    if rc == 0:
-        print("    tap '{}': OK".format(label))
-    else:
-        print("    tap '{}': FAILED ({})".format(label, stderr.strip()[:60]))
-    return rc == 0
+                if elements:  # Only save non-empty captures
+                    snap_name = "snap_{:03d}".format(idx)
+                    raw_path = os.path.join(OUT_DIR, "{}_tree.json".format(snap_name))
+                    elem_path = os.path.join(OUT_DIR, "{}_elements.json".format(snap_name))
+
+                    with open(raw_path, "w") as f:
+                        f.write(stdout)
+                    with open(elem_path, "w") as f:
+                        json.dump(elements, f, indent=2)
+
+                    with capture_lock:
+                        captures.append({
+                            "timestamp": round(ts, 1),
+                            "idx": idx,
+                            "name": snap_name,
+                            "element_count": len(elements),
+                            "elements_path": elem_path,
+                        })
+
+                    idx += 1
+            except json.JSONDecodeError:
+                pass
+
+        # Wait 2 seconds between captures
+        elapsed = time.time() - ts
+        sleep_time = max(0.5, 2.0 - elapsed)
+        time.sleep(sleep_time)
 
 
 def draw_overlays(screenshot_path, elements, output_path):
@@ -144,21 +130,17 @@ def draw_overlays(screenshot_path, elements, output_path):
     if not os.path.exists(screenshot_path) or not elements:
         return False
 
-    # iOS screenshots are @2x or @3x, so we need to scale coordinates
-    # AXe reports logical coordinates; screenshots are in pixels
-    # Detect scale factor from image size
+    # Detect image scale
     rc, stdout, _ = run_cmd([
-        "ffprobe", "-v", "error",
-        "-select_streams", "v:0",
-        "-show_entries", "stream=width,height",
-        "-of", "csv=p=0", screenshot_path
+        "ffprobe", "-v", "error", "-select_streams", "v:0",
+        "-show_entries", "stream=width,height", "-of", "csv=p=0",
+        screenshot_path
     ])
+    scale = 2.0
     if rc == 0 and stdout.strip():
         parts = stdout.strip().split(",")
-        img_w = int(parts[0])
-        scale = img_w / SCREEN_W  # e.g. 786/393 = 2.0 for @2x
-    else:
-        scale = 2.0  # Default to @2x
+        if len(parts) >= 1:
+            scale = int(parts[0]) / SCREEN_W
 
     colors = [
         "0x007AFF", "0x34C759", "0xFF9500", "0xFF3B30", "0xAF52DE",
@@ -171,86 +153,54 @@ def draw_overlays(screenshot_path, elements, output_path):
         fr = elem.get("frame", {})
         x = int(fr.get("x", 0) * scale)
         y = int(fr.get("y", 0) * scale)
-        w = int(fr.get("width", 50) * scale)
-        h = int(fr.get("height", 30) * scale)
+        w = int(fr.get("width", fr.get("w", 50)) * scale)
+        h = int(fr.get("height", fr.get("h", 30)) * scale)
         color = colors[i % len(colors)]
         label = elem.get("label", "")
         role = elem.get("role", "")[:6]
 
+        if w < 5 or h < 5:
+            continue
+
         # Bounding box
         filters.append(
             "drawbox=x={}:y={}:w={}:h={}:color={}@0.5:t=4".format(x, y, w, h, color))
-
-        # Index number circle (top-left of box)
-        num = str(i + 1)
+        # Index number
         filters.append(
             "drawtext=text='{}':fontsize={}:fontcolor=white"
             ":borderw=3:bordercolor={}:x={}:y={}".format(
-                num, int(20 * scale), color, x + 4, y + 2))
-
-        # Label text (below box)
-        safe_label = label.replace("'", "").replace(":", " ").replace("\\", "")[:25]
-        safe_tag = "[{}] {}".format(role, safe_label).replace("'", "").replace(":", " ")
-        text_y = min(y + h + 2, int(SCREEN_H * scale) - int(16 * scale))
+                i + 1, int(20 * scale), color, x + 4, y + 2))
+        # Label
+        safe = label.replace("'", "").replace(":", " ").replace("\\", "")[:20]
+        tag = "[{}] {}".format(role, safe).replace("'", "").replace(":", " ")
+        ty = min(y + h + 2, int(SCREEN_H * scale) - int(14 * scale))
         filters.append(
             "drawtext=text='{}':fontsize={}:fontcolor=white"
             ":borderw=1:bordercolor=black:x={}:y={}".format(
-                safe_tag, int(11 * scale), x, text_y))
+                tag, int(11 * scale), x, ty))
 
-    filter_str = ",".join(filters)
-    rc, _, stderr = run_cmd([
-        "ffmpeg", "-y", "-i", screenshot_path,
-        "-vf", filter_str,
-        output_path
-    ], timeout=30)
-
-    if rc == 0:
-        print("    overlays: {} elements drawn".format(min(len(elements), 20)))
-        return True
-    else:
-        print("    overlay draw failed: {}".format(stderr[:120]))
+    if not filters:
+        shutil.copy2(screenshot_path, output_path)
         return False
 
+    rc, _, stderr = run_cmd([
+        "ffmpeg", "-y", "-i", screenshot_path,
+        "-vf", ",".join(filters), output_path
+    ], timeout=30)
 
-# Interaction steps: action, arg, description, scan_after
-SCENARIO = [
-    ("launch", APP_BUNDLE, "Launch app", False),
-    ("wait", "3", "Wait for app", False),
-    ("tap_label", "v1.5", "Tap v1.5", False),
-    ("wait", "1", "Wait", False),
-    ("tap_label", "Scenarios", "Tap Scenarios", False),
-    ("wait", "1", "Wait for list", False),
-    ("tap_label", "ActivityUpdate.json", "Open ActivityUpdate card", False),
-    ("wait", "2", "Wait for card render", False),
-    ("scan_and_screenshot", "01_activity_card", "ActivityUpdate card rendered", True),
-    ("tap_label", "Comment", "Tap Comment ShowCard", False),
-    ("wait", "1.5", "Wait for ShowCard expand", False),
-    ("scan_and_screenshot", "02_showcard_comment", "ShowCard Comment expanded", True),
-    ("tap_label", "OK", "Dismiss comment", False),
-    ("wait", "1", "Wait", False),
-    ("tap_label", "Set due date", "Tap Set due date", False),
-    ("wait", "1.5", "Wait for date ShowCard", False),
-    ("scan_and_screenshot", "03_showcard_date", "ShowCard date expanded", True),
-    ("tap_label", "Back", "Back to list", False),
-    ("wait", "1", "Wait", False),
-    ("tap_label", "Back", "Back to versions", False),
-    ("wait", "1", "Wait", False),
-    ("tap_label", "v1.5", "Tap v1.5", False),
-    ("wait", "1", "Wait", False),
-    ("tap_label", "Scenarios", "Tap Scenarios", False),
-    ("wait", "1", "Wait", False),
-    ("tap_label", "ExpenseReport.json", "Open ExpenseReport", False),
-    ("wait", "2", "Wait for card", False),
-    ("scan_and_screenshot", "04_expense_card", "ExpenseReport card rendered", True),
-]
+    return rc == 0
+
+
+# ═══════════════════════════════════════════════════════════════
+# Main pipeline
+# ═══════════════════════════════════════════════════════════════
 
 print("=" * 60)
-print("AXe Point-Grid Overlay Pipeline")
+print("Option 2: Parallel describe-ui during XCUITests")
 print("UDID: {}".format(UDID))
-print("Grid: {}px step, scanning y={}-{}".format(GRID_STEP, SCAN_Y_START, SCAN_Y_END))
 print("=" * 60)
 
-# Start video recording
+# 1. Start AXe video recording
 video_path = os.path.join(OUT_DIR, "raw_recording.mp4")
 rec_proc = subprocess.Popen(
     ["axe", "record-video", "--udid", UDID, "--fps", "15", "--output", video_path],
@@ -259,44 +209,60 @@ rec_proc = subprocess.Popen(
 time.sleep(2)
 print("[REC] Recording PID: {}".format(rec_proc.pid))
 
-# Run scenario
-timeline = []
-annotated_dir = os.path.join(OUT_DIR, "annotated")
-os.makedirs(annotated_dir, exist_ok=True)
+# 2. Start background describe-ui capture thread
+print("[A11Y] Starting background a11y capture loop...")
+capture_thread = threading.Thread(target=describe_ui_loop, daemon=True)
+capture_thread.start()
+
+# 3. Take a pre-test screenshot
+axe_preshot = os.path.join(OUT_DIR, "pre_test.png")
+run_cmd(["axe", "screenshot", "--output", axe_preshot, "--udid", UDID])
+print("[SHOT] Pre-test screenshot")
+
+# 4. Run XCUITests (they drive real card interactions)
+print("\n[TEST] Running XCUITests...")
 start_time = time.time()
 
-for action, arg, desc, do_scan in SCENARIO:
-    elapsed = time.time() - start_time
-    print("\n[{:5.1f}s] {} ({} {})".format(elapsed, desc, action, arg))
+rc, stdout, stderr = run_cmd([
+    "xcodebuild", "test-without-building",
+    "-workspace", "source/ios/AdaptiveCards/AdaptiveCards.xcworkspace",
+    "-scheme", "ADCIOSVisualizer",
+    "-sdk", "iphonesimulator",
+    "-destination", "platform=iOS Simulator,id={}".format(UDID),
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testSmokeTestActivityUpdateComment",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testSmokeTestActivityUpdateDate",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testFocusOnValidationFailure",
+    "CODE_SIGN_IDENTITY=-", "CODE_SIGNING_REQUIRED=NO", "CODE_SIGNING_ALLOWED=NO",
+], timeout=300)
 
-    entry = {"timestamp": round(elapsed, 1), "action": action,
-             "arg": arg, "description": desc}
+test_duration = time.time() - start_time
+print("[TEST] XCUITests completed in {:.1f}s (exit: {})".format(test_duration, rc))
 
-    if action == "launch":
-        run_cmd(["xcrun", "simctl", "launch", UDID, arg])
-    elif action == "wait":
-        time.sleep(float(arg))
-    elif action == "tap_label":
-        entry["success"] = axe_tap(UDID, arg)
-    elif action == "scan_and_screenshot":
-        # Take screenshot first
-        shot_path = axe_screenshot(UDID, arg)
-        entry["screenshot"] = "{}.png".format(arg)
+# Save test log
+with open(os.path.join(OUT_DIR, "xcuitest.log"), "w") as f:
+    f.write(stdout)
+    f.write("\n--- STDERR ---\n")
+    f.write(stderr)
 
-        # Scan grid for elements
-        elements = scan_grid(UDID, arg, step=GRID_STEP)
-        entry["element_count"] = len(elements)
+# Parse test results
+passed = stdout.count("passed")
+failed = stdout.count("failed")
+print("[TEST] Passed: {}, Failed: {}".format(passed, failed))
 
-        # Draw overlays
-        if shot_path and elements:
-            annotated_path = os.path.join(annotated_dir, "annotated_{}.png".format(arg))
-            if draw_overlays(shot_path, elements, annotated_path):
-                entry["annotated"] = "annotated/annotated_{}.png".format(arg)
+# 5. Take post-test screenshots
+for i in range(3):
+    time.sleep(1)
+    shot_path = os.path.join(OUT_DIR, "post_test_{}.png".format(i))
+    run_cmd(["axe", "screenshot", "--output", shot_path, "--udid", UDID])
 
-    timeline.append(entry)
+# 6. Stop background capture
+print("\n[A11Y] Stopping background capture...")
+capture_running = False
+capture_thread.join(timeout=10)
+print("[A11Y] Captured {} a11y snapshots during tests".format(len(captures)))
 
-# Stop recording
-print("\n[REC] Stopping recording...")
+# 7. Stop video recording
+print("[REC] Stopping recording...")
 rec_proc.send_signal(2)
 try:
     rec_proc.wait(timeout=15)
@@ -305,57 +271,141 @@ except:
 time.sleep(2)
 
 if os.path.exists(video_path):
-    print("[REC] Recording: {} bytes".format(os.path.getsize(video_path)))
+    sz = os.path.getsize(video_path)
+    print("[REC] Recording: {} bytes".format(sz))
     shutil.copy2(video_path, os.path.join(OUT_DIR, "voiceover_demo.mp4"))
 
-# Save timeline
-with open(os.path.join(OUT_DIR, "timeline.json"), "w") as f:
-    json.dump({"timeline": timeline}, f, indent=2)
+# ═══════════════════════════════════════════════════════════════
+# Post-processing: find richest captures and draw overlays
+# ═══════════════════════════════════════════════════════════════
 
-# Generate narration for scanned steps
 print("\n" + "=" * 60)
-print("Generating VoiceOver narration from scanned elements")
+print("Post-processing: finding richest accessibility captures")
 print("=" * 60)
 
-for entry in timeline:
-    if entry.get("element_count", 0) > 0:
-        name = entry["arg"]
-        elements_path = os.path.join(OUT_DIR, "{}_elements.json".format(name))
-        if os.path.exists(elements_path):
-            with open(elements_path) as f:
-                elems = json.load(f)
-            lines = []
-            for e in elems[:8]:
-                speech = e.get("label", "")
-                val = e.get("value", "")
-                role = e.get("role", "")
-                if not speech:
-                    continue
-                if val:
-                    speech += ", " + val
-                speech += ". " + role + "."
-                lines.append(speech)
-            if lines:
-                text = " ".join(lines)
-                narr_path = os.path.join(OUT_DIR, "narr_{}.aiff".format(name))
-                rc, _, _ = run_cmd(
-                    ["say", "-v", "Samantha", "-r", "180", "-o", narr_path, text], timeout=15)
-                if rc == 0:
-                    print("  Narration {}: {} bytes".format(name, os.path.getsize(narr_path)))
+annotated_dir = os.path.join(OUT_DIR, "annotated")
+os.makedirs(annotated_dir, exist_ok=True)
 
-# Summary
+# Sort captures by element count (most elements = card content visible)
+with capture_lock:
+    sorted_captures = sorted(captures, key=lambda c: c["element_count"], reverse=True)
+
+# Find unique captures (different element sets)
+seen_counts = set()
+best_captures = []
+for cap in sorted_captures:
+    count = cap["element_count"]
+    if count not in seen_counts and count > 3:
+        seen_counts.add(count)
+        best_captures.append(cap)
+    if len(best_captures) >= 5:
+        break
+
+print("Best {} captures (by element richness):".format(len(best_captures)))
+for cap in best_captures:
+    print("  {} — {} elements at {:.1f}s".format(
+        cap["name"], cap["element_count"],
+        cap["timestamp"] - (captures[0]["timestamp"] if captures else 0)))
+
+# For each best capture, take a screenshot at the nearest time and draw overlays
+# Since we can't go back in time, use the post-test screenshots or take new ones
+# Actually the video has the frames — extract frames at capture timestamps
+if best_captures and os.path.exists(video_path):
+    base_time = captures[0]["timestamp"] if captures else start_time
+    for cap in best_captures:
+        name = cap["name"]
+        elem_path = cap["elements_path"]
+        relative_ts = cap["timestamp"] - base_time
+
+        # Extract frame from video at this timestamp
+        frame_path = os.path.join(OUT_DIR, "{}_frame.png".format(name))
+        run_cmd([
+            "ffmpeg", "-y", "-ss", str(max(0, relative_ts)),
+            "-i", video_path, "-frames:v", "1", "-q:v", "2", frame_path
+        ], timeout=15)
+
+        if os.path.exists(frame_path) and os.path.exists(elem_path):
+            with open(elem_path) as f:
+                elements = json.load(f)
+
+            annotated_path = os.path.join(annotated_dir,
+                "annotated_{}.png".format(name))
+
+            if draw_overlays(frame_path, elements, annotated_path):
+                print("  Annotated {}: {} elements drawn".format(name, len(elements)))
+                cap["annotated"] = "annotated/annotated_{}.png".format(name)
+            else:
+                print("  Overlay draw failed for {}".format(name))
+
+# Generate narration for the best capture
+print("\n" + "=" * 60)
+print("Generating VoiceOver narration")
+print("=" * 60)
+
+narr_count = 0
+for cap in best_captures[:3]:
+    elem_path = cap["elements_path"]
+    if os.path.exists(elem_path):
+        with open(elem_path) as f:
+            elements = json.load(f)
+        lines = []
+        for e in elements[:10]:
+            speech = e.get("label", "")
+            val = e.get("value", "")
+            role = e.get("role", "")
+            if not speech:
+                continue
+            if val:
+                speech += ", " + val
+            speech += ". " + role + "."
+            lines.append(speech)
+        if lines:
+            text = " ".join(lines)
+            narr_path = os.path.join(OUT_DIR, "narr_{}.aiff".format(cap["name"]))
+            rc, _, _ = run_cmd(
+                ["say", "-v", "Samantha", "-r", "180", "-o", narr_path, text], timeout=15)
+            if rc == 0:
+                narr_count += 1
+                print("  Narration {}: {} bytes".format(
+                    cap["name"], os.path.getsize(narr_path)))
+
+# Save metadata
 annotated_count = len([f for f in os.listdir(annotated_dir) if f.endswith(".png")])
-scan_steps = [e for e in timeline if e.get("element_count", 0) > 0]
+metadata = {
+    "total_captures": len(captures),
+    "best_captures": best_captures,
+    "test_duration_sec": round(test_duration, 1),
+    "tests_passed": passed,
+    "tests_failed": failed,
+    "annotated_screenshots": annotated_count,
+    "narration_segments": narr_count,
+    "video_size": os.path.getsize(video_path) if os.path.exists(video_path) else 0,
+}
+
+with open(os.path.join(OUT_DIR, "timeline.json"), "w") as f:
+    json.dump(metadata, f, indent=2)
+
+# Per-capture element summary
+for cap in captures[:5]:
+    if os.path.exists(cap["elements_path"]):
+        with open(cap["elements_path"]) as f:
+            elems = json.load(f)
+        print("\n  {} ({} elements):".format(cap["name"], len(elems)))
+        for i, e in enumerate(elems[:6]):
+            fr = e["frame"]
+            print("    {:2d}. [{}] {} = {} ({},{} {}x{})".format(
+                i + 1, e["role"][:8], e["label"][:25],
+                (e["value"] or "")[:15],
+                int(fr.get("x", 0)), int(fr.get("y", 0)),
+                int(fr.get("width", fr.get("w", 0))),
+                int(fr.get("height", fr.get("h", 0)))))
 
 print("\n" + "=" * 60)
 print("Pipeline complete")
-print("  Video: {}".format(video_path if os.path.exists(video_path) else "NONE"))
-print("  Scanned steps: {}".format(len(scan_steps)))
+print("  Total a11y captures: {}".format(len(captures)))
+print("  Best captures: {}".format(len(best_captures)))
 print("  Annotated screenshots: {}".format(annotated_count))
-for s in scan_steps:
-    print("    {} — {} elements, annotated={}".format(
-        s["description"], s["element_count"], bool(s.get("annotated"))))
+print("  Narrations: {}".format(narr_count))
+print("  Video: {} bytes".format(os.path.getsize(video_path) if os.path.exists(video_path) else 0))
 print("=" * 60)
-
-# Exit 0 even if some taps failed (pipeline produced artifacts)
 sys.exit(0)

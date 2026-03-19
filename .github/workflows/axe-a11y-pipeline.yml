@@ -82,9 +82,9 @@ jobs:
 
     - name: Run AXe a11y pipeline
       run: |
+        mkdir -p /tmp/axe-output
         python3 .github/scripts/a11y_axe_pipeline.py \
           "$SIM_UDID" \
-          "$APP_BUNDLE" \
           /tmp/axe-output \
           2>&1 | tee /tmp/axe-output/pipeline.log
 
