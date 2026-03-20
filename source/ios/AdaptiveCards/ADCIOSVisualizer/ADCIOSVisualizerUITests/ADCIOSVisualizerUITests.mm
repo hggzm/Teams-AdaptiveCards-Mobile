@@ -875,95 +875,277 @@
 }
 
 
-#pragma mark - A11y Tree Dump for Accessibility Verification
+#pragma mark - Accessibility-Driven UI Automation
 
-- (void)testA11yDumpActivityUpdateShowCard
+/// Discover all accessible elements in VoiceOver reading order.
+/// Returns an array of dictionaries with label, value, role, frame, identifier.
+/// This is the iOS equivalent of Android's AccessibilityNodeInfo traversal.
+- (NSArray *)discoverAccessibleElements
 {
-    [self openCardForVersion:@"v1.5" forCardType:@"Scenarios" withCardName:@"ActivityUpdate.json"];
-    [NSThread sleepForTimeInterval:1.0];
-
-    // Dump accessibility tree
     NSMutableArray *elements = [NSMutableArray array];
+    
+    // Query each VoiceOver-relevant element type in order
     XCUIElementType scanTypes[] = {
         XCUIElementTypeButton, XCUIElementTypeStaticText,
         XCUIElementTypeTextField, XCUIElementTypeTextView,
         XCUIElementTypeImage, XCUIElementTypeSwitch, XCUIElementTypeSlider,
     };
     NSString *roleNames[] = {@"button", @"text", @"textField", @"textView", @"image", @"switch", @"slider"};
-
+    
     for (int t = 0; t < 7; t++) {
         XCUIElementQuery *q = [testApp descendantsMatchingType:scanTypes[t]];
         NSUInteger count = q.count;
-        for (NSUInteger i = 0; i < count && i < 30; i++) {
+        for (NSUInteger i = 0; i < count && i < 50; i++) {
             @try {
                 XCUIElement *elem = [q elementBoundByIndex:i];
                 if (!elem.exists) continue;
                 NSString *label = elem.label ?: @"";
                 if (label.length == 0) continue;
                 NSString *value = elem.value ? [NSString stringWithFormat:@"%@", elem.value] : @"";
+                NSString *identifier = elem.identifier ?: @"";
                 CGRect frame = elem.frame;
                 if (frame.size.width < 5 || frame.size.height < 5) continue;
                 if (frame.size.width > 390 && frame.size.height > 800) continue;
+                
                 [elements addObject:@{
-                    @"label": label, @"value": value, @"role": roleNames[t],
+                    @"label": label,
+                    @"value": value,
+                    @"role": roleNames[t],
+                    @"identifier": identifier,
                     @"frame": @{@"x": @(frame.origin.x), @"y": @(frame.origin.y),
                                 @"width": @(frame.size.width), @"height": @(frame.size.height)},
+                    @"isEnabled": @(elem.isEnabled),
+                    @"isSelected": @(elem.isSelected),
+                    @"isHittable": @(elem.isHittable),
                 }];
             } @catch (NSException *e) { continue; }
         }
     }
+    
+    // Sort by position (reading order: top-to-bottom, left-to-right)
+    [elements sortUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
+        CGFloat ay = [a[@"frame"][@"y"] floatValue];
+        CGFloat by = [b[@"frame"][@"y"] floatValue];
+        if (fabs(ay - by) > 10) return ay < by ? NSOrderedAscending : NSOrderedDescending;
+        CGFloat ax = [a[@"frame"][@"x"] floatValue];
+        CGFloat bx = [b[@"frame"][@"x"] floatValue];
+        return ax < bx ? NSOrderedAscending : NSOrderedDescending;
+    }];
+    
+    return elements;
+}
 
-    NSLog(@"A11Y_RESULT: activity_card %lu elements", (unsigned long)elements.count);
+/// Find and tap an element by its accessibility label. Returns YES if found.
+/// This is the core of a11y-driven navigation — find by label, not coordinates.
+- (BOOL)tapByAccessibilityLabel:(NSString *)label
+{
+    // Try buttons first (most common interactive element)
+    XCUIElement *button = testApp.buttons[label];
+    if ([button exists] && [button isHittable]) {
+        [button tap];
+        NSLog(@"A11Y_NAV: tapped button '%@'", label);
+        return YES;
+    }
+    
+    // Try static texts (table cells, list items)
+    XCUIElement *text = testApp.staticTexts[label];
+    if ([text exists] && [text isHittable]) {
+        [text tap];
+        NSLog(@"A11Y_NAV: tapped text '%@'", label);
+        return YES;
+    }
+    
+    // Try any element type
+    NSPredicate *pred = [NSPredicate predicateWithFormat:@"label == %@", label];
+    XCUIElement *any = [[testApp descendantsMatchingType:XCUIElementTypeAny] elementMatchingPredicate:pred];
+    if ([any exists] && [any isHittable]) {
+        [any tap];
+        NSLog(@"A11Y_NAV: tapped element '%@'", label);
+        return YES;
+    }
+    
+    NSLog(@"A11Y_NAV: element '%@' not found or not hittable", label);
+    return NO;
+}
 
-    // Write to /tmp/a11y-xcui/
+/// Navigate to a card by name using only accessibility navigation.
+/// Discovers the menu structure and navigates using labels.
+- (BOOL)navigateToCardByA11y:(NSString *)version type:(NSString *)type card:(NSString *)cardName
+{
+    // Step 1: Find and tap version button via a11y label
+    if (![self tapByAccessibilityLabel:version]) {
+        NSLog(@"A11Y_NAV: version '%@' not accessible", version);
+        return NO;
+    }
+    [NSThread sleepForTimeInterval:0.5];
+    
+    // Step 2: Find and tap card type via a11y label
+    if (![self tapByAccessibilityLabel:type]) {
+        NSLog(@"A11Y_NAV: type '%@' not accessible", type);
+        return NO;
+    }
+    [NSThread sleepForTimeInterval:0.5];
+    
+    // Step 3: Find and tap card name via a11y label
+    if (![self tapByAccessibilityLabel:cardName]) {
+        NSLog(@"A11Y_NAV: card '%@' not accessible", cardName);
+        return NO;
+    }
+    [NSThread sleepForTimeInterval:1.5]; // Wait for card to render
+    
+    NSLog(@"A11Y_NAV: navigated to %@/%@/%@", version, type, cardName);
+    return YES;
+}
+
+/// Save a11y state: element tree + screenshot to /tmp/a11y-xcui/
+- (void)saveA11yState:(NSString *)name
+{
+    NSArray *elements = [self discoverAccessibleElements];
+    
+    // Write element JSON
     NSString *dir = @"/tmp/a11y-xcui";
-    [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
-
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:elements options:NSJSONWritingPrettyPrinted error:nil];
-    [jsonData writeToFile:[NSString stringWithFormat:@"%@/activity_card_rendered_elements.json", dir] atomically:YES];
-
+    [[NSFileManager defaultManager] createDirectoryAtPath:dir
+                              withIntermediateDirectories:YES attributes:nil error:nil];
+    
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:elements
+                                                       options:NSJSONWritingPrettyPrinted error:nil];
+    NSString *elemPath = [NSString stringWithFormat:@"%@/%@_elements.json", dir, name];
+    [jsonData writeToFile:elemPath atomically:YES];
+    
     // Screenshot
     XCUIScreenshot *screenshot = [XCUIScreen.mainScreen screenshot];
-    [screenshot.PNGRepresentation writeToFile:[NSString stringWithFormat:@"%@/activity_card_rendered.png", dir] atomically:YES];
-
-    // Tap Comment ShowCard
-    XCUIElementQuery *buttons = testApp.buttons;
-    if ([buttons[@"Comment"] exists]) {
-        [buttons[@"Comment"] tap];
-        [NSThread sleepForTimeInterval:1.5];
-
-        // Re-scan after ShowCard expand
-        NSMutableArray *expanded = [NSMutableArray array];
-        for (int t = 0; t < 7; t++) {
-            XCUIElementQuery *q2 = [testApp descendantsMatchingType:scanTypes[t]];
-            NSUInteger c2 = q2.count;
-            for (NSUInteger i = 0; i < c2 && i < 30; i++) {
-                @try {
-                    XCUIElement *e2 = [q2 elementBoundByIndex:i];
-                    if (!e2.exists) continue;
-                    NSString *l2 = e2.label ?: @"";
-                    if (l2.length == 0) continue;
-                    NSString *v2 = e2.value ? [NSString stringWithFormat:@"%@", e2.value] : @"";
-                    CGRect f2 = e2.frame;
-                    if (f2.size.width < 5 || f2.size.height < 5) continue;
-                    if (f2.size.width > 390 && f2.size.height > 800) continue;
-                    [expanded addObject:@{
-                        @"label": l2, @"value": v2, @"role": roleNames[t],
-                        @"frame": @{@"x": @(f2.origin.x), @"y": @(f2.origin.y),
-                                    @"width": @(f2.size.width), @"height": @(f2.size.height)},
-                    }];
-                } @catch (NSException *e) { continue; }
-            }
+    NSString *shotPath = [NSString stringWithFormat:@"%@/%@.png", dir, name];
+    [screenshot.PNGRepresentation writeToFile:shotPath atomically:YES];
+    
+    NSLog(@"A11Y_STATE: %@ -> %lu elements", name, (unsigned long)elements.count);
+    
+    // Log VoiceOver reading order
+    for (NSUInteger i = 0; i < elements.count && i < 20; i++) {
+        NSDictionary *e = elements[i];
+        NSString *voiceoverReads = e[@"label"];
+        if ([e[@"value"] length] > 0) {
+            voiceoverReads = [NSString stringWithFormat:@"%@, %@", voiceoverReads, e[@"value"]];
         }
-
-        NSLog(@"A11Y_RESULT: showcard_expanded %lu elements", (unsigned long)expanded.count);
-
-        NSData *json2 = [NSJSONSerialization dataWithJSONObject:expanded options:NSJSONWritingPrettyPrinted error:nil];
-        [json2 writeToFile:[NSString stringWithFormat:@"%@/showcard_comment_expanded_elements.json", dir] atomically:YES];
-
-        XCUIScreenshot *ss2 = [XCUIScreen.mainScreen screenshot];
-        [ss2.PNGRepresentation writeToFile:[NSString stringWithFormat:@"%@/showcard_comment_expanded.png", dir] atomically:YES];
+        NSLog(@"A11Y_VO: %lu. [%@] %@", (unsigned long)(i + 1), e[@"role"], voiceoverReads);
     }
 }
+
+#pragma mark - A11y Automation Test: Navigate Any Card
+
+/// Accessibility-driven automation: navigate to a card, interact with
+/// interactive elements (buttons, ShowCards), and capture a11y state at each step.
+/// All navigation uses accessibility labels only — no coordinates, no view hierarchy.
+- (void)testA11yAutomation_ActivityUpdate
+{
+    NSLog(@"A11Y_AUTO: === Starting ActivityUpdate a11y automation ===");
+    
+    // Navigate using a11y labels only
+    BOOL navigated = [self navigateToCardByA11y:@"v1.5" type:@"Scenarios" card:@"ActivityUpdate.json"];
+    XCTAssertTrue(navigated, @"Should navigate to ActivityUpdate via a11y labels");
+    
+    // Capture initial card state
+    [self saveA11yState:@"auto_activity_initial"];
+    
+    // Discover all interactive elements on the rendered card
+    NSArray *elements = [self discoverAccessibleElements];
+    NSLog(@"A11Y_AUTO: Found %lu accessible elements on card", (unsigned long)elements.count);
+    
+    // Find all buttons (interactive elements VoiceOver can activate)
+    NSMutableArray *buttons = [NSMutableArray array];
+    for (NSDictionary *e in elements) {
+        if ([e[@"role"] isEqualToString:@"button"] && [e[@"isHittable"] boolValue]) {
+            [buttons addObject:e];
+        }
+    }
+    NSLog(@"A11Y_AUTO: %lu hittable buttons found", (unsigned long)buttons.count);
+    
+    // Try to find ShowCard buttons (Comment, Set due date) via a11y label
+    BOOL foundComment = NO;
+    for (NSDictionary *btn in buttons) {
+        if ([btn[@"label"] isEqualToString:@"Comment"]) {
+            foundComment = YES;
+            NSLog(@"A11Y_AUTO: Found ShowCard button 'Comment' via a11y label");
+            
+            // Tap it to expand ShowCard
+            [self tapByAccessibilityLabel:@"Comment"];
+            [NSThread sleepForTimeInterval:1.5];
+            
+            // Capture expanded state
+            [self saveA11yState:@"auto_activity_showcard_expanded"];
+            
+            // Verify new elements appeared (the ShowCard content)
+            NSArray *expandedElements = [self discoverAccessibleElements];
+            XCTAssertGreaterThan(expandedElements.count, elements.count,
+                @"Expanded ShowCard should have more a11y elements than collapsed");
+            NSLog(@"A11Y_AUTO: ShowCard expanded: %lu -> %lu elements",
+                  (unsigned long)elements.count, (unsigned long)expandedElements.count);
+            
+            break;
+        }
+    }
+    
+    if (!foundComment) {
+        NSLog(@"A11Y_AUTO: 'Comment' button not found — listing all button labels:");
+        for (NSDictionary *btn in buttons) {
+            NSLog(@"A11Y_AUTO:   button: '%@'", btn[@"label"]);
+        }
+    }
+}
+
+/// Accessibility-driven automation for ExpenseReport card.
+/// Demonstrates navigating to a different card and finding ToggleVisibility.
+- (void)testA11yAutomation_ExpenseReport
+{
+    NSLog(@"A11Y_AUTO: === Starting ExpenseReport a11y automation ===");
+    
+    // Navigate using a11y labels
+    BOOL navigated = [self navigateToCardByA11y:@"v1.5" type:@"Scenarios" card:@"ExpenseReport.json"];
+    XCTAssertTrue(navigated, @"Should navigate to ExpenseReport via a11y labels");
+    
+    // Capture card state
+    [self saveA11yState:@"auto_expense_initial"];
+    
+    // Discover elements
+    NSArray *elements = [self discoverAccessibleElements];
+    NSLog(@"A11Y_AUTO: Found %lu accessible elements", (unsigned long)elements.count);
+    
+    // Find any button that might be a ShowCard (Reject, Approve)
+    for (NSDictionary *e in elements) {
+        if ([e[@"role"] isEqualToString:@"button"]) {
+            NSString *label = e[@"label"];
+            if ([label isEqualToString:@"Reject"] || [label isEqualToString:@"Approve"]) {
+                NSLog(@"A11Y_AUTO: Found action button '%@' via a11y label", label);
+            }
+        }
+    }
+}
+
+/// Generic card automation: navigate to ANY card and dump its a11y tree.
+/// This can be parameterized to test any card in the sample set.
+- (void)testA11yAutomation_InputForm
+{
+    NSLog(@"A11Y_AUTO: === Starting InputForm a11y automation ===");
+    
+    BOOL navigated = [self navigateToCardByA11y:@"v1.5" type:@"Scenarios" card:@"InputForm.json"];
+    if (!navigated) {
+        // Try v1.3 Elements path
+        navigated = [self navigateToCardByA11y:@"v1.3" type:@"Elements" card:@"Input.Text.ErrorMessage.json"];
+    }
+    XCTAssertTrue(navigated, @"Should navigate to an input card via a11y labels");
+    
+    [self saveA11yState:@"auto_input_initial"];
+    
+    // Find text fields (input elements)
+    NSArray *elements = [self discoverAccessibleElements];
+    NSMutableArray *inputs = [NSMutableArray array];
+    for (NSDictionary *e in elements) {
+        if ([e[@"role"] isEqualToString:@"textField"] || [e[@"role"] isEqualToString:@"textView"]) {
+            [inputs addObject:e];
+            NSLog(@"A11Y_AUTO: Found input '%@' (id: '%@')", e[@"label"], e[@"identifier"]);
+        }
+    }
+    NSLog(@"A11Y_AUTO: %lu input fields found on card", (unsigned long)inputs.count);
+}
+
 
 @end
