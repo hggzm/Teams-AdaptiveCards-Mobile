@@ -212,4 +212,4 @@ jobs:
 # clean build
 # timeout 600
 # green overlays
-# a11y automation
+# in-app inspector
