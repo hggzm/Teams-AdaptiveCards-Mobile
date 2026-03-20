@@ -369,7 +369,7 @@ if tts_segments:
     for seg in tts_segments:
         os.remove(seg) if os.path.exists(seg) else None
     os.remove(concat_list) if os.path.exists(concat_list) else None
-    os.remove(combined_audio) if os.path.exists(combined_audio) else None
+    if combined_audio and os.path.exists(combined_audio): os.remove(combined_audio)
 
 print("\nDone: {} annotated screenshots, {} TTS segments".format(
     annotated_count, len(tts_segments)
