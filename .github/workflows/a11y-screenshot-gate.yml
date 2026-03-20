@@ -80,6 +80,11 @@ jobs:
         "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.AccessibilityScreenshotTests --stacktrace 2>&1 | tee /tmp/a11y-test.log | tail -20
         TEST_EXIT=$?
 
+        # Run A11yNavigator tests (accessibility-driven automation)
+        echo "=== Running A11yNavigatorTests ==="
+        "$GRADLEW" -p "$PROJECT" :uitestapp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.adaptivecards.uitestapp.A11yNavigatorTests --stacktrace 2>&1 | tee -a /tmp/a11y-test.log | tail -20 || true
+        TEST_EXIT=$?
+
         # Dump accessibility tree after tests (while app may still be up)
         adb shell uiautomator dump /data/local/tmp/a11y_tree.xml 2>/dev/null || true
         adb pull /data/local/tmp/a11y_tree.xml /tmp/a11y-tree.xml 2>/dev/null || true
