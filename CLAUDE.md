@@ -66,3 +66,41 @@ cd source/android
 See `docs/PROXY_PR_LOG.md` for the proxy branch workflow documentation.
 Development happens on `proxy/fix-*` branches, merged to `proxy/integration`.
 Clean branches for upstream PRs branch from `upstream/main`.
+
+## Accessibility Testing Infrastructure
+
+### Full Guide
+See `docs/ACCESSIBILITY_TESTING.md` for the complete accessibility testing guide.
+
+### Quick Reference
+
+**Android A11y Pipeline**: `.github/workflows/a11y-screenshot-gate.yml`
+- Triggers on `proxy/**` branches with `source/android/**` changes
+- 9 screenshot tests + 4 A11yNavigator tests (13 total)
+- Artifacts: screenshots, annotated overlays, TalkBack video, a11y transcript
+
+**iOS A11y Pipeline**: `.github/workflows/a11y-screenshot-gate.yml` (iOS section)
+- Triggers on `proxy/**` branches with `source/ios/**` changes
+- VoiceOver snapshot tests + interaction recording
+
+**Key Files**:
+- `A11yNavigator.kt`  Test helper: find/tap elements by accessibility label
+- `A11yInspector.kt`  Runtime inspector (works in main app, no test harness)
+- `A11yOverlayView.kt`  Green overlay showing numbered a11y elements
+- `AccessibilityScreenshotTests.kt`  9 screenshot scenarios
+- `A11yNavigatorTests.kt`  4 accessibility-driven automation tests
+- `scripts/annotate_a11y.py`  Post-process annotated overlays + TTS
+
+**Usage**:
+```kotlin
+// In tests (A11yNavigator):
+val nav = A11yNavigator()
+nav.tapByLabel("Reject")        // Tap by accessibility label
+nav.findByLabel("Submit")       // Find element
+nav.walkFocus("scenario")       // Walk TalkBack focus
+
+// At runtime (A11yInspector):
+val inspector = A11yInspector(cardView)
+inspector.tapByLabel("Submit")  // Same API, works in app
+inspector.printTree()           // Log a11y tree
+```
