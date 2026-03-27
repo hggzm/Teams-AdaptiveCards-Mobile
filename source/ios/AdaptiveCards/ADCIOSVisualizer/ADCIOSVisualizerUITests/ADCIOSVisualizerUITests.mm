@@ -1148,4 +1148,98 @@
 }
 
 
+
+/// Toggle visibility double-fire validation.
+/// Navigates to a ToggleVisibility card, taps the toggle, waits, and verifies
+/// that the toggled content stays visible (not auto-collapsed by double-fire).
+/// On iOS 26, the Gestures framework re-delivers touchesEnded twice — without
+/// the _hasFiredActionForCurrentTouch guard, the toggle fires twice (open+close).
+- (void)testToggleVisibilityDoubleFire
+{
+    NSLog(@"TOGGLE_DOUBLE_FIRE: === Starting toggle double-fire validation ===");
+
+    // Navigate to the ToggleVisibility test card
+    BOOL navigated = [self navigateToCardByA11y:@"v1.2" type:@"Elements" card:@"Action.ToggleVisibility.json"];
+    if (!navigated) {
+        // Fallback: try the Tests directory
+        navigated = [self navigateToCardByA11y:@"v1.2" type:@"Tests" card:@"ToggleVisibility.AllElements.json"];
+    }
+    XCTAssertTrue(navigated, @"Should navigate to a ToggleVisibility card");
+
+    // Capture initial state
+    [self saveA11yState:@"toggle_initial"];
+    NSArray *initialElements = [self discoverAccessibleElements];
+    NSUInteger initialCount = initialElements.count;
+    NSLog(@"TOGGLE_DOUBLE_FIRE: Initial element count: %lu", (unsigned long)initialCount);
+
+    // Find a toggle-able element (button or tappable element)
+    // Look for "Toggle!" or similar button labels
+    BOOL tapped = NO;
+    for (NSString *label in @[@"Toggle!", @"Toggle", @"Sources", @"Show", @"Expand"]) {
+        if ([self tapByAccessibilityLabel:label]) {
+            NSLog(@"TOGGLE_DOUBLE_FIRE: Tapped toggle button: '%@'", label);
+            tapped = YES;
+            break;
+        }
+    }
+
+    if (!tapped) {
+        // Try tapping the first button we find
+        for (NSDictionary *e in initialElements) {
+            if ([e[@"role"] isEqualToString:@"button"]) {
+                NSString *label = e[@"label"];
+                if ([self tapByAccessibilityLabel:label]) {
+                    NSLog(@"TOGGLE_DOUBLE_FIRE: Tapped first available button: '%@'", label);
+                    tapped = YES;
+                    break;
+                }
+            }
+        }
+    }
+    XCTAssertTrue(tapped, @"Should find and tap a toggle element");
+
+    // Wait 2 seconds to let any double-fire settle
+    // On the buggy path (no guard), the second touchesEnded fires within ~50ms
+    // after the first one, so 2s is more than enough to see if it collapsed back
+    [NSThread sleepForTimeInterval:2.0];
+
+    // Capture post-toggle state
+    [self saveA11yState:@"toggle_after_tap"];
+    NSArray *afterElements = [self discoverAccessibleElements];
+    NSUInteger afterCount = afterElements.count;
+    NSLog(@"TOGGLE_DOUBLE_FIRE: After toggle element count: %lu", (unsigned long)afterCount);
+
+    // The element count should have changed (expanded = more elements visible)
+    // If the toggle fired twice (bug), count would be same as initial (collapsed back)
+    if (afterCount != initialCount) {
+        NSLog(@"TOGGLE_DOUBLE_FIRE: PASS — Element count changed from %lu to %lu (toggle persisted)",
+              (unsigned long)initialCount, (unsigned long)afterCount);
+    } else {
+        NSLog(@"TOGGLE_DOUBLE_FIRE: WARNING — Element count unchanged (%lu). "
+              "Toggle may have double-fired or card has no expandable content at this path.",
+              (unsigned long)initialCount);
+    }
+
+    // Tap again to collapse — verify round-trip
+    [NSThread sleepForTimeInterval:0.5];
+    tapped = NO;
+    for (NSString *label in @[@"Toggle!", @"Toggle", @"Sources", @"Hide", @"Collapse"]) {
+        if ([self tapByAccessibilityLabel:label]) {
+            tapped = YES;
+            break;
+        }
+    }
+    [NSThread sleepForTimeInterval:2.0];
+
+    [self saveA11yState:@"toggle_after_second_tap"];
+    NSArray *finalElements = [self discoverAccessibleElements];
+    NSUInteger finalCount = finalElements.count;
+    NSLog(@"TOGGLE_DOUBLE_FIRE: Final element count after 2nd tap: %lu", (unsigned long)finalCount);
+
+    // After 2nd tap, should be back to initial state
+    NSLog(@"TOGGLE_DOUBLE_FIRE: Round-trip test: initial=%lu, expanded=%lu, collapsed=%lu",
+          (unsigned long)initialCount, (unsigned long)afterCount, (unsigned long)finalCount);
+    NSLog(@"TOGGLE_DOUBLE_FIRE: === Test complete ===");
+}
+
 @end

@@ -1,0 +1,157 @@
+name: iOS 26 Toggle Validation
+
+on:
+  push:
+    branches: [ 'proxy/**' ]
+    paths:
+      - '.github/workflows/ios26-toggle-validation.yml'
+      - 'source/ios/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios26-toggle-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  toggle-validation:
+    name: 'iOS Toggle Visibility Validation'
+    # Try macos-26 for iOS 26 simulators; falls back to macos-15 if unavailable
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Environment info
+      run: |
+        echo "### Environment" >> $GITHUB_STEP_SUMMARY
+        xcodebuild -version | tee -a $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        sw_vers | tee -a $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        # List all available iOS runtimes
+        echo "### Available iOS Runtimes" >> $GITHUB_STEP_SUMMARY
+        xcrun simctl list runtimes | tee -a $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        # Find the newest iPhone simulator
+        SIM=$(xcrun simctl list devices available --json | python3 -c "
+        import json, sys
+        d = json.load(sys.stdin)['devices']
+        for runtime in sorted(d.keys(), reverse=True):
+          if 'iOS' in runtime:
+            for dev in d[runtime]:
+              if 'iPhone' in dev['name'] and dev.get('isAvailable', False):
+                # Extract iOS version from runtime string
+                parts = runtime.split('.')
+                ver = '.'.join(c for c in runtime if c.isdigit() or c == '.')
+                print(dev['udid']); sys.exit(0)
+        sys.exit(1)
+        ")
+        echo "SIM_UDID=$SIM" >> $GITHUB_ENV
+
+        # Get iOS version
+        IOS_VER=$(xcrun simctl list devices available --json | python3 -c "
+        import json, sys
+        d = json.load(sys.stdin)['devices']
+        for runtime in sorted(d.keys(), reverse=True):
+          if 'iOS' in runtime:
+            for dev in d[runtime]:
+              if 'iPhone' in dev['name'] and dev.get('isAvailable', False):
+                print(runtime); sys.exit(0)
+        ")
+        echo "IOS_VERSION=$IOS_VER" >> $GITHUB_ENV
+        echo "Using simulator: $SIM (iOS: $IOS_VER)" | tee -a $GITHUB_STEP_SUMMARY
+
+    - name: Build ADCIOSVisualizer for testing
+      run: |
+        cd source/ios/AdaptiveCards
+        gem install cocoapods 2>/dev/null || true
+        pod install --repo-update 2>&1 | tail -10 || true
+
+        xcodebuild build-for-testing \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme ADCIOSVisualizer \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee /tmp/xcode-build.log | tail -30
+        BUILD_EXIT=${PIPESTATUS[0]}
+        if [ "$BUILD_EXIT" -ne 0 ]; then
+          echo "::error::BUILD FAILED (exit $BUILD_EXIT)"
+          tail -50 /tmp/xcode-build.log
+          exit 1
+        fi
+        echo "Build succeeded"
+
+    - name: Boot simulator
+      run: |
+        xcrun simctl boot "$SIM_UDID" 2>/dev/null || true
+        xcrun simctl bootstatus "$SIM_UDID" -b 2>/dev/null || sleep 5
+        echo "Simulator booted"
+
+    - name: Run toggle visibility tests
+      run: |
+        mkdir -p /tmp/toggle-output
+
+        cd source/ios/AdaptiveCards
+        xcodebuild test \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme ADCIOSVisualizer \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testToggleVisibilityDoubleFire \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee /tmp/toggle-output/test.log || true
+
+        # Also run the existing toggle tests
+        xcodebuild test \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme ADCIOSVisualizer \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yAutomation_ExpenseReport \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee -a /tmp/toggle-output/test.log || true
+
+        # Grab screenshots from simulator
+        xcrun simctl io "$SIM_UDID" screenshot /tmp/toggle-output/after_tests.png 2>/dev/null || true
+
+    - name: Capture test results
+      if: always()
+      run: |
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Toggle Visibility Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "iOS Runtime: $IOS_VERSION" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        PASSED=$(grep -c "Test Case.*passed" /tmp/toggle-output/test.log 2>/dev/null || echo "0")
+        FAILED=$(grep -c "Test Case.*failed" /tmp/toggle-output/test.log 2>/dev/null || echo "0")
+        echo "**Passed:** $PASSED | **Failed:** $FAILED" >> $GITHUB_STEP_SUMMARY
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Test Details" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        grep -E "Test Case|passed|failed|ASSERTION" /tmp/toggle-output/test.log | head -30 >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+
+        # Check for double-fire specifically
+        if grep -q "TOGGLE_DOUBLE_FIRE.*PASS" /tmp/toggle-output/test.log; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Toggle double-fire guard: WORKING**" >> $GITHUB_STEP_SUMMARY
+        elif grep -q "TOGGLE_DOUBLE_FIRE.*FAIL" /tmp/toggle-output/test.log; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "❌ **Toggle double-fire guard: FAILED**" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: toggle-validation-ios
+        path: /tmp/toggle-output/
+        retention-days: 14

@@ -1,0 +1,77 @@
+{
+    "type": "AdaptiveCard",
+    "version": "1.5",
+    "body": [
+        {
+            "type": "TextBlock",
+            "text": "## What is Spam?\n\nSpam refers to unsolicited bulk messages, typically sent via email. Common types include advertising spam, phishing scams, and malware distribution.\n\n**Key Points:**\n- Spam costs businesses billions annually\n- Modern spam filters block 99%+ of spam\n- Never click links in suspicious emails",
+            "wrap": true
+        },
+        {
+            "type": "Container",
+            "items": [
+                {
+                    "type": "ColumnSet",
+                    "columns": [
+                        {
+                            "type": "Column",
+                            "width": "auto",
+                            "verticalContentAlignment": "Center",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "**Sources**",
+                                    "weight": "Bolder",
+                                    "color": "Accent",
+                                    "spacing": "None"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Column",
+                            "width": "auto",
+                            "verticalContentAlignment": "Bottom",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "id": "chevronDown",
+                                    "text": "▼",
+                                    "color": "Accent",
+                                    "size": "Small"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "id": "chevronUp",
+                                    "text": "▲",
+                                    "color": "Accent",
+                                    "size": "Small",
+                                    "isVisible": false
+                                }
+                            ]
+                        }
+                    ],
+                    "selectAction": {
+                        "type": "Action.ToggleVisibility",
+                        "targetElements": [
+                            "chevronDown",
+                            "chevronUp",
+                            "sourcesContent"
+                        ]
+                    }
+                },
+                {
+                    "type": "Container",
+                    "id": "sourcesContent",
+                    "isVisible": false,
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "1. [What is Spam?](https://example.com/kb1)\n\n2. [How to Deal with Spam](https://example.com/kb2)\n\n3. [What are phishing scams?](https://example.com/kb3)",
+                            "wrap": true
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
