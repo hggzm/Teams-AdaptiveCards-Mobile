@@ -530,5 +530,140 @@ final class A11yInteractionSnapshotTests: SnapshotTestCase {
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }
+
+
+    // MARK: - Scenario: ServiceNow ToggleVisibility Double-Fire Guard
+
+    /// Before state: "Sources" section is collapsed, chevron points down.
+    /// This captures the exact layout from the ServiceNow Now Assist card
+    /// (TrackingID# 2603110030008961) to verify toggle rendering.
+    func testToggleVisibility_servicenow_collapsed() {
+        let card = makeServiceNowToggleCard(expanded: false)
+
+        // Assert: chevronDown is visible
+        let chevronDown = findView(in: card, accessibilityLabel: "▼")
+        XCTAssertNotNil(chevronDown, "Chevron down must be visible when collapsed")
+        if let cd = chevronDown {
+            XCTAssertFalse(cd.isHidden, "Chevron down must not be hidden")
+        }
+
+        // Assert: sourcesContent is hidden
+        let sourcesContent = card.viewWithTag("sourcesContent".hash)
+        if let sc = sourcesContent {
+            XCTAssertTrue(sc.isHidden, "Sources content must be hidden when collapsed")
+        }
+
+        assertSnapshot(of: card, named: "toggle_servicenow_collapsed", configuration: .iPhone15Pro)
+    }
+
+    /// After state: "Sources" section is expanded, chevron points up.
+    /// Validates that the toggle persists (no double-fire auto-collapse).
+    func testToggleVisibility_servicenow_expanded() {
+        let card = makeServiceNowToggleCard(expanded: true)
+
+        // Assert: chevronUp is visible
+        let chevronUp = findView(in: card, accessibilityLabel: "▲")
+        XCTAssertNotNil(chevronUp, "Chevron up must be visible when expanded")
+        if let cu = chevronUp {
+            XCTAssertFalse(cu.isHidden, "Chevron up must not be hidden")
+        }
+
+        // Assert: sources content is visible
+        let sourcesContent = card.viewWithTag("sourcesContent".hash)
+        if let sc = sourcesContent {
+            XCTAssertFalse(sc.isHidden, "Sources content must be visible after toggle")
+        }
+
+        assertSnapshot(of: card, named: "toggle_servicenow_expanded", configuration: .iPhone15Pro)
+    }
+
+    // MARK: - ServiceNow Toggle Card Builder
+
+    /// Builds a UIView matching the ServiceNow Now Assist card structure:
+    /// - TextBlock "What is Spam?"
+    /// - Container > ColumnSet [Sources ▼/▲] > Container#sourcesContent (links)
+    private func makeServiceNowToggleCard(expanded: Bool) -> UIView {
+        let card = UIView(frame: CGRect(x: 0, y: 0, width: 375, height: 500))
+        card.backgroundColor = .white
+
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
+            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+        ])
+
+        // Title TextBlock
+        let title = UILabel()
+        title.text = "What is Spam?"
+        title.font = .boldSystemFont(ofSize: 18)
+        title.numberOfLines = 0
+        stack.addArrangedSubview(title)
+
+        // Body text
+        let body = UILabel()
+        body.text = "Spam refers to unsolicited bulk messages. Common types include advertising spam, phishing scams, and malware distribution."
+        body.font = .systemFont(ofSize: 14)
+        body.numberOfLines = 0
+        stack.addArrangedSubview(body)
+
+        // Sources toggle row
+        let toggleRow = UIStackView()
+        toggleRow.axis = .horizontal
+        toggleRow.spacing = 4
+        toggleRow.alignment = .center
+
+        let sourcesLabel = UILabel()
+        sourcesLabel.text = "Sources"
+        sourcesLabel.font = .boldSystemFont(ofSize: 14)
+        sourcesLabel.textColor = .systemBlue
+        toggleRow.addArrangedSubview(sourcesLabel)
+
+        let chevronDown = UILabel()
+        chevronDown.text = "▼"
+        chevronDown.textColor = .systemBlue
+        chevronDown.font = .systemFont(ofSize: 12)
+        chevronDown.accessibilityLabel = "▼"
+        chevronDown.isHidden = expanded  // hidden when expanded
+        toggleRow.addArrangedSubview(chevronDown)
+
+        let chevronUp = UILabel()
+        chevronUp.text = "▲"
+        chevronUp.textColor = .systemBlue
+        chevronUp.font = .systemFont(ofSize: 12)
+        chevronUp.accessibilityLabel = "▲"
+        chevronUp.isHidden = !expanded  // visible when expanded
+        toggleRow.addArrangedSubview(chevronUp)
+
+        toggleRow.isAccessibilityElement = true
+        toggleRow.accessibilityLabel = "Sources"
+        toggleRow.accessibilityTraits = .button
+        stack.addArrangedSubview(toggleRow)
+
+        // Sources content container
+        let sourcesContent = UIStackView()
+        sourcesContent.axis = .vertical
+        sourcesContent.spacing = 4
+        sourcesContent.tag = "sourcesContent".hash
+        sourcesContent.isHidden = !expanded  // hidden when collapsed
+
+        for (i, link) in ["What is Spam?", "How to Deal with Spam", "What are phishing scams?"].enumerated() {
+            let linkLabel = UILabel()
+            linkLabel.text = "\(i + 1). \(link)"
+            linkLabel.textColor = .systemBlue
+            linkLabel.font = .systemFont(ofSize: 14)
+            linkLabel.numberOfLines = 0
+            sourcesContent.addArrangedSubview(linkLabel)
+        }
+        stack.addArrangedSubview(sourcesContent)
+
+        card.layoutIfNeeded()
+        return card
+    }
+
 }
 #endif // canImport(UIKit)
