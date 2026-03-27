@@ -143,7 +143,7 @@ When merged upstream:
 
 | # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
 |---|-------|-------------|-------------|------------|-----|
-| 39 | ServiceNow Toggle Bug (TrackingID# 2603110030008961) | proxy/fix-ios26-toggle-double-fire | — | pending | iOS: Guard against double touchesEnded delivery on iOS 26 |
+| 39 | ServiceNow Toggle Bug (TrackingID# 2603110030008961) | proxy/fix-ios26-toggle-double-fire | — | upstream-pr [#669](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/669) | iOS: Guard against double touchesEnded delivery on iOS 26 |
 
 **Root cause:** iOS 26 Gestures framework re-delivers `touchesEnded:withEvent:` twice per tap.
 `ACRContentStackView.touchesEnded` calls `doSelectAction` unconditionally, so `Action.ToggleVisibility`
