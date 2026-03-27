@@ -138,3 +138,16 @@ When merged upstream:
 | 36 | #274 | proxy/fix-rtl-config-274 | clean/fix-rtl-config-274 | [#547](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/547) | iOS: Fix duplicate ACRRtlRTL condition in configRtl |
 | 37 | #105 | proxy/fix-container-child-a11y-105 | clean/fix-container-child-a11y-105 | [#548](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/548) | Android: Preserve keyboard focusability for container children |
 | 38 | #86 | proxy/fix-timepicker-focus-86 | clean/fix-timepicker-focus-86 | [#549](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/549) | Android: Return focus after dismissing time/date picker |
+
+## iOS 26 Toggle Visibility Fix
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 39 | ServiceNow Toggle Bug (TrackingID# 2603110030008961) | proxy/fix-ios26-toggle-double-fire | — | pending | iOS: Guard against double touchesEnded delivery on iOS 26 |
+
+**Root cause:** iOS 26 Gestures framework re-delivers `touchesEnded:withEvent:` twice per tap.
+`ACRContentStackView.touchesEnded` calls `doSelectAction` unconditionally, so `Action.ToggleVisibility`
+fires twice — open then immediately close. Fix adds `_hasFiredActionForCurrentTouch` ivar guard.
+
+**Validated on iOS 26.2 simulator** (Xcode 16.4, macos-15 runner, `com.apple.CoreSimulator.SimRuntime.iOS-26-2`).
+Toggle test: initial=54 elements -> expanded=56 -> collapsed=54 (round-trip confirmed).
