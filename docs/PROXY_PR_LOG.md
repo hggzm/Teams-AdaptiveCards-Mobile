@@ -151,3 +151,15 @@ fires twice — open then immediately close. Fix adds `_hasFiredActionForCurrent
 
 **Validated on iOS 26.2 simulator** (Xcode 16.4, macos-15 runner, `com.apple.CoreSimulator.SimRuntime.iOS-26-2`).
 Toggle test: initial=54 elements -> expanded=56 -> collapsed=54 (round-trip confirmed).
+
+## Card Speak Property — Root View Accessibility Label
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 40 | WI#5090802 | proxy/fix-card-speak-accessibility | clean/fix-card-speak-accessibility | upstream-pr [#672](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/672) | iOS+Android: Surface card speak property as accessibilityLabel/contentDescription |
+
+**Problem:** Rendered Adaptive Card root view has hardcoded `ACR Root View` as accessibilityLabel (iOS) and no contentDescription (Android). The card spec's `speak` property is parsed but never surfaced to the rendered view.
+
+**Fix:**
+- iOS: Set `ACRView.accessibilityLabel` from card speak property via `GetSpeak()` with full null-safety guards
+- Android: Set `contentDescription` from speak; set `accessibilityLiveRegion = POLITE`
