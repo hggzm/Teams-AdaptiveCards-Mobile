@@ -16,7 +16,8 @@ let package = Package(
                 "SnapshotTesting/SnapshotTestCase.swift",
                 "Tests/AccessibilitySnapshotTests.swift",
                 "Tests/CardLayoutSnapshotTests.swift",
-                "Tests/A11yInteractionSnapshotTests.swift"
+                "Tests/A11yInteractionSnapshotTests.swift",
+                "Tests/DiagStackedActionsetTests.swift"
             ],
             linkerSettings: [
                 .linkedFramework("UIKit"),
