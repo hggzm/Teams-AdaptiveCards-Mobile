@@ -341,4 +341,33 @@ class AccessibilityScreenshotTests {
         ).check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
         takeNamedScreenshot("activity_showcard_expanded")
     }
+
+    // ---------------------------------------------------------------
+    // Diagnostic variants A/B/C/D (stacked ActionSet symptom)
+    // ---------------------------------------------------------------
+
+    @Test
+    fun diag_stacked_A_control() {
+        renderCard("diag-stacked-actionset-b3-A.json")
+        takeNamedScreenshot("diag_stacked_A_control")
+    }
+
+    @Test
+    fun diag_stacked_B_noWidth() {
+        renderCard("diag-stacked-actionset-b3-B.json")
+        takeNamedScreenshot("diag_stacked_B_noWidth")
+    }
+
+    @Test
+    fun diag_stacked_C_single() {
+        renderCard("diag-stacked-actionset-b3-C.json")
+        takeNamedScreenshot("diag_stacked_C_single")
+    }
+
+    @Test
+    fun diag_stacked_D_v15() {
+        renderCard("diag-stacked-actionset-b3-D.json")
+        takeNamedScreenshot("diag_stacked_D_v15")
+    }
+
 }
