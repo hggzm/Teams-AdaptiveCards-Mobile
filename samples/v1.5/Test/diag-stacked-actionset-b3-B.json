@@ -1,0 +1,124 @@
+{
+  "type": "AdaptiveCard",
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.3",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "Stacked ActionSet repro - synthetic baseline (public-safe)",
+      "weight": "Bolder",
+      "wrap": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "Variant tests render of 4 ActionSets x 10 Action.Execute buttons with msteams.width Full.",
+      "wrap": true,
+      "isSubtle": true
+    },
+    {
+      "type": "ActionSet",
+      "actions": [
+        {
+          "type": "Action.Execute",
+          "title": "Mark timestamp",
+          "verb": "TimeStamp",
+          "data": {
+            "kind": "ts",
+            "slot": "morning"
+          }
+        },
+        {
+          "type": "Action.Execute",
+          "title": "Skip",
+          "verb": "TimeStamp",
+          "data": {
+            "kind": "ts",
+            "slot": "skip"
+          }
+        },
+        {
+          "type": "Action.Execute",
+          "title": "Notify",
+          "verb": "TimeStamp",
+          "data": {
+            "kind": "ts",
+            "slot": "later"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ActionSet",
+      "actions": [
+        {
+          "type": "Action.Execute",
+          "title": "Add note",
+          "verb": "FreeText",
+          "data": {
+            "kind": "note",
+            "topic": "shift"
+          }
+        },
+        {
+          "type": "Action.Execute",
+          "title": "Add comment",
+          "verb": "FreeText",
+          "data": {
+            "kind": "note",
+            "topic": "team"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ActionSet",
+      "actions": [
+        {
+          "type": "Action.Execute",
+          "title": "Open form 1",
+          "verb": "CustomForm",
+          "data": {
+            "form": "checklist"
+          }
+        },
+        {
+          "type": "Action.Execute",
+          "title": "Open form 2",
+          "verb": "CustomForm",
+          "data": {
+            "form": "feedback"
+          }
+        },
+        {
+          "type": "Action.Execute",
+          "title": "Open form 3",
+          "verb": "CustomForm",
+          "data": {
+            "form": "handoff"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ActionSet",
+      "actions": [
+        {
+          "type": "Action.Execute",
+          "title": "Submit",
+          "verb": "CustomForm",
+          "data": {
+            "form": "submit-all"
+          }
+        },
+        {
+          "type": "Action.Execute",
+          "title": "Reset",
+          "verb": "CustomForm",
+          "data": {
+            "form": "reset"
+          }
+        }
+      ]
+    }
+  ]
+}

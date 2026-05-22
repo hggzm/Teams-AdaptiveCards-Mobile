@@ -1242,4 +1242,36 @@
     NSLog(@"TOGGLE_DOUBLE_FIRE: === Test complete ===");
 }
 
+
+- (void)diag_navigate_and_capture:(NSString *)cardFileName saveName:(NSString *)saveName
+{
+    NSLog(@"DIAG: === Starting %@ ===", saveName);
+    BOOL navigated = [self navigateToCardByA11y:@"v1.5" type:@"Test" card:cardFileName];
+    XCTAssertTrue(navigated, @"Should navigate to %@ via a11y labels", cardFileName);
+    [NSThread sleepForTimeInterval:1.0];
+    [self saveA11yState:saveName];
+    NSArray *elements = [self discoverAccessibleElements];
+    NSLog(@"DIAG: %@ has %lu accessible elements", saveName, (unsigned long)elements.count);
+}
+
+- (void)testA11yAutomation_DiagStackedA
+{
+    [self diag_navigate_and_capture:@"diag-stacked-actionset-b3-A.json" saveName:@"diag_stacked_A_control"];
+}
+
+- (void)testA11yAutomation_DiagStackedB
+{
+    [self diag_navigate_and_capture:@"diag-stacked-actionset-b3-B.json" saveName:@"diag_stacked_B_noWidth"];
+}
+
+- (void)testA11yAutomation_DiagStackedC
+{
+    [self diag_navigate_and_capture:@"diag-stacked-actionset-b3-C.json" saveName:@"diag_stacked_C_single"];
+}
+
+- (void)testA11yAutomation_DiagStackedD
+{
+    [self diag_navigate_and_capture:@"diag-stacked-actionset-b3-D.json" saveName:@"diag_stacked_D_v15"];
+}
+
 @end
