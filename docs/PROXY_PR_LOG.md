@@ -163,3 +163,11 @@ Toggle test: initial=54 elements -> expanded=56 -> collapsed=54 (round-trip conf
 **Fix:**
 - iOS: Set `ACRView.accessibilityLabel` from card speak property via `GetSpeak()` with full null-safety guards
 - Android: Set `contentDescription` from speak; set `accessibilityLiveRegion = POLITE`
+
+## Swift-on-Windows experimental bridges (proxy-only)
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 41 | giteax Swift-on-Windows kit drop | proxy/feat-swift-giteax-bridge | n/a (proxy-only) | n/a | pending |
+
+**Status:** pending. Vendored hggz/giteax snapshot as `source/ios-swift-giteax/`: five targets (Giteax library, GiteaxServer executable, Csqlite3, vendored libgit2 with Windows SChannel arm, vendored SwiftGitX) totalling 18.2 MB. Per ADDENDUM-v2, all previously private SwiftPM dependencies are vendored inline as local targets so the committed `Package.swift` carries zero `git@github.com-hggz` SSH URLs. The pure-Swift NIOSSH listener (which depended on a private hggz/swift-nio-ssh fork) is intentionally dropped from this snapshot; HTTPS smart-git over Vapor remains the exercised git transport. Proxy-only CI at `.github/workflows/swift-giteax-bridge-gate.yml` runs two steps on Windows MSVC: (1) `swift build -c debug` of the vendored kit (compile floor), and (2) `./smoke.ps1` of the Flavor A symbol-check example at `source/ios-swift-giteax/examples/adaptivecards-giteax-demo/` which spins Giteax up in-process, inits a bare git repo via `SwiftGitX.Repository.create(at:isBare:)` (proving the libgit2 + Swift C-bridge linkage), creates a user via the admin REST API, round-trips the canonical adaptivecards.io Hello World sample card as the body of an issue, and asserts byte-equal + structurally valid. Prints `PASS adaptivecards-giteax-roundtrip` on success. Verified green locally on Windows MSVC. No edits to existing ObjC/Java/C++ shipping code.
