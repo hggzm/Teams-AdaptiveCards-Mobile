@@ -1,0 +1,60 @@
+# proxy-only — do NOT cherry-pick this workflow to any clean/* branch
+# or to any PR targeting microsoft/main. Lives only on:
+#   hggz/AdaptiveCards-Mobile : proxy/feat-swift-swiftag-bridge, proxy/integration
+#   hggzm/Teams-AdaptiveCards-Mobile : proxy/integration (after merge)
+name: swift-swiftag-bridge gate
+
+on:
+  push:
+    branches:
+      - 'proxy/feat-swift-swiftag-bridge'
+      - 'proxy/integration'
+    paths:
+      - 'source/ios-swift-swiftag/**'
+      - '.github/workflows/swift-swiftag-bridge-gate.yml'
+  pull_request:
+    branches: [ 'proxy/integration' ]
+    paths:
+      - 'source/ios-swift-swiftag/**'
+      - '.github/workflows/swift-swiftag-bridge-gate.yml'
+  workflow_dispatch:
+
+jobs:
+  windows-msvc:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # proxy/integration carries a legacy committed file with an
+          # invalid Windows filename (`t-Path C:\...`) that breaks a
+          # full checkout on Windows runners. Scope the checkout to
+          # the paths this gate actually needs.
+          sparse-checkout: |
+            source/ios-swift-swiftag
+            .github/workflows/swift-swiftag-bridge-gate.yml
+          sparse-checkout-cone-mode: false
+      - name: Install Swift
+        uses: compnerd/gha-setup-swift@main
+        with:
+          # `swift-version` is the directory segment under
+          # download.swift.org; `swift-build` is the file-name prefix.
+          # 6.0.3 trips the well-known cyclic-`ucrt` Clang module bug
+          # on Windows for our manifest; 6.1.2 builds clean.
+          swift-version: "swift-6.1.2-release"
+          swift-build:   "6.1.2-RELEASE"
+      - run: swift --version
+
+      - name: build kit (compile floor)
+        working-directory: source/ios-swift-swiftag
+        run: swift build -c debug
+
+      - name: test kit
+        working-directory: source/ios-swift-swiftag
+        run: swift test --parallel
+
+      - name: build + run symbol-check example (link + execute)
+        working-directory: source/ios-swift-swiftag/examples/adaptivecards-swiftag-demo
+        run: ./smoke.ps1

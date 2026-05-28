@@ -1,4 +1,4 @@
-# Proxy → Upstream PR Tracking Log
+# Proxy ? Upstream PR Tracking Log
 
 Track every PR merged into `proxy/integration` that needs replication to
 `microsoft/Teams-AdaptiveCards-Mobile` main.
@@ -10,18 +10,18 @@ Track every PR merged into `proxy/integration` that needs replication to
 | `pending` | Merged to proxy; not yet proposed upstream |
 | `upstream-pr` | PR opened against upstream |
 | `merged` | Upstream PR merged |
-| `skipped` | Proxy-only (CI config, docs) — no upstream PR needed |
+| `skipped` | Proxy-only (CI config, docs) ? no upstream PR needed |
 
 ## Tracking Table
 
 | # | Proxy PR | Date | Title | Commit | Status | Fork PR (clean) | Upstream PR |
 |---|----------|------|-------|--------|--------|-----------------|-------------|
-| 1 | — | 2025-01-18 | ci: add agent validation gate | `04ff142d` | skipped | — | CI-only, not applicable to upstream |
-| 2 | — | 2025-01-18 | ci: skip invalid test JSON files | `b4c4ef0b` | skipped | — | CI-only |
-| 3 | — | 2025-01-18 | docs: add proxy branch tracker | `6117dc06` | skipped | — | Docs-only |
-| 4 | — | 2025-01-18 | ci: upgrade gate with visual regression | `3eb25eee` | skipped | — | CI-only |
-| 5 | — | 2026-03-01 | docs: add proxy workflow guide + PR log | `d798b829` | skipped | — | Docs-only |
-| 6 | #14 | 2026-03-01 | docs: add descriptive comment to SharedAdaptiveCard.cpp | `7bd23944` | upstream-pr | — | [#508](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/508) |
+| 1 | ? | 2025-01-18 | ci: add agent validation gate | `04ff142d` | skipped | ? | CI-only, not applicable to upstream |
+| 2 | ? | 2025-01-18 | ci: skip invalid test JSON files | `b4c4ef0b` | skipped | ? | CI-only |
+| 3 | ? | 2025-01-18 | docs: add proxy branch tracker | `6117dc06` | skipped | ? | Docs-only |
+| 4 | ? | 2025-01-18 | ci: upgrade gate with visual regression | `3eb25eee` | skipped | ? | CI-only |
+| 5 | ? | 2026-03-01 | docs: add proxy workflow guide + PR log | `d798b829` | skipped | ? | Docs-only |
+| 6 | #14 | 2026-03-01 | docs: add descriptive comment to SharedAdaptiveCard.cpp | `7bd23944` | upstream-pr | ? | [#508](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/508) |
 | 7 | #23 | 2025-07-15 | fix: add Image role for TalkBack on ImageView elements | `49868ff1` | upstream-pr | [#30](https://github.com/hggzm/Teams-AdaptiveCards-Mobile/pull/30) | [#518](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/518) |
 | 8 | #24 | 2025-07-15 | fix: prevent TalkBack from announcing both Link and Button for OpenUrl | `c68a8b2a` | upstream-pr | [#31](https://github.com/hggzm/Teams-AdaptiveCards-Mobile/pull/31) | [#519](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/519) |
 | 9 | #25 | 2025-07-15 | fix: announce error messages to TalkBack on validation failure | `d2275edc` | upstream-pr | [#32](https://github.com/hggzm/Teams-AdaptiveCards-Mobile/pull/32) | [#520](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/520) |
@@ -58,13 +58,13 @@ Upstream PRs #518-#524 use the same clean branches. All verified to show exactly
 When a PR is merged into `proxy/integration`, add a new row:
 
 ```markdown
-| <next_#> | #<pr_number> | YYYY-MM-DD | <title> | `<short_hash>` | pending | — | — |
+| <next_#> | #<pr_number> | YYYY-MM-DD | <title> | `<short_hash>` | pending | ? | ? |
 ```
 
 When a clean fork PR is created:
 
 ```markdown
-| <#> | ... | ... | ... | ... | pending | [#NN](url) | — |
+| <#> | ... | ... | ... | ... | pending | [#NN](url) | ? |
 ```
 
 When the upstream PR is created:
@@ -79,59 +79,59 @@ When merged upstream:
 | <#> | ... | ... | ... | ... | merged | [#NN](url) | [#NNN](url) |
 ```
 
-## Batch 2b — iOS Accessibility Fixes (PRs #525-#531)
+## Batch 2b ? iOS Accessibility Fixes (PRs #525-#531)
 
 | # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
 |---|-------|-------------|-------------|------------|-----|
 | 14 | #166/#165 | proxy/fix-showcard-focus-166 | clean/fix-showcard-focus-166 | [#525](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/525) | Post VoiceOver notification on ShowCard expand/collapse |
 | 15 | #34 | proxy/fix-togglevisibility-focus-34 | clean/fix-togglevisibility-focus-34 | [#526](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/526) | Post VoiceOver notification after ToggleVisibility |
 | 16 | #493 | proxy/fix-error-announce-493 | clean/fix-error-announce-493 | [#527](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/527) | Announce validation error messages to TalkBack |
-| 17 | #164 | — | clean/fix-group-announcement-164 | [#528](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/528) | Prevent VoiceOver "Group" on containers with selectAction |
-| 18 | #173 | — | clean/fix-choiceset-selected-173 | [#529](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/529) | Announce "selected" state for ChoiceSet compact items |
-| 19 | #100 | — | clean/fix-showcard-announce-100 | [#530](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/530) | Announce expanded/collapsed state for ShowCard actions |
-| 20 | #12/#108 | — | clean/fix-hidden-focus-12-108 | [#531](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/531) | Prevent TalkBack from focusing on hidden/GONE elements |
+| 17 | #164 | ? | clean/fix-group-announcement-164 | [#528](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/528) | Prevent VoiceOver "Group" on containers with selectAction |
+| 18 | #173 | ? | clean/fix-choiceset-selected-173 | [#529](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/529) | Announce "selected" state for ChoiceSet compact items |
+| 19 | #100 | ? | clean/fix-showcard-announce-100 | [#530](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/530) | Announce expanded/collapsed state for ShowCard actions |
+| 20 | #12/#108 | ? | clean/fix-hidden-focus-12-108 | [#531](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/531) | Prevent TalkBack from focusing on hidden/GONE elements |
 
-## Batch 3 — ChoiceSet Fixes (PRs #532-#534)
-
-| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
-|---|-------|-------------|-------------|------------|-----|
-| 21 | #483 | — | clean/fix-choiceset-label-repeat-483 | [#532](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/532) | iOS: Stop repeating ChoiceSet label on every radio/checkbox |
-| 22 | #180 | — | clean/fix-choiceset-modal-180 | [#533](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/533) | iOS: Prevent VoiceOver escape to background in dropdown |
-| 23 | #89 | — | clean/fix-choiceset-position-89 | [#534](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/534) | Android: Announce position info for ChoiceSet items |
-
-## Batch 4 — Input & Image Fixes (PRs #535-#537)
+## Batch 3 ? ChoiceSet Fixes (PRs #532-#534)
 
 | # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
 |---|-------|-------------|-------------|------------|-----|
-| 24 | #107 | — | clean/fix-email-inputtype-107 | [#535](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/535) | Android: Add TYPE_CLASS_TEXT to email/url/password |
-| 25 | #88 | — | clean/fix-double-announce-88 | [#536](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/536) | Android: Prevent TalkBack double label announcement |
-| 26 | #171 | — | clean/fix-image-selectaction-a11y-171 | [#537](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/537) | iOS: Fallback a11y label for images with selectAction |
+| 21 | #483 | ? | clean/fix-choiceset-label-repeat-483 | [#532](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/532) | iOS: Stop repeating ChoiceSet label on every radio/checkbox |
+| 22 | #180 | ? | clean/fix-choiceset-modal-180 | [#533](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/533) | iOS: Prevent VoiceOver escape to background in dropdown |
+| 23 | #89 | ? | clean/fix-choiceset-position-89 | [#534](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/534) | Android: Announce position info for ChoiceSet items |
 
-## Batch 5 — Table & ColumnSet Fixes (PRs #538-#540)
-
-| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
-|---|-------|-------------|-------------|------------|-----|
-| 27 | #42/#44 | — | clean/fix-columnset-reading-order-42 | [#538](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/538) | iOS: Fix VoiceOver reading order for ColumnSet |
-| 28 | #48 (iOS) | — | clean/fix-table-a11y-48-ios | [#539](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/539) | iOS: Set accessibilityContainerType on table |
-| 29 | #48 (Android) | — | clean/fix-table-a11y-48-android | [#540](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/540) | Android: Table heading + CollectionInfo for TalkBack |
-
-## Batch 6 — Heading, Button & Spinner Fixes (PRs #541-#543)
+## Batch 4 ? Input & Image Fixes (PRs #535-#537)
 
 | # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
 |---|-------|-------------|-------------|------------|-----|
-| 30 | #170 | — | clean/fix-heading-activatable-170 | [#541](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/541) | iOS: Prevent "double tap to activate" on headings |
-| 31 | #176 | — | clean/fix-button-role-twice-176 | [#542](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/542) | iOS: Prevent button role announced twice |
-| 32 | #109 | — | clean/fix-spinner-focus-109 | [#543](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/543) | Android: Improve keyboard focus for Spinner dropdown |
+| 24 | #107 | ? | clean/fix-email-inputtype-107 | [#535](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/535) | Android: Add TYPE_CLASS_TEXT to email/url/password |
+| 25 | #88 | ? | clean/fix-double-announce-88 | [#536](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/536) | Android: Prevent TalkBack double label announcement |
+| 26 | #171 | ? | clean/fix-image-selectaction-a11y-171 | [#537](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/537) | iOS: Fallback a11y label for images with selectAction |
 
-## Batch 7 — Selected State, Required & Video Fixes (PRs #544-#546)
+## Batch 5 ? Table & ColumnSet Fixes (PRs #538-#540)
 
 | # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
 |---|-------|-------------|-------------|------------|-----|
-| 33 | #103 | — | clean/fix-spinner-selected-visual-103 | [#544](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/544) | Android: Highlight selected item in dropdown |
-| 34 | #190 | — | clean/fix-required-asterisk-190 | [#545](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/545) | iOS: Show required asterisk for inputs without label |
-| 35 | #168 | — | clean/fix-video-focus-order-168 | [#546](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/546) | iOS: Improve VoiceOver focus order on video player |
+| 27 | #42/#44 | ? | clean/fix-columnset-reading-order-42 | [#538](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/538) | iOS: Fix VoiceOver reading order for ColumnSet |
+| 28 | #48 (iOS) | ? | clean/fix-table-a11y-48-ios | [#539](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/539) | iOS: Set accessibilityContainerType on table |
+| 29 | #48 (Android) | ? | clean/fix-table-a11y-48-android | [#540](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/540) | Android: Table heading + CollectionInfo for TalkBack |
 
-## Batch 8 — RTL, Container & Picker Fixes (PRs #547-#549)
+## Batch 6 ? Heading, Button & Spinner Fixes (PRs #541-#543)
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 30 | #170 | ? | clean/fix-heading-activatable-170 | [#541](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/541) | iOS: Prevent "double tap to activate" on headings |
+| 31 | #176 | ? | clean/fix-button-role-twice-176 | [#542](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/542) | iOS: Prevent button role announced twice |
+| 32 | #109 | ? | clean/fix-spinner-focus-109 | [#543](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/543) | Android: Improve keyboard focus for Spinner dropdown |
+
+## Batch 7 ? Selected State, Required & Video Fixes (PRs #544-#546)
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 33 | #103 | ? | clean/fix-spinner-selected-visual-103 | [#544](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/544) | Android: Highlight selected item in dropdown |
+| 34 | #190 | ? | clean/fix-required-asterisk-190 | [#545](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/545) | iOS: Show required asterisk for inputs without label |
+| 35 | #168 | ? | clean/fix-video-focus-order-168 | [#546](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/546) | iOS: Improve VoiceOver focus order on video player |
+
+## Batch 8 ? RTL, Container & Picker Fixes (PRs #547-#549)
 
 | # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
 |---|-------|-------------|-------------|------------|-----|
@@ -143,16 +143,16 @@ When merged upstream:
 
 | # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
 |---|-------|-------------|-------------|------------|-----|
-| 39 | ServiceNow Toggle Bug (TrackingID# 2603110030008961) | proxy/fix-ios26-toggle-double-fire | — | upstream-pr [#669](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/669) | iOS: Guard against double touchesEnded delivery on iOS 26 |
+| 39 | ServiceNow Toggle Bug (TrackingID# 2603110030008961) | proxy/fix-ios26-toggle-double-fire | ? | upstream-pr [#669](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/669) | iOS: Guard against double touchesEnded delivery on iOS 26 |
 
 **Root cause:** iOS 26 Gestures framework re-delivers `touchesEnded:withEvent:` twice per tap.
 `ACRContentStackView.touchesEnded` calls `doSelectAction` unconditionally, so `Action.ToggleVisibility`
-fires twice — open then immediately close. Fix adds `_hasFiredActionForCurrentTouch` ivar guard.
+fires twice ? open then immediately close. Fix adds `_hasFiredActionForCurrentTouch` ivar guard.
 
 **Validated on iOS 26.2 simulator** (Xcode 16.4, macos-15 runner, `com.apple.CoreSimulator.SimRuntime.iOS-26-2`).
 Toggle test: initial=54 elements -> expanded=56 -> collapsed=54 (round-trip confirmed).
 
-## Card Speak Property — Root View Accessibility Label
+## Card Speak Property ? Root View Accessibility Label
 
 | # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
 |---|-------|-------------|-------------|------------|-----|
@@ -163,3 +163,10 @@ Toggle test: initial=54 elements -> expanded=56 -> collapsed=54 (round-trip conf
 **Fix:**
 - iOS: Set `ACRView.accessibilityLabel` from card speak property via `GetSpeak()` with full null-safety guards
 - Android: Set `contentDescription` from speak; set `accessibilityLiveRegion = POLITE`
+
+
+## Swift-on-Windows Proxy Drops (vendored kits, proxy-only)
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 41 | hggzm#49 | proxy/feat-swift-swiftag-bridge | — | pending (proxy-only, no upstream PR planned) | Add `source/ios-swift-swiftag/` -- vendored SwiftAg snapshot (Agent / ConversableAgent / GroupChat patterns / Tool / ToolRegistry, pure Foundation, swift-tools-version:6.0) + runtime symbol-check example `adaptivecards-swiftag-demo` + Windows MSVC gate workflow |
