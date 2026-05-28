@@ -1,0 +1,49 @@
+# proxy-only — do NOT cherry-pick this workflow to any clean/* branch
+# or to any PR targeting microsoft/main. Lives only on:
+#   hggz/AdaptiveCards-Mobile : proxy/feat-swift-swiftharness-bridge,
+#                               proxy/integration (after merge)
+#   hggzm/Teams-AdaptiveCards-Mobile : proxy/integration (after merge)
+name: swift-swiftharness-bridge gate
+
+on:
+  push:
+    branches:
+      - 'proxy/feat-swift-swiftharness-bridge'
+      - 'proxy/integration'
+    paths:
+      - 'source/ios-swift-swiftharness/**'
+      - '.github/workflows/swift-swiftharness-bridge-gate.yml'
+  pull_request:
+    branches: [ 'proxy/integration' ]
+    paths:
+      - 'source/ios-swift-swiftharness/**'
+      - '.github/workflows/swift-swiftharness-bridge-gate.yml'
+
+jobs:
+  windows-msvc:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Swift 6.3.1
+        uses: compnerd/gha-setup-swift@main
+        with:
+          swift-version: "6.3.1"
+          swift-build:   "6.3.1-RELEASE"
+
+      - name: swift --version
+        run: swift --version
+
+      # CI step 1 — compile floor.
+      - name: build vendored kit
+        working-directory: source/ios-swift-swiftharness
+        run: swift build -c debug
+
+      # CI step 2 — link + execute the symbol-check example. Must
+      # print "PASS adaptivecards-swiftharness-roundtrip" on stdout.
+      - name: build + run symbol-check example
+        working-directory: source/ios-swift-swiftharness/examples/adaptivecards-swiftharness-demo
+        run: .\smoke.ps1
