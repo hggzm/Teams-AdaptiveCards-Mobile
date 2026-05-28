@@ -1,0 +1,73 @@
+# proxy-only — do NOT cherry-pick this workflow to any clean/* branch
+# or to any PR targeting microsoft/main. Lives only on:
+#   hggz/AdaptiveCards-Mobile : proxy/feat-swift-swiftka-bridge, proxy/integration
+#   hggzm/Teams-AdaptiveCards-Mobile : proxy/integration (after merge)
+name: swift-swiftka-bridge gate
+
+on:
+  push:
+    branches:
+      - 'proxy/feat-swift-swiftka-bridge'
+      - 'proxy/integration'
+    paths:
+      - 'source/ios-swift-swiftka/**'
+      - '.github/workflows/swift-swiftka-bridge-gate.yml'
+  pull_request:
+    branches: [ 'proxy/integration' ]
+    paths:
+      - 'source/ios-swift-swiftka/**'
+      - '.github/workflows/swift-swiftka-bridge-gate.yml'
+
+jobs:
+  windows-msvc:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      # The default `actions/checkout@v4` fails on this branch because
+      # the proxy/integration tree carries a legacy file whose path
+      # contains a colon — invalid on Windows NTFS. We do a manual
+      # sparse-init that excludes that single file BEFORE fetching,
+      # so git on the runner never tries to materialise the bad path.
+      - name: Manual sparse checkout (skip Windows-invalid path)
+        shell: pwsh
+        run: |
+          git init
+          git config core.autocrlf false
+          git config core.protectNTFS false
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git config core.sparseCheckout true
+          @"
+          /*
+          !/t-Path*
+          "@ | Set-Content -NoNewline .git/info/sparse-checkout
+          git fetch --no-tags --depth=1 origin "${{ github.sha }}"
+          git checkout --progress --force FETCH_HEAD
+          git rev-parse HEAD
+
+      - name: Install Swift
+        uses: compnerd/gha-setup-swift@main
+        with:
+          # `swift-version` is the directory segment under
+          # download.swift.org; `swift-build` is the file-name prefix.
+          # 6.1.2 is the latest published Windows asset as of the
+          # vendor date; the kit itself was developed on 6.3.1 locally
+          # but only depends on Swift 6.0 language features.
+          swift-version: "swift-6.1.2-release"
+          swift-build:   "6.1.2-RELEASE"
+
+      - name: swift --version
+        run: swift --version
+
+      # Step 1 — compile floor: the vendored kit + bridge build clean.
+      - name: build kit (compile floor)
+        working-directory: source/ios-swift-swiftka
+        run: swift build -c debug
+
+      # Step 2 — link-and-execute ceiling: the mandatory symbol-check
+      # example builds + runs against the canonical AdaptiveCards.io
+      # sample card and prints PASS adaptivecards-swiftka-roundtrip.
+      - name: build + run symbol-check example (link + execute)
+        working-directory: source/ios-swift-swiftka/examples/adaptivecards-swiftka-demo
+        run: ./smoke.ps1
