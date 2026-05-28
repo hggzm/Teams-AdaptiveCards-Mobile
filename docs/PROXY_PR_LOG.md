@@ -29,7 +29,6 @@ Track every PR merged into `proxy/integration` that needs replication to
 | 11 | #27 | 2025-07-15 | fix: prevent RadioGroup from aggregating child labels for TalkBack | `bd7eae63` | upstream-pr | [#34](https://github.com/hggzm/Teams-AdaptiveCards-Mobile/pull/34) | [#522](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/522) |
 | 12 | #28 | 2025-07-15 | fix: ShowCard toggle announces expanded/collapsed instead of selected | `027675eb` | upstream-pr | [#35](https://github.com/hggzm/Teams-AdaptiveCards-Mobile/pull/35) | [#523](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/523) |
 | 13 | #29 | 2025-07-15 | fix: render ProgressBar with accessible role and value info for TalkBack | `e338d0ef` | upstream-pr | [#36](https://github.com/hggzm/Teams-AdaptiveCards-Mobile/pull/36) | [#524](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/524) |
-| 14 | #50 | 2026-05-28 | feat(swift-swiftka-bridge): initial proxy drop | `af480172` | pending | — | — |
 
 ## Clean Branch Strategy
 
@@ -164,3 +163,14 @@ Toggle test: initial=54 elements -> expanded=56 -> collapsed=54 (round-trip conf
 **Fix:**
 - iOS: Set `ACRView.accessibilityLabel` from card speak property via `GetSpeak()` with full null-safety guards
 - Android: Set `contentDescription` from speak; set `accessibilityLiveRegion = POLITE`
+
+
+## Swift-on-Windows Bridge — swiftpi Agent Runtime
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 41 | Vendor the swiftpi Swift-on-Windows agent runtime as an experimental proxy-only parallel surface alongside the production ObjC/Java/C++ AdaptiveCards stack. | proxy/feat-swift-swiftpi-bridge | — | pending | source/ios-swift-swiftpi/: vendored snapshot of hggz/swiftpi (Swift 6 agent runtime over the hggz Phase-F NIO substrate) + runtime symbol-check demo at examples/adaptivecards-swiftpi-demo/ exercising the canonical adaptivecards.io Hello-World card through Agent + FakeProvider + ToolDispatcher. CI: .github/workflows/swift-swiftpi-bridge-gate.yml (Windows MSVC build + tests + smoke). No edits to existing ObjC/Java/C++ shipping code. |
+
+**Scope:** Proxy-only, experimental. Vendored on 2026-05-28; inherits repo-root MIT. No nested LICENSE, no GPL per-file headers, no SSH URLs in committed Package.swift. Substrate pinned to public hggz forks (swift-nio 7c9c6861, swift-nio-extras 076c9b49, swift-nio-ssl 7f9efd53, async-http-client eaaf46ac) at the same revisions used by hggz/swiftci and hggz/giteax.
+
+**Symbol-check coverage:** The mandatory ADDENDUM-v2 §13 demo exercises Agent (init + run), Provider, FakeProvider, FakeProviderTape.toolUseTurn, FakeProviderTape.textTurn, Context, ToolDef, StreamOptions, JSONValue (Decodable round-trip), and every AgentEvent case against the canonical adaptivecards.io Hello-World JSON. The demo asserts the canonical event sequence and prints PASS adaptivecards-swiftpi-agentloop on success.
