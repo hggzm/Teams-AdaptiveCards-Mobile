@@ -171,3 +171,10 @@ Toggle test: initial=54 elements -> expanded=56 -> collapsed=54 (round-trip conf
 | 41 | swiftharness Swift-on-Windows kit drop | proxy/feat-swift-swiftharness-bridge | n/a (proxy-only) | n/a | pending |
 
 **Status:** pending. Vendored `hggz/swiftharness` snapshot as `source/ios-swift-swiftharness/`: four library targets (Core, Tools, Commands, Session, total ~20 .swift files), proxy-only CI gating `swift build -c debug` plus a Flavor A symbol-check example (`examples/adaptivecards-swiftharness-demo/`) that round-trips the canonical AdaptiveCards.io "Hello World" sample through the vendored `SessionStore` actor. Six distinct kit symbols exercised. `smoke.ps1` exits non-zero unless `PASS adaptivecards-swiftharness-roundtrip` lands on stdout. No edits to existing ObjC/Java/C++ shipping code. Foundation-only — manifest carries zero SSH URLs.
+## Swift-on-Windows experimental bridges (proxy-only)
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 41 | swiftharness Swift-on-Windows kit drop | proxy/feat-swift-swiftharness-bridge | n/a (proxy-only) | n/a | pending |
+
+**Status:** pending. Vendored `hggz/swiftharness` snapshot as `source/ios-swift-swiftharness/`: four library targets (Core, Tools, Commands, Session, total ~20 .swift files), proxy-only CI gating `swift build -c debug` plus a Flavor A symbol-check example (`examples/adaptivecards-swiftharness-demo/`) that round-trips the canonical AdaptiveCards.io "Hello World" sample through the vendored `SessionStore` actor. Six distinct kit symbols exercised. `smoke.ps1` exits non-zero unless `PASS adaptivecards-swiftharness-roundtrip` lands on stdout. No edits to existing ObjC/Java/C++ shipping code. Foundation-only — manifest carries zero SSH URLs.
