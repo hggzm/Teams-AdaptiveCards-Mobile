@@ -45,18 +45,6 @@ jobs:
           git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin $env:REF
           git checkout --progress --force $env:REF
           git rev-parse HEAD
-          # Debug: did Sources/ make it onto disk?
-          Write-Host '--- ls source/ios-swift-swiftpi (top) ---'
-          Get-ChildItem source/ios-swift-swiftpi | Format-Table -AutoSize | Out-String | Write-Host
-          if (Test-Path source/ios-swift-swiftpi/Sources) {
-            Write-Host '--- ls source/ios-swift-swiftpi/Sources ---'
-            Get-ChildItem source/ios-swift-swiftpi/Sources -Recurse -File | Measure-Object | Format-Table -AutoSize | Out-String | Write-Host
-          } else {
-            Write-Host 'FATAL: Sources/ NOT on disk after checkout'
-            Write-Host '--- ls-tree HEAD source/ios-swift-swiftpi (count) ---'
-            (git ls-tree -r HEAD source/ios-swift-swiftpi | Measure-Object).Count
-            exit 1
-          }
 
       - name: Install Swift 6.3.1
         uses: compnerd/gha-setup-swift@main
