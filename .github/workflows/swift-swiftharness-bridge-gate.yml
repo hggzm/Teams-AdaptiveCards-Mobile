@@ -18,6 +18,7 @@ on:
     paths:
       - 'source/ios-swift-swiftharness/**'
       - '.github/workflows/swift-swiftharness-bridge-gate.yml'
+  workflow_dispatch:
 
 jobs:
   windows-msvc:
