@@ -9,6 +9,7 @@
 #import "ACOBaseActionElementPrivate.h"
 #import "ACOHostConfigPrivate.h"
 #import "ACOVisibilityManager.h"
+#import "ACRContentStackView.h"
 #import "ACRRendererPrivate.h"
 #import "ACRView.h"
 #import "BaseActionElement.h"
@@ -105,6 +106,57 @@
     for (id<ACOIVisibilityManagerFacade> viewToUpdateVisibility in facades) {
         [viewToUpdateVisibility updatePaddingVisibility];
     }
+
+    // Re-measure the host after a ToggleVisibility expand/collapse (fixes #812389686).
+    //
+    // ShowCard already tells the host to re-measure (didChangeVisibility: /
+    // didChangeViewLayout:) so a self-sizing host cell grows with the expanded
+    // content. ToggleVisibility did not, so expanding a tall hidden Container
+    // left the host at its collapsed height: the content was clipped (no scroll
+    // region created) and overflowed its host cell, overlapping the next card
+    // (z-order).
+    //
+    // 1. Recompute + invalidate the cached intrinsic content size from each
+    //    affected host up to the root view. ACRColumnView caches its height in
+    //    combinedContentSize (returned by intrinsicContentSize); the toggle path
+    //    updates it incrementally via increaseIntrinsicContentSize: but never
+    //    invalidates it, so UIKit keeps the stale collapsed size. The bottom-up
+    //    walk recomputes from the visible arranged subviews (idempotent) and
+    //    invalidates so the layout engine re-queries the grown size.
+    for (id<ACOIVisibilityManagerFacade> facade in facades) {
+        if (![facade isKindOfClass:[ACRContentStackView class]]) {
+            continue;
+        }
+        UIView *node = (ACRContentStackView *)facade;
+        while (node) {
+            if ([node isKindOfClass:[ACRContentStackView class]]) {
+                [(ACRContentStackView *)node updateIntrinsicContentSize];
+                [node invalidateIntrinsicContentSize];
+                [node setNeedsLayout];
+            }
+            if (node == _rootView) {
+                break;
+            }
+            node = node.superview;
+        }
+    }
+
+    // 2. Ask the host to re-measure the card, exactly as ShowCard does. Report
+    //    the root view's current frame as the old size and its recomputed
+    //    intrinsic height as the new size so a self-sizing cell can grow/shrink.
+    if (_rootView &&
+        [_rootView.acrActionDelegate respondsToSelector:@selector(didChangeViewLayout:newFrame:)]) {
+        CGRect oldFrame = _rootView.frame;
+        CGRect newFrame = oldFrame;
+        newFrame.size.height = _rootView.intrinsicContentSize.height;
+        if (ABS(newFrame.size.height - oldFrame.size.height) > 0.5) {
+            [_rootView.acrActionDelegate didChangeViewLayout:oldFrame newFrame:newFrame];
+        }
+    }
+
+    // Post an accessibility layout-changed notification so VoiceOver re-scans the
+    // toggled content and does not lose focus.
+    UIAccessibilityPostNotification(UIAccessibilityLayoutChangedNotification, nil);
 }
 
 @end
