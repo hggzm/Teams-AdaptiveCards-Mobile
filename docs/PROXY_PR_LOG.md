@@ -163,3 +163,11 @@ Toggle test: initial=54 elements -> expanded=56 -> collapsed=54 (round-trip conf
 **Fix:**
 - iOS: Set `ACRView.accessibilityLabel` from card speak property via `GetSpeak()` with full null-safety guards
 - Android: Set `contentDescription` from speak; set `accessibilityLiveRegion = POLITE`
+
+## Swift-on-Windows experimental bridges (proxy-only)
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 42 | swiftsync Swift-on-Windows kit drop | proxy/feat-swift-swiftsync-bridge | n/a (proxy-only) | n/a | pending |
+
+**Status:** pending. Vendored hggz/swiftsync snapshot as `source/ios-swift-swiftsync/`: a single SwiftSyncCore library target (the general-purpose, pure-Foundation, rsync-style recursive directory-sync engine). SwiftSyncCore has zero external package dependencies and imports only `Foundation`, so the committed `Package.swift` carries zero SSH-alias URLs and the snapshot needs no vcpkg/zlib. The kit terminal/progress UI layer (which used `import Darwin`/`Glibc`/`WinSDK`) is intentionally omitted because the bridge surface is the headless engine. Per ADDENDUM-v2 the subfolder inherits the repo-root MIT license (no nested LICENSE, no GPL per-file headers). Proxy-only CI at `.github/workflows/swift-swiftsync-bridge-gate.yml` runs two steps on Windows MSVC: (1) `swift build -c debug` of the vendored kit (compile floor), and (2) `./smoke.ps1` of the Flavor A symbol-check example at `source/ios-swift-swiftsync/examples/adaptivecards-swiftsync-demo/`, which syncs the canonical adaptivecards.io Hello World sample card from a temp source dir into a temp destination dir via the public `Syncer.run()` API, reads it back, asserts byte-equality, and confirms a re-sync is a no-op via `FSOps.stat`/`FSOps.decideCopy`. It exercises at least three distinct public symbols (`Syncer`/`Syncer.Options`/`run`, `SyncSummary`/`SyncStats`, `FSOps.stat`/`decideCopy`, `HumanSize`) and prints `PASS adaptivecards-swiftsync-roundtrip` on success. Verified green locally on Windows MSVC. No edits to existing ObjC/Java/C++ shipping code.
