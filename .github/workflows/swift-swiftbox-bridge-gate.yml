@@ -1,0 +1,74 @@
+# proxy-only -- do NOT cherry-pick this workflow to any clean/* branch
+# or to any PR targeting microsoft/main. Lives only on:
+#   hggz/AdaptiveCards-Mobile        : proxy/feat-swift-swiftbox-bridge, proxy/integration
+#   hggzm/Teams-AdaptiveCards-Mobile : proxy/integration (after merge)
+name: swift-swiftbox-bridge gate
+
+on:
+  push:
+    branches:
+      - 'proxy/feat-swift-swiftbox-bridge'
+      - 'proxy/integration'
+    paths:
+      - 'source/ios-swift-swiftbox/**'
+      - '.github/workflows/swift-swiftbox-bridge-gate.yml'
+  pull_request:
+    branches: [ 'proxy/integration' ]
+    paths:
+      - 'source/ios-swift-swiftbox/**'
+      - '.github/workflows/swift-swiftbox-bridge-gate.yml'
+
+jobs:
+  windows-msvc:
+    name: Windows MSVC / Swift 6.3.1
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      # proxy/integration carries a tracked file with a colon in its name
+      # ('t-Path C:\Users\hugogonzalez\teams_branch_diffs.txt'), invalid on
+      # NTFS. actions/checkout@v4 rejects the path with exit 128 regardless of
+      # sparse settings. A manual clone with core.protectNTFS=false bypasses the
+      # safety check on that one path; nothing in source/ios-swift-swiftbox/ or
+      # the workflow file is affected.
+      - name: Manual checkout with protectNTFS=false
+        env:
+          REPO: ${{ github.repository }}
+          REF: ${{ github.sha }}
+        run: |
+          git config --global core.protectNTFS false
+          git init .
+          git remote add origin "https://github.com/$env:REPO.git"
+          git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin $env:REF
+          git checkout --progress --force $env:REF
+          git rev-parse HEAD
+
+      - name: Install Swift 6.3.1
+        uses: compnerd/gha-setup-swift@main
+        with:
+          swift-version: "swift-6.3.1-release"
+          swift-build:   "6.3.1-RELEASE"
+
+      - name: swift --version
+        run: swift --version
+
+      # ----------------------------------------------------------------
+      # Step 1 (compile floor): the vendored kit must build clean.
+      # swiftbox is pure Foundation -- no vcpkg / zlib.
+      # ----------------------------------------------------------------
+      - name: swift build -c debug (kit)
+        working-directory: source/ios-swift-swiftbox
+        run: |
+          swift build -c debug
+          if ($LASTEXITCODE -ne 0) { throw "kit build failed" }
+
+      # ----------------------------------------------------------------
+      # Step 2 (link + execute): the symbol-check demo must build, run,
+      # and emit `PASS adaptivecards-swiftbox-roundtrip`.
+      # ----------------------------------------------------------------
+      - name: smoke (build + run + assert PASS)
+        working-directory: source/ios-swift-swiftbox/examples/adaptivecards-swiftbox-demo
+        run: |
+          ./smoke.ps1
+          if ($LASTEXITCODE -ne 0) { throw "smoke failed" }
