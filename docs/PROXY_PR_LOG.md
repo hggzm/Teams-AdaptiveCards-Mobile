@@ -163,3 +163,13 @@ Toggle test: initial=54 elements -> expanded=56 -> collapsed=54 (round-trip conf
 **Fix:**
 - iOS: Set `ACRView.accessibilityLabel` from card speak property via `GetSpeak()` with full null-safety guards
 - Android: Set `contentDescription` from speak; set `accessibilityLiveRegion = POLITE`
+
+## Swift-on-Windows Bridge — swiftoauth OAuth 2.0 Playground
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 41 | Vendor the swiftoauth Swift-on-Windows OAuth 2.0 playground as an experimental proxy-only parallel surface alongside the production ObjC/Java/C++ AdaptiveCards stack. | proxy/feat-swift-swiftoauth-bridge | — | pending | source/ios-swift-swiftoauth/: vendored snapshot of swiftoauth (Swift 6 OAuth 2.0 authorization-code + PKCE playground with a 127.0.0.1 loopback callback server, over the hggz Phase-F NIO substrate) + runtime symbol-check demo at examples/adaptivecards-swiftoauth-demo/ binding the loopback server and round-tripping the canonical adaptivecards.io Hello-World card fact through a CSRF-validated loopback HTTP exchange. CI: .github/workflows/swift-swiftoauth-bridge-gate.yml (Windows MSVC build + smoke). No edits to existing ObjC/Java/C++ shipping code. |
+
+**Scope:** Proxy-only, experimental. Vendored on 2026-06-17; inherits repo-root MIT. No nested LICENSE, no GPL per-file headers, no SSH URLs in committed Package.swift. Substrate pinned to public hggz forks (hummingbird 3e892143, swift-nio 7c9c6861, swift-nio-extras 076c9b49) at the same revisions used by hggz/swiftci and hggz/giteax. No zlib needed (loopback server uses Hummingbird's HTTP/1 runtime, not nio-ssl/compression).
+
+**Symbol-check coverage:** The mandatory ADDENDUM-v2 §13 demo (Flavor B / transport) exercises OAuthState (generate/value/matches), PKCE (generate/codeVerifier/codeChallenge/isValidVerifier/challenge), CallbackServerConfig (init/redirectURI), CallbackServer (init/run), CallbackServer.RunResult (outcome/boundPort/redirectURI), and CallbackOutcome against the canonical adaptivecards.io Hello-World JSON. The demo binds 127.0.0.1, validates a constant-time CSRF state, asserts the captured code equals the derived body[0].type fact, and prints PASS adaptivecards-swiftoauth-http on success.

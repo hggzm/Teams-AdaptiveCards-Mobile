@@ -1,0 +1,7 @@
+# Build artifacts — never committed.
+.build/
+.swiftpm/
+Package.resolved
+vcpkg_installed/
+.DS_Store
+*.log
