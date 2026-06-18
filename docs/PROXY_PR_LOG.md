@@ -163,3 +163,13 @@ Toggle test: initial=54 elements -> expanded=56 -> collapsed=54 (round-trip conf
 **Fix:**
 - iOS: Set `ACRView.accessibilityLabel` from card speak property via `GetSpeak()` with full null-safety guards
 - Android: Set `contentDescription` from speak; set `accessibilityLiveRegion = POLITE`
+
+## Swift-on-Windows Bridge -- swiftci ("jenkins") CI Controller + Agent
+
+| # | Description | Proxy Branch | Clean Branch | Status | Detail |
+|---|-------------|--------------|--------------|--------|--------|
+| 42 | Vendor the swiftci (swiftjenkins) Swift-on-Windows CI controller + build-agent kit as an experimental proxy-only parallel surface alongside the production ObjC/Java/C++ AdaptiveCards stack. | proxy/feat-swift-jenkins-bridge | -- | pending | source/ios-swift-jenkins/: vendored snapshot of hggz/swiftci (Vapor-on-Windows CI controller + WebSocket build agent) + runtime symbol-check demo at examples/adaptivecards-jenkins-demo/ round-tripping the canonical adaptivecards.io Hello-World card through AgentMessage.Artifact + encodeJSON()/decode(json:). CI: .github/workflows/swift-jenkins-bridge-gate.yml (Windows MSVC build + smoke). No edits to existing ObjC/Java/C++ shipping code. |
+
+**Scope:** Proxy-only, experimental. Vendored on 2026-06-17; inherits repo-root MIT. No nested LICENSE, no GPL per-file headers, no SSH URLs in committed Package.swift. Substrate pinned to public hggz forks (vapor 5d21fd1e, swift-nio 7c9c6861, swift-nio-extras 076c9b49, swift-nio-ssl 7f9efd53, async-http-client eaaf46ac, websocket-kit ddfba8c) plus Yams 5.x.
+
+**Symbol-check coverage:** The mandatory ADDENDUM-v2 section 13 demo exercises Build (init), BuildStatus (.passed), AgentMessage (enum + .artifact case), AgentMessage.Artifact (init), encodeJSON(), and decode(json:) against the canonical adaptivecards.io Hello-World JSON. The demo asserts byte-identical round-trip and prints PASS adaptivecards-jenkins-roundtrip on success.
