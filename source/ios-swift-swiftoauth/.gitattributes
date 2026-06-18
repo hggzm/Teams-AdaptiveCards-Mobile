@@ -1,0 +1,11 @@
+# Force LF on all text in this vendored subfolder so the Swift-on-Windows
+# sources behave identically on macOS, Linux, and Windows MSVC CI. Stray
+# CR bytes break the NIO substrate and Linux toolchains.
+* text=auto eol=lf
+*.swift text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.sh    text eol=lf
+*.ps1   text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf

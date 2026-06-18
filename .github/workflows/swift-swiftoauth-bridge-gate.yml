@@ -1,0 +1,81 @@
+# proxy-only — do NOT cherry-pick this workflow to any clean/* branch
+# or to any PR targeting microsoft/main. Lives only on:
+#   hggz/AdaptiveCards-Mobile  : proxy/feat-swift-swiftoauth-bridge, proxy/integration
+#   hggzm/Teams-AdaptiveCards-Mobile : proxy/integration (after merge)
+name: swift-swiftoauth-bridge gate
+
+on:
+  push:
+    branches:
+      - 'proxy/feat-swift-swiftoauth-bridge'
+      - 'proxy/integration'
+    paths:
+      - 'source/ios-swift-swiftoauth/**'
+      - '.github/workflows/swift-swiftoauth-bridge-gate.yml'
+  pull_request:
+    branches: [ 'proxy/integration' ]
+    paths:
+      - 'source/ios-swift-swiftoauth/**'
+      - '.github/workflows/swift-swiftoauth-bridge-gate.yml'
+
+jobs:
+  windows-msvc:
+    name: Windows MSVC / Swift 6.3.1
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      # The proxy/integration tree carries a tracked file with a colon
+      # in its name ('t-Path C:\Users\hugogonzalez\teams_branch_diffs.txt'),
+      # which is invalid on NTFS. `actions/checkout@v4` runs `git checkout`
+      # which rejects that path with exit 128 regardless of sparse-checkout
+      # settings. Workaround: clone manually with `core.protectNTFS=false`
+      # so git on Windows ignores the NTFS-safety check on that one path;
+      # everything we care about (source/ios-swift-swiftoauth/ + this
+      # workflow) is safe.
+      - name: Manual checkout with protectNTFS=false
+        env:
+          REPO: ${{ github.repository }}
+          REF: ${{ github.sha }}
+        run: |
+          git config --global core.protectNTFS false
+          git init .
+          git remote add origin "https://github.com/$env:REPO.git"
+          git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin $env:REF
+          git checkout --progress --force $env:REF
+          git rev-parse HEAD
+
+      - name: Install Swift 6.3.1
+        uses: compnerd/gha-setup-swift@main
+        with:
+          # compnerd/gha-setup-swift wants the release-branch name in
+          # swift-version (NOT just the version number) and the
+          # corresponding RELEASE tag in swift-build. This matches the
+          # pattern used by hggz/swiftci and hggz/giteax CI.
+          swift-version: "swift-6.3.1-release"
+          swift-build:   "6.3.1-RELEASE"
+
+      - name: swift --version
+        run: swift --version
+
+      # ----------------------------------------------------------------
+      # Step 1 (compile floor): the vendored kit must build clean.
+      # No zlib: the loopback server uses Hummingbird's HTTP/1 runtime
+      # (swift-nio + swift-nio-extras), not nio-ssl/compression.
+      # ----------------------------------------------------------------
+      - name: swift build -c debug (kit)
+        working-directory: source/ios-swift-swiftoauth
+        run: |
+          swift build -c debug
+          if ($LASTEXITCODE -ne 0) { throw "kit build failed" }
+
+      # ----------------------------------------------------------------
+      # Step 2 (link + execute): the symbol-check demo must build, run,
+      # and emit `PASS adaptivecards-swiftoauth-http`.
+      # ----------------------------------------------------------------
+      - name: smoke (build + run + assert PASS)
+        working-directory: source/ios-swift-swiftoauth/examples/adaptivecards-swiftoauth-demo
+        run: |
+          ./smoke.ps1
+          if ($LASTEXITCODE -ne 0) { throw "smoke failed" }
