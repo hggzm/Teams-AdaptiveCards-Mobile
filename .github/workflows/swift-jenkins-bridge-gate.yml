@@ -1,0 +1,97 @@
+# proxy-only -- do NOT cherry-pick this workflow to any clean/* branch
+# or to any PR targeting microsoft/main. Lives only on:
+#   hggz/AdaptiveCards-Mobile        : proxy/feat-swift-jenkins-bridge, proxy/integration
+#   hggzm/Teams-AdaptiveCards-Mobile : proxy/integration (after merge)
+name: swift-jenkins-bridge gate
+
+on:
+  push:
+    branches:
+      - 'proxy/feat-swift-jenkins-bridge'
+      - 'proxy/integration'
+    paths:
+      - 'source/ios-swift-jenkins/**'
+      - '.github/workflows/swift-jenkins-bridge-gate.yml'
+  pull_request:
+    branches: [ 'proxy/integration' ]
+    paths:
+      - 'source/ios-swift-jenkins/**'
+      - '.github/workflows/swift-jenkins-bridge-gate.yml'
+
+jobs:
+  windows-msvc:
+    name: Windows MSVC / Swift 6.3.1
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      # proxy/integration carries a tracked file with a colon in its
+      # name ('t-Path C:\Users\hugogonzalez\teams_branch_diffs.txt'),
+      # invalid on NTFS. actions/checkout@v4 rejects the path with
+      # exit 128 regardless of sparse settings. Manual clone with
+      # core.protectNTFS=false bypasses the safety check on that one
+      # path; nothing in source/ios-swift-jenkins/ or the workflow file
+      # is affected.
+      - name: Manual checkout with protectNTFS=false
+        env:
+          REPO: ${{ github.repository }}
+          REF: ${{ github.sha }}
+        run: |
+          git config --global core.protectNTFS false
+          git init .
+          git remote add origin "https://github.com/$env:REPO.git"
+          git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin $env:REF
+          git checkout --progress --force $env:REF
+          git rev-parse HEAD
+
+      - name: Install Swift 6.3.1
+        uses: compnerd/gha-setup-swift@main
+        with:
+          # compnerd/gha-setup-swift wants the release-branch name in
+          # swift-version (NOT just the version number) and the
+          # corresponding RELEASE tag in swift-build. Pattern matches
+          # the other proxy bridges + hggz/giteax / hggz/swiftci CI.
+          swift-version: "swift-6.3.1-release"
+          swift-build:   "6.3.1-RELEASE"
+
+      - name: swift --version
+        run: swift --version
+
+      # The Vapor/NIO substrate pulls NIOHTTPCompression, whose
+      # CNIOExtrasZlib C module wants zlib at C-module resolution time.
+      # Install via vcpkg manifest mode using the vendored vcpkg.json.
+      - name: Install zlib (vcpkg manifest)
+        working-directory: source/ios-swift-jenkins
+        run: |
+          $env:VCPKG_DEFAULT_TRIPLET = 'x64-windows-static-md'
+          & "$env:VCPKG_INSTALLATION_ROOT\vcpkg.exe" install --triplet x64-windows-static-md
+          if ($LASTEXITCODE -ne 0) { throw "vcpkg install failed" }
+          $inc = (Resolve-Path "vcpkg_installed\x64-windows-static-md\include").Path
+          $lib = (Resolve-Path "vcpkg_installed\x64-windows-static-md\lib").Path
+          "ZLIB_INC=$inc" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding ascii
+          "ZLIB_LIB=$lib" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding ascii
+          Write-Host "ZLIB_INC=$inc"
+          Write-Host "ZLIB_LIB=$lib"
+
+      # ----------------------------------------------------------------
+      # Step 1 (compile floor): the vendored kit must build clean.
+      # ----------------------------------------------------------------
+      - name: swift build -c debug (kit)
+        working-directory: source/ios-swift-jenkins
+        run: |
+          swift build -c debug `
+            -Xcc "-I$env:ZLIB_INC" `
+            -Xswiftc "-I$env:ZLIB_INC" `
+            -Xlinker "/LIBPATH:$env:ZLIB_LIB"
+          if ($LASTEXITCODE -ne 0) { throw "kit build failed" }
+
+      # ----------------------------------------------------------------
+      # Step 2 (link + execute): the symbol-check demo must build, run,
+      # and emit `PASS adaptivecards-jenkins-roundtrip`.
+      # ----------------------------------------------------------------
+      - name: smoke (build + run + assert PASS)
+        working-directory: source/ios-swift-jenkins/examples/adaptivecards-jenkins-demo
+        run: |
+          ./smoke.ps1 -ZlibInc "$env:ZLIB_INC" -ZlibLib "$env:ZLIB_LIB"
+          if ($LASTEXITCODE -ne 0) { throw "smoke failed" }
