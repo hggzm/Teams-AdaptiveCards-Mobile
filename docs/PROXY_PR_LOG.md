@@ -29,6 +29,7 @@ Track every PR merged into `proxy/integration` that needs replication to
 | 11 | #27 | 2025-07-15 | fix: prevent RadioGroup from aggregating child labels for TalkBack | `bd7eae63` | upstream-pr | [#34](https://github.com/hggzm/Teams-AdaptiveCards-Mobile/pull/34) | [#522](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/522) |
 | 12 | #28 | 2025-07-15 | fix: ShowCard toggle announces expanded/collapsed instead of selected | `027675eb` | upstream-pr | [#35](https://github.com/hggzm/Teams-AdaptiveCards-Mobile/pull/35) | [#523](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/523) |
 | 13 | #29 | 2025-07-15 | fix: render ProgressBar with accessible role and value info for TalkBack | `e338d0ef` | upstream-pr | [#36](https://github.com/hggzm/Teams-AdaptiveCards-Mobile/pull/36) | [#524](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/524) |
+| 14 | #50 | 2026-05-28 | feat(swift-swiftka-bridge): initial proxy drop | `af480172` | pending | — | — |
 
 ## Clean Branch Strategy
 
