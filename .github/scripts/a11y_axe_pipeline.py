@@ -59,6 +59,13 @@ rc, stdout, stderr = run_cmd([
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yAutomation_ActivityUpdate",
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yAutomation_ExpenseReport",
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yAutomation_InputForm",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_FoodOrderShowCard_dropdown",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_ColumnSetChoiceSet_name",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_InputStyle_fieldName",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_CompoundButton_role",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_RtlFalse_phantomButton",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_ActivityUpdate_dismissFocus",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_ActionMode_cancelFocus",
     "CODE_SIGN_IDENTITY=-", "CODE_SIGNING_REQUIRED=NO", "CODE_SIGNING_ALLOWED=NO",
 ], timeout=600)
 test_dur = time.time() - start_time

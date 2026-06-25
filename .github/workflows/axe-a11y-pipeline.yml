@@ -28,10 +28,16 @@ jobs:
 
     - name: Install tools
       run: |
-        brew tap cameroncooke/axe
-        brew install axe ffmpeg
-        axe --version 2>/dev/null || axe --help | head -1
-        ffmpeg -version | head -1
+        # ffmpeg is a core formula (video post-processing).
+        brew install ffmpeg || true
+        # axe CLI (cameroncooke/axe) is OPTIONAL: used only for video recording.
+        # a11y_axe_pipeline.py falls back to `xcrun simctl io recordVideo` when axe
+        # is absent, and the a11y element-dump evidence comes from XCUITest. Newer
+        # Homebrew refuses third-party taps as 'untrusted', so keep this non-fatal.
+        brew tap cameroncooke/axe 2>/dev/null || echo "axe tap unavailable (untrusted); using simctl recordVideo fallback"
+        brew install axe 2>/dev/null || echo "axe CLI unavailable; using simctl recordVideo fallback"
+        axe --version 2>/dev/null || echo "(no axe CLI - simctl fallback active)"
+        ffmpeg -version | head -1 || true
 
     - name: Boot Simulator
       run: |
