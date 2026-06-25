@@ -1242,4 +1242,82 @@
     NSLog(@"TOGGLE_DOUBLE_FIRE: === Test complete ===");
 }
 
+
+#pragma mark - A11YMAS Batch B: Swipe-Accessibility Repro Scenarios
+
+/// Helper: navigate to a card, dump its a11y tree, and report whether any of the
+/// expected control labels are reachable via VoiceOver. Logs A11YMAS_REPRO when a
+/// expected control is NOT reachable (the swipe-accessibility bug), and A11YMAS_OK
+/// when reachable (post-fix). Always dumps <name>_elements.json for the pipeline.
+- (void)a11ymasScanCard:(NSString *)version
+                   type:(NSString *)type
+                   card:(NSString *)card
+              stateName:(NSString *)stateName
+        expectedLabels:(NSArray<NSString *> *)expectedLabels
+                     wi:(NSString *)wi
+{
+    BOOL navigated = [self navigateToCardByA11y:version type:type card:card];
+    XCTAssertTrue(navigated, @"A11YMAS WI#%@: should navigate to %@", wi, card);
+    if (!navigated) { return; }
+
+    [self saveA11yState:stateName];
+    NSArray *elements = [self discoverAccessibleElements];
+    NSLog(@"A11YMAS_SCAN: WI#%@ card=%@ elements=%lu", wi, card, (unsigned long)elements.count);
+
+    NSMutableSet *reachable = [NSMutableSet set];
+    for (NSDictionary *e in elements) {
+        if ([e[@"label"] length] > 0) { [reachable addObject:e[@"label"]]; }
+    }
+    for (NSString *expected in expectedLabels) {
+        BOOL found = NO;
+        for (NSString *label in reachable) {
+            if ([label rangeOfString:expected options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                found = YES;
+                break;
+            }
+        }
+        if (found) {
+            NSLog(@"A11YMAS_OK: WI#%@ reachable: '%@'", wi, expected);
+        } else {
+            NSLog(@"A11YMAS_REPRO: WI#%@ NOT reachable via swipe: '%@'", wi, expected);
+        }
+    }
+}
+
+/// WI#5535831 — RatingInput stars not reachable via swipe gesture.
+- (void)testA11yMAS_RatingInput_swipe
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Scenarios" card:@"RatingInput.json"
+                stateName:@"a11ymas_5535831_rating_input"
+           expectedLabels:@[ @"Rate 1 Star", @"Rate 3 Star", @"Rate 5 Star" ]
+                       wi:@"5535831"];
+}
+
+/// WI#5533268 — FluentIcon.RTL icons ("RTL is supported") not reachable via swipe.
+- (void)testA11yMAS_FluentIconRTL_swipe
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Scenarios" card:@"FluentIcon.RTL.json"
+                stateName:@"a11ymas_5533268_fluenticon_rtl"
+           expectedLabels:@[ @"RTL is supported" ]
+                       wi:@"5533268"];
+}
+
+/// WI#5536935 — TooltipTestCard controls not reachable via swipe (Sev1).
+- (void)testA11yMAS_TooltipTestCard_swipe
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Tests" card:@"TooltipTestCard.json"
+                stateName:@"a11ymas_5536935_tooltip"
+           expectedLabels:@[ @"Submit", @"Action" ]
+                       wi:@"5536935"];
+}
+
+/// WI#5539188 — InputLabelPosition 'Click here for action' link not reachable via swipe.
+- (void)testA11yMAS_InputLabel_link_swipe
+{
+    [self a11ymasScanCard:@"v1.6" type:@"Elements" card:@"InputLabelPosition.json"
+                stateName:@"a11ymas_5539188_inputlabel_link"
+           expectedLabels:@[ @"Click here for action" ]
+                       wi:@"5539188"];
+}
+
 @end

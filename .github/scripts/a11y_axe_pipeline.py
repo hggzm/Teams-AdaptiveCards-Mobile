@@ -59,6 +59,10 @@ rc, stdout, stderr = run_cmd([
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yAutomation_ActivityUpdate",
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yAutomation_ExpenseReport",
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yAutomation_InputForm",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_RatingInput_swipe",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_FluentIconRTL_swipe",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_TooltipTestCard_swipe",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_InputLabel_link_swipe",
     "CODE_SIGN_IDENTITY=-", "CODE_SIGNING_REQUIRED=NO", "CODE_SIGNING_ALLOWED=NO",
 ], timeout=600)
 test_dur = time.time() - start_time
