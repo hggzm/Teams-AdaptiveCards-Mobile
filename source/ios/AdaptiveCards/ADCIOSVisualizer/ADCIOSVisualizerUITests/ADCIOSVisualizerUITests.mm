@@ -943,7 +943,10 @@
 {
     if (![element exists]) { return NO; }
     if ([element isHittable]) { return YES; }
-    XCUIElement *scroller = [[testApp tables] elementBoundByIndex:0];
+    // The sample list is the SECOND table (index 1) in the split view, matching
+    // openCardForVersion. Fall back to table 0 / first scroll view / the app.
+    XCUIElement *scroller = [[testApp tables] elementBoundByIndex:1];
+    if (![scroller exists]) { scroller = [[testApp tables] elementBoundByIndex:0]; }
     if (![scroller exists]) { scroller = [[testApp scrollViews] elementBoundByIndex:0]; }
     if (![scroller exists]) { scroller = testApp; }
     for (int i = 0; i < 8 && [element exists] && ![element isHittable]; i++) {
@@ -1416,7 +1419,7 @@
 - (void)testA11yMAS_ActionMode_cancelFocus
 {
     [self a11ymasActivate:@"v1.5" type:@"Tests" card:@"ActionModeTestCard.json"
-              actionLabel:@"More"
+              actionLabel:@"..."
                 stateName:@"a11ymas_5536765_actionmode_cancel"
                        wi:@"5536765"];
 }
@@ -1497,6 +1500,65 @@
                 stateName:@"a11ymas_5539188_inputlabel_link"
            expectedLabels:@[ @"Click here for action" ]
                        wi:@"5539188"];
+}
+
+
+#pragma mark - A11YMAS Batch D: Keyboard-Accessibility Repro Scenarios
+
+/// D-group helper: navigate to a card, then walk focus with the HW Tab key,
+/// recording how many distinct controls receive keyboard focus. Logs
+/// A11YMAS_KBD with the focused-element count so we can see whether interactive
+/// controls are reachable via keyboard (the bug: count stays at 0 / does not
+/// advance into the card).
+- (void)a11ymasKeyboardWalk:(NSString *)version
+                       type:(NSString *)type
+                       card:(NSString *)card
+                  stateName:(NSString *)stateName
+                         wi:(NSString *)wi
+{
+    BOOL navigated = [self navigateToCardByA11y:version type:type card:card];
+    XCTAssertTrue(navigated, @"A11YMAS WI#%@: should navigate to %@", wi, card);
+    if (!navigated) { return; }
+
+    [self saveA11yState:stateName];
+
+    // Drive the hardware keyboard: press Tab several times and capture which
+    // element holds keyboard focus (hasKeyboardFocus) after each press.
+    NSMutableSet *focusedLabels = [NSMutableSet set];
+    for (int i = 0; i < 12; i++) {
+        [testApp typeKey:XCUIKeyboardKeyTab modifierFlags:XCUIKeyModifierNone];
+        [NSThread sleepForTimeInterval:0.3];
+        XCUIElement *focused = [[[testApp descendantsMatchingType:XCUIElementTypeAny]
+            matchingPredicate:[NSPredicate predicateWithFormat:@"hasKeyboardFocus == true"]]
+            elementBoundByIndex:0];
+        if ([focused exists] && focused.label.length > 0) {
+            [focusedLabels addObject:focused.label];
+        }
+    }
+    NSLog(@"A11YMAS_KBD: WI#%@ card=%@ distinctKeyboardFocusable=%lu",
+          wi, card, (unsigned long)focusedLabels.count);
+    for (NSString *l in focusedLabels) {
+        NSLog(@"A11YMAS_KBD:   focusable: '%@'", l);
+    }
+    if (focusedLabels.count == 0) {
+        NSLog(@"A11YMAS_REPRO: WI#%@ no card control reachable via keyboard Tab", wi);
+    }
+}
+
+/// WI#5532354 — CompoundButtonSample controls not reachable via tab / ctrl+tab.
+- (void)testA11yMAS_CompoundButton_keyboard
+{
+    [self a11ymasKeyboardWalk:@"v1.5" type:@"Scenarios" card:@"CompoundButtonSample.json"
+                    stateName:@"a11ymas_5532354_compoundbutton_kbd"
+                           wi:@"5532354"];
+}
+
+/// WI#5428636 — interactive controls (ActionModeTestCard actions) not keyboard-accessible.
+- (void)testA11yMAS_Interactive_keyboard
+{
+    [self a11ymasKeyboardWalk:@"v1.5" type:@"Tests" card:@"ActionModeTestCard.json"
+                    stateName:@"a11ymas_5428636_interactive_kbd"
+                           wi:@"5428636"];
 }
 
 @end
