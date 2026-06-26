@@ -891,9 +891,17 @@
         XCUIElementTypeImage, XCUIElementTypeSwitch, XCUIElementTypeSlider,
     };
     NSString *roleNames[] = {@"button", @"text", @"textField", @"textView", @"image", @"switch", @"slider"};
-    
+
+    // The visualizer is a split view: the master sample list (46+ "*.json" rows)
+    // stays visible alongside the rendered-card pane (the "ChatWindow" table).
+    // Scanning the whole app conflates both, drowning card content in list rows.
+    // Scope the scan to the ChatWindow when it exists so element dumps reflect the
+    // card under test; fall back to the whole app otherwise.
+    XCUIElement *chatWindow = testApp.tables[@"ChatWindow"];
+    id scanRoot = ([chatWindow exists]) ? (id)chatWindow : (id)testApp;
+
     for (int t = 0; t < 7; t++) {
-        XCUIElementQuery *q = [testApp descendantsMatchingType:scanTypes[t]];
+        XCUIElementQuery *q = [scanRoot descendantsMatchingType:scanTypes[t]];
         NSUInteger count = q.count;
         for (NSUInteger i = 0; i < count && i < 50; i++) {
             @try {
