@@ -255,7 +255,15 @@ NSString * const DYNAMIC_VISIBLE_PROP = @"isVisible.dynamic";
     [button.titleLabel setFont:[UIFont systemFontOfSize:15.0]];
     button.titleLabel.font = [UIFontMetrics.defaultMetrics scaledFontForFont:button.titleLabel.font];
     button.isAccessibilityElement = YES;
-    button.accessibilityLabel = title;
+    // When an action has no title (e.g. a Submit with only a tooltip), fall back to
+    // the tooltip so VoiceOver can name and reach the button. Without this an
+    // untitled button has an empty accessibilityLabel and is effectively
+    // unreachable / unannounced.
+    if (title.length) {
+        button.accessibilityLabel = title;
+    } else if (acoAction.tooltip.length) {
+        button.accessibilityLabel = acoAction.tooltip;
+    }
     button.enabled = [acoAction isEnabled];
     
     // Handle dynamic properties if expression evaluation is enabled
