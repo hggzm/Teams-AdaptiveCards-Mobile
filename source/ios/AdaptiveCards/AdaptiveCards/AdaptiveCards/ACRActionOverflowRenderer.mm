@@ -40,7 +40,7 @@
         // The visible glyph is "...", but VoiceOver would otherwise read the title
         // literally ("dot dot dot"). Give the overflow control a descriptive
         // accessible name so screen-reader users know it reveals more actions.
-        button.accessibilityLabel = NSLocalizedString(@"More actions", nil);
+        button.accessibilityLabel = NSLocalizedString(@"More options", nil);
 
         ACROverflowTarget *target;
         ACRTargetBuilderDirector *director = [rootView getActionsTargetBuilderDirector];
