@@ -31,6 +31,7 @@ Track every PR merged into `proxy/integration` that needs replication to
 | 13 | #29 | 2025-07-15 | fix: render ProgressBar with accessible role and value info for TalkBack | `e338d0ef` | upstream-pr | [#36](https://github.com/hggzm/Teams-AdaptiveCards-Mobile/pull/36) | [#524](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/524) |
 | 14 | #60 | 2026-06-30 | fix(ios): overflow (…) button accessible name (More options) | `199b7d8d` | upstream-pr | [#60](https://github.com/hggzm/Teams-AdaptiveCards-Mobile/pull/60) | [#694](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/694) |
 | 15 | #62 | 2026-06-30 | fix(ios): expose interactive Icon (selectAction) to VoiceOver | `bff5de03` | upstream-pr | [#62](https://github.com/hggzm/Teams-AdaptiveCards-Mobile/pull/62) | [#695](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/695) |
+| 16 | #63 | 2026-06-30 | fix(ios): keep interactive children reachable when a card has a selectAction | `92889e51` | upstream-pr | [#63](https://github.com/hggzm/Teams-AdaptiveCards-Mobile/pull/63) | [#696](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/696) |
 
 ## Clean Branch Strategy
 
@@ -87,6 +88,7 @@ When merged upstream:
 |---|-------|-------------|-------------|------------|-----|
 | 14 | #166/#165 | proxy/fix-showcard-focus-166 | clean/fix-showcard-focus-166 | [#525](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/525) | Post VoiceOver notification on ShowCard expand/collapse |
 | 15 | #34 | proxy/fix-togglevisibility-focus-34 | clean/fix-togglevisibility-focus-34 | [#526](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/526) | Post VoiceOver notification after ToggleVisibility |
+| 16 | #63 | 2026-06-30 | fix(ios): keep interactive children reachable when a card has a selectAction | `92889e51` | upstream-pr | [#63](https://github.com/hggzm/Teams-AdaptiveCards-Mobile/pull/63) | [#696](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/696) |
 | 16 | #493 | proxy/fix-error-announce-493 | clean/fix-error-announce-493 | [#527](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/527) | Announce validation error messages to TalkBack |
 | 17 | #164 | — | clean/fix-group-announcement-164 | [#528](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/528) | Prevent VoiceOver "Group" on containers with selectAction |
 | 18 | #173 | — | clean/fix-choiceset-selected-173 | [#529](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/pull/529) | Announce "selected" state for ChoiceSet compact items |
