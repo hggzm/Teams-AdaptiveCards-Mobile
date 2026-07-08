@@ -1,0 +1,31 @@
+{
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "type": "AdaptiveCard",
+    "version": "1.5",
+    "backgroundImage": {
+        "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAeklEQVR42u3XsQ2AMAxE0e8sQ0dJwQyMwCplJmZgBEZgBEZgBEbwSZEmSuwoJ0VKxCu/dGdblmXBnQ0KUABlgAIoAySgTJIBcogFyiAXKIBcogVygAWKABYogFyiAXKIBcogFyiAXKIBcogFyiAXKIBcogFyiAXKIBcogFyiAXKIhV/8AB/0Ku2sAAAAAElFTkSuQmCC",
+        "fillMode": "cover"
+    },
+    "body": [
+        {
+            "type": "TextBlock",
+            "text": "backgroundImage - data URI (base64)",
+            "weight": "bolder",
+            "size": "large",
+            "wrap": true
+        },
+        {
+            "type": "TextBlock",
+            "text": "Mitigation / SDK path for AB#5477531 / AB#5477625: a data-URI backgroundImage is decoded in-process and never hits the network, so there is no host to leak a token to. This also exercises the AdaptiveBase64 decode path hardened by the SDK fix (karthikgopal36 user/kargopal/fix-adaptive-base64-decode).",
+            "wrap": true,
+            "spacing": "medium"
+        },
+        {
+            "type": "TextBlock",
+            "text": "Expected: card renders the decoded base64 background; no network request is made.",
+            "wrap": true,
+            "isSubtle": true,
+            "spacing": "small"
+        }
+    ]
+}

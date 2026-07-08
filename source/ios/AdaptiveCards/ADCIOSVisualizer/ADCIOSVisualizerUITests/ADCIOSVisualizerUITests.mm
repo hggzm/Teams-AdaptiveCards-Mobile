@@ -140,6 +140,29 @@
     [testApp.toolbars[@"Toolbar"].buttons[@"Done"] tap];
 }
 
+- (void)testSmokeTestBackgroundImageRemoteHost
+{
+    // AB#5477531 / AB#5477625: render a card whose backgroundImage points at a remote host.
+    // The renderer must lay the card out with the background image; the host app is responsible
+    // for fetching it through the unauthenticated image path so the Teams MT bearer token is
+    // never attached. This test drives the render + VoiceOver a11y dump for the AXe pipeline.
+    [self openCardForVersion:@"v1.5" forCardType:@"Scenarios" withCardName:@"BackgroundImageRemoteHostAttack.json"];
+
+    XCUIElement *heading = testApp.staticTexts[@"backgroundImage - remote host"];
+    XCTAssertTrue([heading waitForExistenceWithTimeout:10], @"Remote-host backgroundImage card did not render");
+}
+
+- (void)testSmokeTestBackgroundImageDataUri
+{
+    // AB#5477531 / AB#5477625 mitigation + AdaptiveBase64 decode path: render a card whose
+    // backgroundImage is an in-process base64 data URI (never hits the network, so it cannot
+    // leak a token). Also exercises the AdaptiveBase64 decode path hardened in the SDK fix.
+    [self openCardForVersion:@"v1.5" forCardType:@"Scenarios" withCardName:@"BackgroundImageDataUri.json"];
+
+    XCUIElement *heading = testApp.staticTexts[@"backgroundImage - data URI (base64)"];
+    XCTAssertTrue([heading waitForExistenceWithTimeout:10], @"Data-URI backgroundImage card did not render");
+}
+
 - (void)testSmokeTestActivityUpdateDate
 {
     [self openCardForVersion:@"v1.5" forCardType:@"Scenarios" withCardName:@"ActivityUpdate.json"];

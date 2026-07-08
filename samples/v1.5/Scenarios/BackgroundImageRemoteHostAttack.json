@@ -1,0 +1,31 @@
+{
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "type": "AdaptiveCard",
+    "version": "1.5",
+    "backgroundImage": {
+        "url": "https://messagecardplayground.azurewebsites.net/assets/AlarmClock.png",
+        "fillMode": "cover"
+    },
+    "body": [
+        {
+            "type": "TextBlock",
+            "text": "backgroundImage - remote host",
+            "weight": "bolder",
+            "size": "large",
+            "wrap": true
+        },
+        {
+            "type": "TextBlock",
+            "text": "Security scenario for AB#5477531 / AB#5477625: a card-supplied backgroundImage points at an arbitrary external host. The host app must fetch it through the UNAUTHENTICATED image path (requiresAuth:NO) so the Teams Middle-Tier bearer token is never attached to the outbound request.",
+            "wrap": true,
+            "spacing": "medium"
+        },
+        {
+            "type": "TextBlock",
+            "text": "Expected: card renders with the background image; no Authorization header leaks to the external host.",
+            "wrap": true,
+            "isSubtle": true,
+            "spacing": "small"
+        }
+    ]
+}

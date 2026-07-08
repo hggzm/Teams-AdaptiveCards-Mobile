@@ -190,6 +190,39 @@ jobs:
         echo "=== Scenario recording ==="
         ls -la /tmp/axe-diag/a11y_scenario.mp4 2>/dev/null || echo "No recording"
 
+    - name: Diagnostic 5b - Security backgroundImage cards (AB#5477531 / AB#5477625)
+      run: |
+        echo "=== Security backgroundImage cards: MT bearer token leak (AB#5477531 / AB#5477625) ==="
+        echo "Cards under test:"
+        echo "  - BackgroundImageRemoteHostAttack.json (remote-host backgroundImage)"
+        echo "  - BackgroundImageDataUri.json (in-process base64 data-URI backgroundImage)"
+
+        run_card_test () {
+          local TESTNAME="$1"; local TAG="$2"; local CARD="$3"
+          echo "=== [$TAG] running $TESTNAME (card: $CARD) ==="
+          cd source/ios/AdaptiveCards
+          xcodebuild test-without-building \
+            -workspace AdaptiveCards.xcworkspace \
+            -scheme ADCIOSVisualizer \
+            -sdk iphonesimulator \
+            -destination "platform=iOS Simulator,id=$SIM_UDID" \
+            -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/$TESTNAME \
+            CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee "/tmp/axe-diag/${TAG}_test.log" | grep -E "Test Case|passed|failed" || true
+          cd $GITHUB_WORKSPACE
+          sleep 2
+          # Capture the a11y tree + screenshot of the rendered backgroundImage card
+          axe describe-ui --udid "$SIM_UDID" > "/tmp/axe-diag/${TAG}_a11y.txt" 2>&1 || true
+          axe screenshot --output "/tmp/axe-diag/${TAG}.png" --udid "$SIM_UDID" 2>&1 || true
+          echo "--- [$TAG] a11y tree size: $(wc -c < /tmp/axe-diag/${TAG}_a11y.txt 2>/dev/null || echo 0) bytes, screenshot: $(ls -la /tmp/axe-diag/${TAG}.png 2>/dev/null | awk '{print $5}') bytes ---"
+        }
+
+        run_card_test "testSmokeTestBackgroundImageRemoteHost" "06_bg_remote_host" "BackgroundImageRemoteHostAttack.json"
+        run_card_test "testSmokeTestBackgroundImageDataUri" "07_bg_data_uri" "BackgroundImageDataUri.json"
+
+        echo "=== backgroundImage card diagnostics complete ==="
+        ls -la /tmp/axe-diag/06_bg_remote_host.png /tmp/axe-diag/07_bg_data_uri.png 2>/dev/null || echo "(screenshots missing)"
+
     - name: Diagnostic 6 - Validate video has content
       run: |
         echo "=== Video validation ==="

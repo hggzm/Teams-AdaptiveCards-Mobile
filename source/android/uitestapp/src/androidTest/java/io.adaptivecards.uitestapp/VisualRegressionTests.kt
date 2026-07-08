@@ -53,6 +53,14 @@ class VisualRegressionTests {
     @Test fun visual_StockUpdate() = renderCardAndCapture("StockUpdate.json")
     @Test fun visual_WeatherLarge() = renderCardAndCapture("WeatherLarge.json")
     @Test fun visual_SportingEvent() = renderCardAndCapture("SportingEvent.json")
+
+    // Security diagnostic cards for AB#5477531 / AB#5477625 (MT bearer token leak via
+    // card backgroundImage). These render the backgroundImage code path so the emulator
+    // screenshots confirm the card renders correctly across both fetch modes:
+    //  - remote-host backgroundImage (must be fetched WITHOUT the MT bearer token)
+    //  - data-URI base64 backgroundImage (decoded in-process, never hits the network)
+    @Test fun visual_BackgroundImageRemoteHost() = renderCardAndCapture("BackgroundImageRemoteHostAttack.json")
+    @Test fun visual_BackgroundImageDataUri() = renderCardAndCapture("BackgroundImageDataUri.json")
 }
 // Visual regression test trigger
 // API 29 trigger
