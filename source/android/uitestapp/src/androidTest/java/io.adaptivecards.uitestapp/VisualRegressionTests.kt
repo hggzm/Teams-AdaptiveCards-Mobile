@@ -61,6 +61,9 @@ class VisualRegressionTests {
     //  - data-URI base64 backgroundImage (decoded in-process, never hits the network)
     @Test fun visual_BackgroundImageRemoteHost() = renderCardAndCapture("BackgroundImageRemoteHostAttack.json")
     @Test fun visual_BackgroundImageDataUri() = renderCardAndCapture("BackgroundImageDataUri.json")
+    // Malformed base64 data-URI: the hardened AdaptiveBase64Util::Decode (JNI C++) must reject it
+    // and return empty, so the card still renders without a background and the app does not crash.
+    @Test fun visual_BackgroundImageMalformedBase64() = renderCardAndCapture("BackgroundImageMalformedBase64.json")
 }
 // Visual regression test trigger
 // API 29 trigger

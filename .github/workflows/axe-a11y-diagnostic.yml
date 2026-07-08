@@ -222,6 +222,7 @@ jobs:
 
         run_card_test "testSmokeTestBackgroundImageRemoteHost" "06_bg_remote_host" "BackgroundImageRemoteHostAttack.json"
         run_card_test "testSmokeTestBackgroundImageDataUri" "07_bg_data_uri" "BackgroundImageDataUri.json"
+        run_card_test "testSmokeTestBackgroundImageMalformedBase64" "08_bg_malformed_base64" "BackgroundImageMalformedBase64.json"
 
         echo "=== backgroundImage card diagnostics complete ==="
         ls -la /tmp/axe-diag/06_bg_remote_host.png /tmp/axe-diag/07_bg_data_uri.png 2>/dev/null || echo "(screenshots missing)"

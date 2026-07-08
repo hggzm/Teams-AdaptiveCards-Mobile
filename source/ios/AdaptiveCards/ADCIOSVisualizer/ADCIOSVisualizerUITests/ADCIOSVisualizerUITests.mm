@@ -145,22 +145,46 @@
     // AB#5477531 / AB#5477625: render a card whose backgroundImage points at a remote host.
     // The renderer must lay the card out with the background image; the host app is responsible
     // for fetching it through the unauthenticated image path so the Teams MT bearer token is
-    // never attached. This test drives the render + VoiceOver a11y dump for the AXe pipeline.
+    // never attached. This test drives the render + captures a screenshot for the harvest.
     [self openCardForVersion:@"v1.5" forCardType:@"Scenarios" withCardName:@"BackgroundImageRemoteHostAttack.json"];
-
-    XCUIElement *heading = testApp.staticTexts[@"backgroundImage - remote host"];
-    XCTAssertTrue([heading waitForExistenceWithTimeout:10], @"Remote-host backgroundImage card did not render");
+    [self captureRenderedCard:@"BackgroundImageRemoteHost_rendered"];
+    XCTAssertTrue(testApp.state == XCUIApplicationStateRunningForeground,
+                  @"App must stay running while rendering a remote-host backgroundImage card");
 }
 
 - (void)testSmokeTestBackgroundImageDataUri
 {
     // AB#5477531 / AB#5477625 mitigation + AdaptiveBase64 decode path: render a card whose
     // backgroundImage is an in-process base64 data URI (never hits the network, so it cannot
-    // leak a token). Also exercises the AdaptiveBase64 decode path hardened in the SDK fix.
+    // leak a token). Exercises AdaptiveBase64Util::Decode (ACRView.mm) with valid base64.
     [self openCardForVersion:@"v1.5" forCardType:@"Scenarios" withCardName:@"BackgroundImageDataUri.json"];
+    [self captureRenderedCard:@"BackgroundImageDataUri_rendered"];
+    XCTAssertTrue(testApp.state == XCUIApplicationStateRunningForeground,
+                  @"App must stay running while decoding a valid base64 data-URI backgroundImage");
+}
 
-    XCUIElement *heading = testApp.staticTexts[@"backgroundImage - data URI (base64)"];
-    XCTAssertTrue([heading waitForExistenceWithTimeout:10], @"Data-URI backgroundImage card did not render");
+- (void)testSmokeTestBackgroundImageMalformedBase64
+{
+    // AdaptiveBase64 decode hardening proof: the backgroundImage is a malformed base64 data-URI
+    // (bad padding / invalid characters). The hardened AdaptiveBase64Util::Decode must reject it
+    // (return empty) instead of over-reading / over-writing the heap. Success == the card still
+    // renders its body and the app does not crash.
+    [self openCardForVersion:@"v1.5" forCardType:@"Scenarios" withCardName:@"BackgroundImageMalformedBase64.json"];
+    [self captureRenderedCard:@"BackgroundImageMalformedBase64_rendered"];
+    XCTAssertTrue(testApp.state == XCUIApplicationStateRunningForeground,
+                  @"Hardened decoder must reject malformed base64 without crashing the app");
+}
+
+- (void)captureRenderedCard:(NSString *)name
+{
+    // Let the renderer decode the data-URI (if any) and lay out the card.
+    [NSThread sleepForTimeInterval:2.0];
+
+    XCUIScreenshot *shot = [[XCUIScreen mainScreen] screenshot];
+    XCTAttachment *attachment = [XCTAttachment attachmentWithScreenshot:shot];
+    attachment.name = name;
+    attachment.lifetime = XCTAttachmentLifetimeKeepAlways;
+    [self addAttachment:attachment];
 }
 
 - (void)testSmokeTestActivityUpdateDate

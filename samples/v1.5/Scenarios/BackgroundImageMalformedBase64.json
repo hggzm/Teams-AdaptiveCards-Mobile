@@ -1,0 +1,31 @@
+{
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "type": "AdaptiveCard",
+    "version": "1.5",
+    "backgroundImage": {
+        "url": "data:image/png;base64,====AAAA====Zm=9foo_bar!!!not-valid-base64",
+        "fillMode": "cover"
+    },
+    "body": [
+        {
+            "type": "TextBlock",
+            "text": "backgroundImage - malformed base64",
+            "weight": "bolder",
+            "size": "large",
+            "wrap": true
+        },
+        {
+            "type": "TextBlock",
+            "text": "Security regression card for the AdaptiveBase64 decode hardening. The backgroundImage is a deliberately malformed base64 data-URI (bad padding, invalid characters). The hardened AdaptiveBase64Util::Decode must reject it and return empty, so the card still renders (without a background) and the app never crashes or corrupts memory.",
+            "wrap": true,
+            "spacing": "medium"
+        },
+        {
+            "type": "TextBlock",
+            "text": "Expected: card renders body text; decoder returns empty for the malformed data-URI; no crash.",
+            "wrap": true,
+            "isSubtle": true,
+            "spacing": "small"
+        }
+    ]
+}
