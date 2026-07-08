@@ -27,8 +27,11 @@ jobs:
     - name: Install AXe
       run: |
         echo "=== Installing AXe ==="
+        # Homebrew's API-based install refuses third-party taps ("untrusted tap").
+        # Force the git-based tap flow so the cameroncooke/axe formula loads on CI.
+        export HOMEBREW_NO_INSTALL_FROM_API=1
         brew tap cameroncooke/axe
-        brew install axe
+        brew install cameroncooke/axe/axe
         axe --help | head -5
         echo "AXe version: $(axe --version 2>/dev/null || echo 'unknown')"
 
