@@ -203,6 +203,7 @@ jobs:
         run_card_test () {
           local TESTNAME="$1"; local TAG="$2"; local CARD="$3"
           echo "=== [$TAG] running $TESTNAME (card: $CARD) ==="
+          rm -rf "/tmp/axe-diag/${TAG}.xcresult"
           cd source/ios/AdaptiveCards
           xcodebuild test-without-building \
             -workspace AdaptiveCards.xcworkspace \
@@ -210,11 +211,25 @@ jobs:
             -sdk iphonesimulator \
             -destination "platform=iOS Simulator,id=$SIM_UDID" \
             -only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/$TESTNAME \
+            -resultBundlePath "/tmp/axe-diag/${TAG}.xcresult" \
             CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee "/tmp/axe-diag/${TAG}_test.log" | grep -E "Test Case|passed|failed" || true
           cd $GITHUB_WORKSPACE
           sleep 2
-          # Capture the a11y tree + screenshot of the rendered backgroundImage card
+          # Harvest the IN-TEST rendered-card screenshot(s) attached via XCUIScreenshot.
+          # These are captured while the app is live (unlike the post-test AXe grab, which
+          # sees the springboard after XCUITest tears the app down).
+          xcrun xcresulttool export attachments \
+            --path "/tmp/axe-diag/${TAG}.xcresult" \
+            --output-path "/tmp/axe-diag/${TAG}_rendered" 2>/dev/null || true
+          RENDERED=$(find "/tmp/axe-diag/${TAG}_rendered" -type f 2>/dev/null | head -1)
+          if [ -n "$RENDERED" ]; then
+            cp "$RENDERED" "/tmp/axe-diag/${TAG}_rendered.png" 2>/dev/null || true
+            echo "--- [$TAG] harvested rendered-card screenshot: $(wc -c < /tmp/axe-diag/${TAG}_rendered.png 2>/dev/null || echo 0) bytes ---"
+          else
+            echo "--- [$TAG] no in-test attachment found (check XCUIScreenshot in the test) ---"
+          fi
+          # Also capture the a11y tree + a post-test AXe screenshot for reference
           axe describe-ui --udid "$SIM_UDID" > "/tmp/axe-diag/${TAG}_a11y.txt" 2>&1 || true
           axe screenshot --output "/tmp/axe-diag/${TAG}.png" --udid "$SIM_UDID" 2>&1 || true
           echo "--- [$TAG] a11y tree size: $(wc -c < /tmp/axe-diag/${TAG}_a11y.txt 2>/dev/null || echo 0) bytes, screenshot: $(ls -la /tmp/axe-diag/${TAG}.png 2>/dev/null | awk '{print $5}') bytes ---"
