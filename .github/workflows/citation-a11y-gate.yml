@@ -119,6 +119,36 @@ jobs:
           exit 1
         fi
 
+    - name: Extract a11y evidence image
+      if: always()
+      run: |
+        mkdir -p evidence
+        python3 - <<'PY'
+        import re, base64, pathlib
+        log = pathlib.Path("/tmp/ios-test.log").read_text(errors="ignore")
+        parts = []
+        for line in log.splitlines():
+            idx = line.rfind("CITEVCHUNK:")
+            if idx != -1:
+                parts.append(line[idx + len("CITEVCHUNK:"):].strip())
+        b64 = re.sub(r"[^A-Za-z0-9+/=]", "", "".join(parts))
+        if not b64:
+            print("no evidence chunks found in log")
+            raise SystemExit(0)
+        out = pathlib.Path("evidence/citation-a11y-after.png")
+        out.write_bytes(base64.b64decode(b64))
+        print(f"wrote {out} ({out.stat().st_size} bytes from {len(b64)} b64 chars)")
+        PY
+        ls -la evidence/ 2>/dev/null || true
+
+    - name: Upload a11y evidence image
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: citation-a11y-evidence
+        path: evidence/citation-a11y-after.png
+        retention-days: 14
+
     - name: Upload logs
       if: always()
       uses: actions/upload-artifact@v4

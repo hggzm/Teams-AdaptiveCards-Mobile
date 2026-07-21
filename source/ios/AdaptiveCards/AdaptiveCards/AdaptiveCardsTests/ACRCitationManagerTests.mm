@@ -437,4 +437,98 @@
                   @"Plain text without citations must not engage the citation accessibility container");
 }
 
+// Proxy-only: renders an annotated a11y-overlay PNG (rendered card + a numbered box per exposed
+// accessibility element, with a legend of label + trait) and emits it as base64 for the CI gate to
+// extract and upload as review evidence. Named "testZ..." so it runs after the assertion tests.
+- (void)testZGenerateCitationAccessibilityEvidence {
+    UIButton *pill = nil;
+    ACRViewAttachingTextView *textView = [self textViewWithOneCitationPill:&pill];
+    textView.backgroundColor = [UIColor whiteColor];
+
+    NSArray *elements = textView.accessibilityElements;
+
+    CGFloat width = 380;
+    CGFloat cardTop = 26;
+    CGFloat cardHeight = MAX(30.0, CGRectGetHeight(textView.bounds));
+    CGFloat legendTop = cardTop + cardHeight + 16;
+    CGFloat legendHeight = 18.0 * (CGFloat)(elements.count + 1) + 12.0;
+    CGSize size = CGSizeMake(width, legendTop + legendHeight);
+
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size];
+    UIImage *image = [renderer imageWithActions:^(UIGraphicsImageRendererContext *rctx) {
+        CGContextRef ctx = rctx.CGContext;
+        [[UIColor whiteColor] setFill];
+        CGContextFillRect(ctx, CGRectMake(0, 0, size.width, size.height));
+
+        [@"AFTER — accessibility elements exposed by ACRViewAttachingTextView"
+            drawAtPoint:CGPointMake(8, 5)
+         withAttributes:@{ NSFontAttributeName: [UIFont boldSystemFontOfSize:13],
+                           NSForegroundColorAttributeName: [UIColor blackColor] }];
+
+        // The rendered card.
+        CGContextSaveGState(ctx);
+        CGContextTranslateCTM(ctx, 8, cardTop);
+        [textView.layer renderInContext:ctx];
+        CGContextRestoreGState(ctx);
+
+        CGFloat ly = legendTop;
+        [@"VoiceOver / Full Keyboard Access / Voice Control elements (reading order):"
+            drawAtPoint:CGPointMake(8, ly)
+         withAttributes:@{ NSFontAttributeName: [UIFont boldSystemFontOfSize:11],
+                           NSForegroundColorAttributeName: [UIColor darkGrayColor] }];
+        ly += 18;
+
+        NSUInteger i = 1;
+        for (id el in elements) {
+            CGRect frame = CGRectZero;
+            UIAccessibilityTraits traits = 0;
+            NSString *label = @"";
+            if ([el isKindOfClass:[UIView class]]) {
+                frame = [(UIView *)el frame];
+                traits = [(UIView *)el accessibilityTraits];
+                label = [(UIView *)el accessibilityLabel] ?: @"citation";
+            } else if ([el isKindOfClass:[UIAccessibilityElement class]]) {
+                UIAccessibilityElement *ae = (UIAccessibilityElement *)el;
+                frame = ae.accessibilityFrameInContainerSpace;
+                traits = ae.accessibilityTraits;
+                label = ae.accessibilityLabel ?: @"";
+            }
+            BOOL isLink = (traits & UIAccessibilityTraitLink) != 0;
+            UIColor *color = isLink ? [UIColor systemGreenColor] : [UIColor systemBlueColor];
+
+            CGRect box = CGRectOffset(frame, 8, cardTop);
+            [color setStroke];
+            UIBezierPath *path = [UIBezierPath bezierPathWithRect:box];
+            path.lineWidth = 2.0;
+            [path stroke];
+            [[@(i) stringValue] drawAtPoint:CGPointMake(CGRectGetMinX(box) + 1.0, CGRectGetMinY(box) - 1.0)
+                             withAttributes:@{ NSFontAttributeName: [UIFont boldSystemFontOfSize:11],
+                                               NSForegroundColorAttributeName: color }];
+
+            NSString *trimmed = [label stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            NSString *line = [NSString stringWithFormat:@"%lu.  \"%@\"   [%@]",
+                              (unsigned long)i, trimmed, isLink ? @"link" : @"staticText"];
+            [line drawAtPoint:CGPointMake(8, ly)
+               withAttributes:@{ NSFontAttributeName: [UIFont systemFontOfSize:11],
+                                 NSForegroundColorAttributeName: color }];
+            ly += 18;
+            i++;
+        }
+    }];
+
+    NSData *png = UIImagePNGRepresentation(image);
+    XCTAssertTrue(png.length > 0, @"evidence image should render to PNG");
+
+    // Emit as line-chunked base64 (robust to log prefixes) for the CI gate to reassemble.
+    NSString *b64 = [png base64EncodedStringWithOptions:0];
+    NSUInteger chunk = 120;
+    printf("CITEV_BEGIN\n");
+    for (NSUInteger off = 0; off < b64.length; off += chunk) {
+        NSRange r = NSMakeRange(off, MIN(chunk, b64.length - off));
+        printf("CITEVCHUNK:%s\n", [[b64 substringWithRange:r] UTF8String]);
+    }
+    printf("CITEV_END\n");
+    fflush(stdout);
+}
+
 @end
