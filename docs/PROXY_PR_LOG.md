@@ -167,3 +167,29 @@ Toggle test: initial=54 elements -> expanded=56 -> collapsed=54 (round-trip conf
 **Fix:**
 - iOS: Set `ACRView.accessibilityLabel` from card speak property via `GetSpeak()` with full null-safety guards
 - Android: Set `contentDescription` from speak; set `accessibilityLiveRegion = POLITE`
+
+## Citation Views Accessibility Container (embedded NSTextAttachment buttons)
+
+| # | Issue | Proxy Branch | Clean Branch | Upstream PR | Fix |
+|---|-------|-------------|-------------|------------|-----|
+| 41 | AB#5437449 | proxy/feat-citation-a11y-container | — | pending | iOS: expose embedded citation buttons to VoiceOver / Full Keyboard Access / Voice Control |
+
+**Problem:** Inline citation pills are real `UIButton` views embedded via `NSTextAttachment` and positioned
+by `ACRViewAttachingTextViewBehavior`. Because the render surface is `ACRUILabel : UITextView` whose
+`updateAccessibility` forces `isAccessibilityElement = YES`, the whole text view is a single accessibility
+leaf and the embedded buttons are absent from VoiceOver traversal, Full Keyboard Access, and Voice Control
+"Show Numbers". Direct touch works (custom `hitTest:`), assistive tech does not. Affects both TextBlock and
+RichTextBlock (both render via `ACRViewAttachingTextView`). Present on `main` and 2.11.8.
+
+**Fix:**
+- `ACRViewAttachingTextViewBehavior`: expose `orderedAttachments` (view+range in reading order) and an
+  `attachmentsDidChangeHandler` fired after subviews are added/removed and repositioned.
+- `ACRViewAttachingTextView`: act as an accessibility container when attachments exist —
+  `isAccessibilityElement = NO`, and `accessibilityElements` vends, in attributed-string order, virtual
+  static-text elements (with `.header` / `.link` semantics + activation routing) interleaved with the real
+  citation button subviews (promoted to `.link`). Rebuilds on the behavior's change hook; posts
+  `UIAccessibilityLayoutChangedNotification`. When no attachments exist, behavior is unchanged (defers to
+  ACRUILabel's single-element path). Clipped/truncated ranges are skipped (no offscreen elements).
+
+**Validation:** `citation-a11y-gate.yml` (proxy-only) builds AdaptiveCards for the iOS simulator and runs
+`ACRCitationAccessibilityTests` (container vs. leaf, link semantics, reading order, plain-text no-regression).

@@ -1,0 +1,130 @@
+name: Citation A11y Gate
+
+# ==============================================================================
+# CITATION A11Y GATE  (proxy-only — DO NOT propagate to upstream main)
+# ==============================================================================
+# Validates the SDK accessibility-container fix for embedded citation views
+# (ADO 5437449): citation pills embedded via NSTextAttachment must be reachable
+# by VoiceOver / Full Keyboard Access / Voice Control, not hidden behind a single
+# text-view accessibility leaf.
+#
+# Builds AdaptiveCards for the iOS simulator and runs the citation accessibility
+# unit tests as a BLOCKING check.
+#
+# Trigger: push to proxy/feat-citation-a11y-* branches (citation/text paths), or
+# manual dispatch.
+#
+# Agent usage:
+#   gh run list --repo hggzm/Teams-AdaptiveCards-Mobile --workflow citation-a11y-gate.yml --limit 1 --json conclusion
+# ==============================================================================
+
+on:
+  push:
+    branches: [ 'proxy/feat-citation-a11y-*' ]
+    paths:
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/ACRViewAttachingTextView.*'
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/ACRViewAttachingTextViewBehavior.*'
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/ACRViewTextAttachment.*'
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/ACRUILabel.*'
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/ACRCitation*'
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCardsTests/ACRCitation*'
+      - '.github/workflows/citation-a11y-gate.yml'
+  pull_request:
+    branches: [ 'proxy/**' ]
+    paths:
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/ACRViewAttachingTextView.*'
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/ACRViewAttachingTextViewBehavior.*'
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/ACRViewTextAttachment.*'
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/ACRUILabel.*'
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCards/ACRCitation*'
+      - 'source/ios/AdaptiveCards/AdaptiveCards/AdaptiveCardsTests/ACRCitation*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: citation-a11y-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-citation-a11y:
+    name: 'iOS Citation A11y Build + Tests'
+    runs-on: macos-15
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install CocoaPods
+      run: gem install cocoapods 2>/dev/null || true
+
+    - name: Pod Install
+      working-directory: source/ios/AdaptiveCards
+      run: pod install --repo-update 2>&1 | tail -20
+
+    - name: Boot iOS Simulator
+      run: |
+        SIMULATOR=$(xcrun simctl list devices available --json | python3 -c "
+        import json, sys
+        devices = json.load(sys.stdin)['devices']
+        for runtime, devs in devices.items():
+          if 'iOS' in runtime:
+            for d in devs:
+              if 'iPhone' in d['name']:
+                print(d['udid']); sys.exit(0)
+        ")
+        echo "SIM_UDID=$SIMULATOR" >> $GITHUB_ENV
+        xcrun simctl boot "$SIMULATOR" 2>/dev/null || true
+        echo "Using simulator: $SIMULATOR"
+
+    - name: Build AdaptiveCards
+      working-directory: source/ios/AdaptiveCards
+      run: |
+        echo "### iOS Build (citation a11y)" >> $GITHUB_STEP_SUMMARY
+        xcodebuild build \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme AdaptiveCards \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee /tmp/ios-build.log | tail -20
+        if grep -qiE 'BUILD SUCCEEDED' /tmp/ios-build.log; then
+          echo "**Build: PASSED** :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "**Build: FAILED** :x:" >> $GITHUB_STEP_SUMMARY
+          echo "::error::iOS build failed"
+          exit 1
+        fi
+
+    - name: Run Citation Accessibility Tests
+      working-directory: source/ios/AdaptiveCards
+      run: |
+        echo "### iOS Citation A11y Tests" >> $GITHUB_STEP_SUMMARY
+        xcodebuild test \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme AdaptiveCards \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          -only-testing:AdaptiveCardsTests/ACRCitationAccessibilityTests \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee /tmp/ios-test.log | grep -E "Test Case|passed|failed|Test Suite"
+        if grep -q '\*\* TEST SUCCEEDED \*\*' /tmp/ios-test.log; then
+          echo "**Tests: PASSED** :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "**Tests: FAILED** :x:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E "Test Case.*failed|Executed.*failures" /tmp/ios-test.log | tail -20 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "::error::Citation accessibility tests failed"
+          exit 1
+        fi
+
+    - name: Upload logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: citation-a11y-logs
+        path: |
+          /tmp/ios-build.log
+          /tmp/ios-test.log
+        retention-days: 5
