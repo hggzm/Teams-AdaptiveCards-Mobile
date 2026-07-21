@@ -424,15 +424,17 @@
                   @"First element should be the leading static-text run");
 }
 
-- (void)testPlainTextBlockKeepsSingleElementPath {
-    // No attachments: must preserve ACRUILabel's single-leaf behavior (no regression).
+- (void)testPlainTextBlockDoesNotEngageContainer {
+    // No attachments: our accessibility container must not engage at all — it defers entirely to
+    // the ACRUILabel single-element path, so it must not synthesize its own accessibility elements.
     ACRViewAttachingTextView *textView = [[ACRViewAttachingTextView alloc] initWithFrame:CGRectMake(0, 0, 320, 80)];
     textView.attributedText = [[NSAttributedString alloc] initWithString:@"A plain text block with no citations."];
     [textView layoutIfNeeded];
     (void)[textView.layoutManager glyphRangeForTextContainer:textView.textContainer];
 
-    XCTAssertTrue(textView.isAccessibilityElement,
-                  @"Text without citations must keep the single-element accessibility path");
+    NSArray *elements = textView.accessibilityElements;
+    XCTAssertTrue(elements == nil || elements.count == 0,
+                  @"Plain text without citations must not engage the citation accessibility container");
 }
 
 @end
