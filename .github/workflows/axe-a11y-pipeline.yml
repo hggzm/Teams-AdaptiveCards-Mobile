@@ -176,6 +176,17 @@ jobs:
     - name: Deploy to GitHub Pages
       if: always()
       run: |
+        # This step force-pushes gh-pages. Running it when the pipeline produced nothing
+        # republishes an EMPTY gallery and destroys evidence that upstream PRs may be
+        # linking to - which is exactly what happened when the brew-trust failure left
+        # the site reporting "0 ELEMENTS / 0 SCENARIOS" with a 404 transcript.
+        # Keep if: always() so partial runs still publish what they captured, but refuse
+        # to publish nothing over something.
+        if [ -z "$(ls -A /tmp/axe-output 2>/dev/null)" ]; then
+          echo "::warning::No pipeline output; skipping Pages deploy so published evidence is preserved."
+          exit 0
+        fi
+
         PAGES_DIR=/tmp/axe-pages
         mkdir -p "$PAGES_DIR"
 
