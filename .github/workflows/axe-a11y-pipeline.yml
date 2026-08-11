@@ -29,6 +29,11 @@ jobs:
     - name: Install tools
       run: |
         brew tap cameroncooke/axe
+        # Homebrew refuses formulae from third-party taps until the tap is trusted.
+        # Without this the whole job dies at step 1 and every later step is skipped,
+        # which surfaces confusingly as "No files were found with the provided path:
+        # /tmp/axe-output/" at the upload step.
+        brew trust cameroncooke/axe || brew trust --formula cameroncooke/axe/axe
         brew install axe ffmpeg
         axe --version 2>/dev/null || axe --help | head -1
         ffmpeg -version | head -1
