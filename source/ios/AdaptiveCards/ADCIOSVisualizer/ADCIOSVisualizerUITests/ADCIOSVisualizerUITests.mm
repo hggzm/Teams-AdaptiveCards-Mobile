@@ -891,9 +891,17 @@
         XCUIElementTypeImage, XCUIElementTypeSwitch, XCUIElementTypeSlider,
     };
     NSString *roleNames[] = {@"button", @"text", @"textField", @"textView", @"image", @"switch", @"slider"};
-    
+
+    // The visualizer is a split view: the master sample list (46+ "*.json" rows)
+    // stays visible alongside the rendered-card pane (the "ChatWindow" table).
+    // Scanning the whole app conflates both, drowning card content in list rows.
+    // Scope the scan to the ChatWindow when it exists so element dumps reflect the
+    // card under test; fall back to the whole app otherwise.
+    XCUIElement *chatWindow = testApp.tables[@"ChatWindow"];
+    id scanRoot = ([chatWindow exists]) ? (id)chatWindow : (id)testApp;
+
     for (int t = 0; t < 7; t++) {
-        XCUIElementQuery *q = [testApp descendantsMatchingType:scanTypes[t]];
+        XCUIElementQuery *q = [scanRoot descendantsMatchingType:scanTypes[t]];
         NSUInteger count = q.count;
         for (NSUInteger i = 0; i < count && i < 50; i++) {
             @try {
@@ -937,6 +945,24 @@
 
 /// Find and tap an element by its accessibility label. Returns YES if found.
 /// This is the core of a11y-driven navigation — find by label, not coordinates.
+/// Scroll a known-but-off-screen element into view by swiping up on the
+/// first scroll/table container, up to a few times, until it is hittable.
+- (BOOL)scrollElementIntoView:(XCUIElement *)element
+{
+    if (![element exists]) { return NO; }
+    if ([element isHittable]) { return YES; }
+    // The sample list is the SECOND table (index 1) in the split view, matching
+    // openCardForVersion. Fall back to table 0 / first scroll view / the app.
+    XCUIElement *scroller = [[testApp tables] elementBoundByIndex:1];
+    if (![scroller exists]) { scroller = [[testApp tables] elementBoundByIndex:0]; }
+    if (![scroller exists]) { scroller = [[testApp scrollViews] elementBoundByIndex:0]; }
+    if (![scroller exists]) { scroller = testApp; }
+    for (int i = 0; i < 8 && [element exists] && ![element isHittable]; i++) {
+        [scroller swipeUp];
+    }
+    return [element exists] && [element isHittable];
+}
+
 - (BOOL)tapByAccessibilityLabel:(NSString *)label
 {
     // Try buttons first (most common interactive element)
@@ -964,6 +990,16 @@
         return YES;
     }
     
+    // Off-screen in a long list: scroll the matching element into view, then tap.
+    NSPredicate *labelPred = [NSPredicate predicateWithFormat:@"label == %@", label];
+    XCUIElement *offscreen = [[testApp descendantsMatchingType:XCUIElementTypeAny]
+                              elementMatchingPredicate:labelPred];
+    if ([offscreen exists] && [self scrollElementIntoView:offscreen]) {
+        [offscreen tap];
+        NSLog(@"A11Y_NAV: scrolled+tapped '%@'", label);
+        return YES;
+    }
+
     NSLog(@"A11Y_NAV: element '%@' not found or not hittable", label);
     return NO;
 }
@@ -1240,6 +1276,297 @@
     NSLog(@"TOGGLE_DOUBLE_FIRE: Round-trip test: initial=%lu, expanded=%lu, collapsed=%lu",
           (unsigned long)initialCount, (unsigned long)afterCount, (unsigned long)finalCount);
     NSLog(@"TOGGLE_DOUBLE_FIRE: === Test complete ===");
+}
+
+
+#pragma mark - A11YMAS Batch A/C: Name-Role + Focus-Retention Repro Scenarios
+
+/// A-group helper: navigate to a card, optionally tap a label to expand
+/// (e.g. a ShowCard), dump the a11y tree, and report whether each expected
+/// control label is reachable with a non-generic accessible name.
+- (void)a11ymasScanCard:(NSString *)version
+                   type:(NSString *)type
+                   card:(NSString *)card
+          tapToExpand:(NSString *)expandLabel
+              stateName:(NSString *)stateName
+        expectedLabels:(NSArray<NSString *> *)expectedLabels
+                     wi:(NSString *)wi
+{
+    BOOL navigated = [self navigateToCardByA11y:version type:type card:card];
+    XCTAssertTrue(navigated, @"A11YMAS WI#%@: should navigate to %@", wi, card);
+    if (!navigated) { return; }
+
+    if (expandLabel.length > 0) {
+        if ([self tapByAccessibilityLabel:expandLabel]) {
+            NSLog(@"A11YMAS_SCAN: WI#%@ expanded via '%@'", wi, expandLabel);
+            [NSThread sleepForTimeInterval:1.5];
+        } else {
+            NSLog(@"A11YMAS_REPRO: WI#%@ expand control '%@' NOT reachable", wi, expandLabel);
+        }
+    }
+
+    [self saveA11yState:stateName];
+    NSArray *elements = [self discoverAccessibleElements];
+    NSLog(@"A11YMAS_SCAN: WI#%@ card=%@ elements=%lu", wi, card, (unsigned long)elements.count);
+
+    for (NSString *expected in expectedLabels) {
+        BOOL found = NO;
+        for (NSDictionary *e in elements) {
+            if ([e[@"label"] rangeOfString:expected options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                found = YES;
+                NSLog(@"A11YMAS_OK: WI#%@ '%@' present as role=%@ value='%@'",
+                      wi, expected, e[@"role"], e[@"value"]);
+                break;
+            }
+        }
+        if (!found) {
+            NSLog(@"A11YMAS_REPRO: WI#%@ missing accessible name/role: '%@'", wi, expected);
+        }
+    }
+}
+
+/// C-group helper: navigate, capture the pre-action a11y state, activate a
+/// control by label, then capture the post-action state. Logs element counts and
+/// the first few labels in reading order so focus movement after the action is
+/// observable in the element trees + screenshots.
+- (void)a11ymasActivate:(NSString *)version
+                   type:(NSString *)type
+                   card:(NSString *)card
+            actionLabel:(NSString *)actionLabel
+              stateName:(NSString *)stateName
+                     wi:(NSString *)wi
+{
+    BOOL navigated = [self navigateToCardByA11y:version type:type card:card];
+    XCTAssertTrue(navigated, @"A11YMAS WI#%@: should navigate to %@", wi, card);
+    if (!navigated) { return; }
+
+    [self saveA11yState:[NSString stringWithFormat:@"%@_before", stateName]];
+    NSArray *before = [self discoverAccessibleElements];
+    NSString *firstBefore = before.count > 0 ? before[0][@"label"] : @"(none)";
+    NSLog(@"A11YMAS_FOCUS: WI#%@ before action: %lu elements, first='%@'",
+          wi, (unsigned long)before.count, firstBefore);
+
+    if (![self tapByAccessibilityLabel:actionLabel]) {
+        NSLog(@"A11YMAS_REPRO: WI#%@ action control '%@' NOT reachable", wi, actionLabel);
+        return;
+    }
+    NSLog(@"A11YMAS_FOCUS: WI#%@ activated '%@'", wi, actionLabel);
+    [NSThread sleepForTimeInterval:1.5];
+
+    [self saveA11yState:[NSString stringWithFormat:@"%@_after", stateName]];
+    NSArray *after = [self discoverAccessibleElements];
+    NSString *firstAfter = after.count > 0 ? after[0][@"label"] : @"(none)";
+    NSLog(@"A11YMAS_FOCUS: WI#%@ after action: %lu elements, first='%@'",
+          wi, (unsigned long)after.count, firstAfter);
+}
+
+// ===== A-group: missing accessible name / role =====
+
+/// WI#5428631 / WI#5428632 — ShowCard ChoiceSet dropdown role + menu-item names.
+- (void)testA11yMAS_FoodOrderShowCard_dropdown
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Scenarios" card:@"FoodOrder.json"
+              tapToExpand:@"Steak"
+                stateName:@"a11ymas_5428632_foodorder_showcard"
+           expectedLabels:@[ @"Rare", @"Medium-Rare", @"Well-done" ]
+                       wi:@"5428632"];
+}
+
+/// WI#5539328 — ColumnSet.Input.ChoiceSet.VerticalStretch combo box accessible name.
+- (void)testA11yMAS_ColumnSetChoiceSet_name
+{
+    [self a11ymasScanCard:@"v1.1" type:@"Tests" card:@"ColumnSet.Input.ChoiceSet.VerticalStretch.json"
+              tapToExpand:nil
+                stateName:@"a11ymas_5539328_columnset_choiceset"
+           expectedLabels:@[ @"ChoiceSet" ]
+                       wi:@"5539328"];
+}
+
+/// WI#5539505 — InputStyle: text field beside 'Est. Delivery' has no accessible name.
+- (void)testA11yMAS_InputStyle_fieldName
+{
+    [self a11ymasScanCard:@"v1.6" type:@"Elements" card:@"InputStyle.json"
+              tapToExpand:nil
+                stateName:@"a11ymas_5539505_inputstyle"
+           expectedLabels:@[ @"Est. Delivery", @"Product Name" ]
+                       wi:@"5539505"];
+}
+
+/// WI#5532275 — CompoundButton role not announced.
+- (void)testA11yMAS_CompoundButton_role
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Scenarios" card:@"CompoundButtonSample.json"
+              tapToExpand:nil
+                stateName:@"a11ymas_5532275_compoundbutton"
+           expectedLabels:@[ @"Summarize", @"View active work items", @"Give feedback" ]
+                       wi:@"5532275"];
+}
+
+/// WI#5536877 — AdaptiveCard.Rtl.False: phantom 'button' announced with no visual control.
+- (void)testA11yMAS_RtlFalse_phantomButton
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Tests" card:@"AdaptiveCard.Rtl.False.json"
+              tapToExpand:nil
+                stateName:@"a11ymas_5536877_rtlfalse"
+           expectedLabels:@[ @"Column 1", @"Column 2", @"Column 3" ]
+                       wi:@"5536877"];
+}
+
+// ===== C-group: focus retention after action =====
+
+/// WI#5526561 — ActivityUpdate: focus not retained when activating dismiss.
+- (void)testA11yMAS_ActivityUpdate_dismissFocus
+{
+    [self a11ymasActivate:@"v1.5" type:@"Scenarios" card:@"ActivityUpdate.json"
+              actionLabel:@"Set due date"
+                stateName:@"a11ymas_5526561_activity_dismiss"
+                       wi:@"5526561"];
+}
+
+/// WI#5536765 — ActionModeTestCard: focus not retained activating Cancel under More(...).
+- (void)testA11yMAS_ActionMode_cancelFocus
+{
+    [self a11ymasActivate:@"v1.5" type:@"Tests" card:@"ActionModeTestCard.json"
+              actionLabel:@"..."
+                stateName:@"a11ymas_5536765_actionmode_cancel"
+                       wi:@"5536765"];
+}
+
+
+#pragma mark - A11YMAS Batch B: Swipe-Accessibility Repro Scenarios
+
+/// Helper: navigate to a card, dump its a11y tree, and report whether any of the
+/// expected control labels are reachable via VoiceOver. Logs A11YMAS_REPRO when a
+/// expected control is NOT reachable (the swipe-accessibility bug), and A11YMAS_OK
+/// when reachable (post-fix). Always dumps <name>_elements.json for the pipeline.
+- (void)a11ymasScanCard:(NSString *)version
+                   type:(NSString *)type
+                   card:(NSString *)card
+              stateName:(NSString *)stateName
+        expectedLabels:(NSArray<NSString *> *)expectedLabels
+                     wi:(NSString *)wi
+{
+    BOOL navigated = [self navigateToCardByA11y:version type:type card:card];
+    XCTAssertTrue(navigated, @"A11YMAS WI#%@: should navigate to %@", wi, card);
+    if (!navigated) { return; }
+
+    [self saveA11yState:stateName];
+    NSArray *elements = [self discoverAccessibleElements];
+    NSLog(@"A11YMAS_SCAN: WI#%@ card=%@ elements=%lu", wi, card, (unsigned long)elements.count);
+
+    NSMutableSet *reachable = [NSMutableSet set];
+    for (NSDictionary *e in elements) {
+        if ([e[@"label"] length] > 0) { [reachable addObject:e[@"label"]]; }
+    }
+    for (NSString *expected in expectedLabels) {
+        BOOL found = NO;
+        for (NSString *label in reachable) {
+            if ([label rangeOfString:expected options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                found = YES;
+                break;
+            }
+        }
+        if (found) {
+            NSLog(@"A11YMAS_OK: WI#%@ reachable: '%@'", wi, expected);
+        } else {
+            NSLog(@"A11YMAS_REPRO: WI#%@ NOT reachable via swipe: '%@'", wi, expected);
+        }
+    }
+}
+
+/// WI#5535831 — RatingInput stars not reachable via swipe gesture.
+- (void)testA11yMAS_RatingInput_swipe
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Scenarios" card:@"RatingInput.json"
+                stateName:@"a11ymas_5535831_rating_input"
+           expectedLabels:@[ @"Rate 1 Star", @"Rate 3 Star", @"Rate 5 Star" ]
+                       wi:@"5535831"];
+}
+
+/// WI#5533268 — FluentIcon.RTL icons ("RTL is supported") not reachable via swipe.
+- (void)testA11yMAS_FluentIconRTL_swipe
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Scenarios" card:@"FluentIcon.RTL.json"
+                stateName:@"a11ymas_5533268_fluenticon_rtl"
+           expectedLabels:@[ @"RTL is supported" ]
+                       wi:@"5533268"];
+}
+
+/// WI#5536935 — TooltipTestCard controls not reachable via swipe (Sev1).
+- (void)testA11yMAS_TooltipTestCard_swipe
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Tests" card:@"TooltipTestCard.json"
+                stateName:@"a11ymas_5536935_tooltip"
+           expectedLabels:@[ @"Submit", @"Action" ]
+                       wi:@"5536935"];
+}
+
+/// WI#5539188 — InputLabelPosition 'Click here for action' link not reachable via swipe.
+- (void)testA11yMAS_InputLabel_link_swipe
+{
+    [self a11ymasScanCard:@"v1.6" type:@"Elements" card:@"InputLabelPosition.json"
+                stateName:@"a11ymas_5539188_inputlabel_link"
+           expectedLabels:@[ @"Click here for action" ]
+                       wi:@"5539188"];
+}
+
+
+#pragma mark - A11YMAS Batch D: Keyboard-Accessibility Repro Scenarios
+
+/// D-group helper: navigate to a card, then walk focus with the HW Tab key,
+/// recording how many distinct controls receive keyboard focus. Logs
+/// A11YMAS_KBD with the focused-element count so we can see whether interactive
+/// controls are reachable via keyboard (the bug: count stays at 0 / does not
+/// advance into the card).
+- (void)a11ymasKeyboardWalk:(NSString *)version
+                       type:(NSString *)type
+                       card:(NSString *)card
+                  stateName:(NSString *)stateName
+                         wi:(NSString *)wi
+{
+    BOOL navigated = [self navigateToCardByA11y:version type:type card:card];
+    XCTAssertTrue(navigated, @"A11YMAS WI#%@: should navigate to %@", wi, card);
+    if (!navigated) { return; }
+
+    [self saveA11yState:stateName];
+
+    // Drive the hardware keyboard: press Tab several times and capture which
+    // element holds keyboard focus (hasKeyboardFocus) after each press.
+    NSMutableSet *focusedLabels = [NSMutableSet set];
+    for (int i = 0; i < 12; i++) {
+        [testApp typeKey:XCUIKeyboardKeyTab modifierFlags:XCUIKeyModifierNone];
+        [NSThread sleepForTimeInterval:0.3];
+        XCUIElement *focused = [[[testApp descendantsMatchingType:XCUIElementTypeAny]
+            matchingPredicate:[NSPredicate predicateWithFormat:@"hasKeyboardFocus == true"]]
+            elementBoundByIndex:0];
+        if ([focused exists] && focused.label.length > 0) {
+            [focusedLabels addObject:focused.label];
+        }
+    }
+    NSLog(@"A11YMAS_KBD: WI#%@ card=%@ distinctKeyboardFocusable=%lu",
+          wi, card, (unsigned long)focusedLabels.count);
+    for (NSString *l in focusedLabels) {
+        NSLog(@"A11YMAS_KBD:   focusable: '%@'", l);
+    }
+    if (focusedLabels.count == 0) {
+        NSLog(@"A11YMAS_REPRO: WI#%@ no card control reachable via keyboard Tab", wi);
+    }
+}
+
+/// WI#5532354 — CompoundButtonSample controls not reachable via tab / ctrl+tab.
+- (void)testA11yMAS_CompoundButton_keyboard
+{
+    [self a11ymasKeyboardWalk:@"v1.5" type:@"Scenarios" card:@"CompoundButtonSample.json"
+                    stateName:@"a11ymas_5532354_compoundbutton_kbd"
+                           wi:@"5532354"];
+}
+
+/// WI#5428636 — interactive controls (ActionModeTestCard actions) not keyboard-accessible.
+- (void)testA11yMAS_Interactive_keyboard
+{
+    [self a11ymasKeyboardWalk:@"v1.5" type:@"Tests" card:@"ActionModeTestCard.json"
+                    stateName:@"a11ymas_5428636_interactive_kbd"
+                           wi:@"5428636"];
 }
 
 @end
