@@ -963,15 +963,27 @@
     // lower down: CompoundButtonSample, FoodOrder and
     // ColumnSet.Input.ChoiceSet.VerticalStretch all exhausted the budget and failed
     // navigation, so their scenarios produced no evidence at all.
+    // Stop as soon as the list stops moving, otherwise a genuine miss burns the whole
+    // budget: 60 fruitless swipes per lookup pushed the job past its 40 minute timeout.
+    NSString *lastTop = nil;
     for (int i = 0; i < 30 && [element exists] && ![element isHittable]; i++) {
         [scroller swipeUp];
+        XCUIElement *top = [[scroller staticTexts] elementBoundByIndex:0];
+        NSString *nowTop = [top exists] ? top.label : nil;
+        if (nowTop && lastTop && [nowTop isEqualToString:lastTop]) { break; }
+        lastTop = nowTop;
     }
     if ([element exists] && [element isHittable]) {
         return YES;
     }
     // The row may sit above the starting scroll position; sweep back the other way.
+    lastTop = nil;
     for (int i = 0; i < 30 && [element exists] && ![element isHittable]; i++) {
         [scroller swipeDown];
+        XCUIElement *top = [[scroller staticTexts] elementBoundByIndex:0];
+        NSString *nowTop = [top exists] ? top.label : nil;
+        if (nowTop && lastTop && [nowTop isEqualToString:lastTop]) { break; }
+        lastTop = nowTop;
     }
     return [element exists] && [element isHittable];
 }

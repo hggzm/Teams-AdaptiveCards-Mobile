@@ -22,7 +22,10 @@ jobs:
   axe-pipeline:
     name: 'AXe A11y Overlay Pipeline'
     runs-on: macos-15
-    timeout-minutes: 40
+    # 40 was not enough once the suite grew to 13 scenarios: run 31520125257
+    # was cancelled mid-suite at the limit, losing three scenarios that had
+    # captured fine previously.
+    timeout-minutes: 70
     steps:
     - uses: actions/checkout@v4
 
