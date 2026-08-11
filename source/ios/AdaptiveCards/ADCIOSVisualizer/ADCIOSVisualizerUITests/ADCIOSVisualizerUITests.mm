@@ -957,8 +957,21 @@
     if (![scroller exists]) { scroller = [[testApp tables] elementBoundByIndex:0]; }
     if (![scroller exists]) { scroller = [[testApp scrollViews] elementBoundByIndex:0]; }
     if (![scroller exists]) { scroller = testApp; }
-    for (int i = 0; i < 8 && [element exists] && ![element isHittable]; i++) {
+    // The sample lists run to 60+ rows and every row reports the SAME accessibility
+    // frame, so `isHittable` only becomes true once the row physically occupies that
+    // rect. Eight swipes reached cards mid-list (FluentIcon.RTL succeeded) but not ones
+    // lower down: CompoundButtonSample, FoodOrder and
+    // ColumnSet.Input.ChoiceSet.VerticalStretch all exhausted the budget and failed
+    // navigation, so their scenarios produced no evidence at all.
+    for (int i = 0; i < 30 && [element exists] && ![element isHittable]; i++) {
         [scroller swipeUp];
+    }
+    if ([element exists] && [element isHittable]) {
+        return YES;
+    }
+    // The row may sit above the starting scroll position; sweep back the other way.
+    for (int i = 0; i < 30 && [element exists] && ![element isHittable]; i++) {
+        [scroller swipeDown];
     }
     return [element exists] && [element isHittable];
 }
