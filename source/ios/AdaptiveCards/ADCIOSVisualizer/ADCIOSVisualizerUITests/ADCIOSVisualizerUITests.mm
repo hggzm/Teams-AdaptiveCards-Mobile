@@ -1302,6 +1302,30 @@
 /// A-group helper: navigate to a card, optionally tap a label to expand
 /// (e.g. a ShowCard), dump the a11y tree, and report whether each expected
 /// control label is reachable with a non-generic accessible name.
+/// Relaunch with the card rendered directly, bypassing the sample picker.
+/// See -[ViewController loadSampleCardFromLaunchArgumentsIfPresent] for why: every picker
+/// row shares one accessibility frame, so tapping a named row is racy and several
+/// scenarios never reached their card.
+- (BOOL)launchDirectlyWithCard:(NSString *)version type:(NSString *)type card:(NSString *)card
+{
+    NSString *spec = [NSString stringWithFormat:@"%@/%@/%@", version, type, card];
+    [testApp terminate];
+    testApp.launchArguments = @[ @"ui-testing", @"-a11yCard", spec ];
+    [testApp launch];
+
+    // The card renders asynchronously; wait for the pane to gain real content.
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:25.0];
+    while ([deadline timeIntervalSinceNow] > 0) {
+        if ([self discoverAccessibleElements].count > 2) {
+            NSLog(@"A11Y_NAV: direct-loaded '%@'", spec);
+            return YES;
+        }
+        [NSThread sleepForTimeInterval:0.5];
+    }
+    NSLog(@"A11Y_NAV: direct load of '%@' produced no content", spec);
+    return NO;
+}
+
 - (void)a11ymasScanCard:(NSString *)version
                    type:(NSString *)type
                    card:(NSString *)card
@@ -1310,7 +1334,11 @@
         expectedLabels:(NSArray<NSString *> *)expectedLabels
                      wi:(NSString *)wi
 {
-    BOOL navigated = [self navigateToCardByA11y:version type:type card:card];
+    // Direct load first; fall back to picker navigation if the hook is unavailable.
+    BOOL navigated = [self launchDirectlyWithCard:version type:type card:card];
+    if (!navigated) {
+        navigated = [self navigateToCardByA11y:version type:type card:card];
+    }
     XCTAssertTrue(navigated, @"A11YMAS WI#%@: should navigate to %@", wi, card);
     if (!navigated) { return; }
 

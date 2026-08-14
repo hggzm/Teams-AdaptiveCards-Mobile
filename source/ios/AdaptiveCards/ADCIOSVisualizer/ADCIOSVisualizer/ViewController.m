@@ -243,6 +243,9 @@ UIColor* defaultButtonBackgroundColor;
     
     /// Directly Load A certain page for faster debugging
 //       [self loadSamplesDirectlyWithVersion:@"v1.5" type:@"Elements" index:17];
+
+    // UI tests may name a card to render straight away, bypassing the sample picker.
+    [self loadSampleCardFromLaunchArgumentsIfPresent];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -829,6 +832,42 @@ UIColor* defaultButtonBackgroundColor;
             [self.chatWindow reloadData];
         }
     }
+}
+
+/// Test hook. `-a11yCard v1.5/Scenarios/CompoundButtonSample.json` renders that card at
+/// launch instead of driving the sample picker.
+///
+/// The picker is unusable from XCUITest: every row reports the *same* accessibility frame,
+/// so `isHittable` only resolves for whichever row happens to occupy that rect. Tapping a
+/// named row is therefore position dependent and racy - across four pipeline runs the
+/// tooltip and rating scenarios kept trading places and CompoundButton never navigated at
+/// all, so those work items produced no evidence.
+///
+/// Returns NO when the argument is absent, so normal runs are completely unaffected.
+- (BOOL)loadSampleCardFromLaunchArgumentsIfPresent
+{
+    NSArray<NSString *> *arguments = [[NSProcessInfo processInfo] arguments];
+    NSUInteger flagIndex = [arguments indexOfObject:@"-a11yCard"];
+    if (flagIndex == NSNotFound || flagIndex + 1 >= arguments.count) {
+        return NO;
+    }
+
+    NSString *spec = arguments[flagIndex + 1];
+    NSString *cardPath = [[[NSBundle mainBundle] bundlePath]
+        stringByAppendingPathComponent:[NSString stringWithFormat:@"samples/%@", spec]];
+
+    NSError *error = nil;
+    NSString *json = [NSString stringWithContentsOfFile:cardPath
+                                               encoding:NSUTF8StringEncoding
+                                                  error:&error];
+    if (!json.length) {
+        NSLog(@"A11Y_DIRECT: failed to load '%@': %@", spec, error.localizedDescription);
+        return NO;
+    }
+
+    NSLog(@"A11Y_DIRECT: loaded '%@'", spec);
+    [self update:json];
+    return YES;
 }
 
 - (BOOL)appIsBeingTested
