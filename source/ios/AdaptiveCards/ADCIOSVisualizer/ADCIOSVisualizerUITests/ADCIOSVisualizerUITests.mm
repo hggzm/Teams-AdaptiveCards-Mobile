@@ -1313,17 +1313,26 @@
     testApp.launchArguments = @[ @"ui-testing", @"-a11yCard", spec ];
     [testApp launch];
 
-    // The card renders asynchronously; wait for the pane to gain real content.
-    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:25.0];
-    while ([deadline timeIntervalSinceNow] > 0) {
-        if ([self discoverAccessibleElements].count > 2) {
-            NSLog(@"A11Y_NAV: direct-loaded '%@'", spec);
-            return YES;
-        }
-        [NSThread sleepForTimeInterval:0.5];
+    // Wait for the card to render, but do NOT gate on a minimum element count.
+    //
+    // An earlier version required `count > 2`. That is wrong here: the defects under
+    // test include a container collapsing to a SINGLE accessibility element - the Sev1
+    // TooltipTestCard measured exactly n=1 on the unfixed tree. With a >2 gate that card
+    // never satisfied the wait, the helper reported "no content", the scan fell back to
+    // the racy picker, and the scenario never captured. The readiness check was hiding
+    // precisely the defect it was meant to measure.
+    //
+    // Settle first so an async render is not sampled half-built, then accept whatever the
+    // accessibility tree reports, however small.
+    [NSThread sleepForTimeInterval:6.0];
+    NSUInteger elementCount = [self discoverAccessibleElements].count;
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:20.0];
+    while (elementCount == 0 && [deadline timeIntervalSinceNow] > 0) {
+        [NSThread sleepForTimeInterval:1.0];
+        elementCount = [self discoverAccessibleElements].count;
     }
-    NSLog(@"A11Y_NAV: direct load of '%@' produced no content", spec);
-    return NO;
+    NSLog(@"A11Y_NAV: direct-loaded '%@' (%lu elements)", spec, (unsigned long)elementCount);
+    return elementCount > 0;
 }
 
 - (void)a11ymasScanCard:(NSString *)version
