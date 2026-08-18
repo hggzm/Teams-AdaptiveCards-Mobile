@@ -167,6 +167,11 @@ const CGFloat minimumRowHeight = 44.0;
     NSString *accessibilityLabel = ([tableView isKindOfClass:[ACRInputTableView class]]) ? ((ACRInputTableView *)tableView).adaptiveAccessibilityLabel : tableView.accessibilityLabel;
     _accessibilityString = accessibilityLabel ? accessibilityLabel : @"";
     cell.accessibilityTraits = cell.accessibilityTraits;
+
+    // The cell must be a single accessibility element, otherwise VoiceOver descends into
+    // it and reads cell.textLabel and the checkbox/radio image as separate items - and
+    // every label, hint and trait built below is silently ignored.
+    cell.isAccessibilityElement = YES;
     
     // If required field voice over should call it out as required.
     if (isRequired)
