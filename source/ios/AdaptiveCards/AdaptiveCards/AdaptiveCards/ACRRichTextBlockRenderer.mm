@@ -77,6 +77,9 @@
     lab.layoutManager.usesFontLeading = false;
 
     NSMutableAttributedString *content = [[NSMutableAttributedString alloc] init];
+    // Tracks whether any TextRun contributed a link. Declared out here because the
+    // accessibility decision at the end of this method is outside the rootView scope.
+    BOOL containsSelectActionLink = NO;
     if (rootView) {
         NSMutableDictionary *textMap = [rootView getTextMap];
         NSObject<ACRIFeatureFlagResolver> *featureFlagResolver = [[ACRRegistration getInstance] getFeatureFlagResolver];
@@ -160,6 +163,7 @@
                                 [textRunContent addAttribute:NSLinkAttributeName
                                                        value:target
                                                        range:selectActionRange];
+                                containsSelectActionLink = YES;
 
                                 if (!hasGestureRecognizerAdded) {
                                     [ACRTapGestureRecognizerFactory
@@ -280,6 +284,14 @@
     lab.attributedText = content;
     if ([content.string stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet].length == 0) {
         lab.accessibilityValue = @"";
+        lab.isAccessibilityElement = NO;
+    } else if (containsSelectActionLink) {
+        // This block contains links. Marking the text view as a single accessibility
+        // element would collapse it into one static-text node and destroy VoiceOver link
+        // navigation - the links inside become unreachable by swipe, which is the whole
+        // reason `editable` is forced to YES further up. UITextView exposes
+        // NSLinkAttributeName ranges as their own accessibility elements only while it is
+        // not itself a leaf.
         lab.isAccessibilityElement = NO;
     } else {
         lab.isAccessibilityElement = YES;
