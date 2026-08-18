@@ -885,12 +885,19 @@
     NSMutableArray *elements = [NSMutableArray array];
     
     // Query each VoiceOver-relevant element type in order
+    // Link, cell, checkBox and radioButton were absent here, which made whole classes
+    // of fix unmeasurable: anything whose purpose is to surface a link range or a choice
+    // cell as its own accessibility element produced a byte-identical dump, and that read
+    // as "the fix does nothing" when the scanner simply never asked for those types.
     XCUIElementType scanTypes[] = {
         XCUIElementTypeButton, XCUIElementTypeStaticText,
         XCUIElementTypeTextField, XCUIElementTypeTextView,
         XCUIElementTypeImage, XCUIElementTypeSwitch, XCUIElementTypeSlider,
+        XCUIElementTypeLink, XCUIElementTypeCell,
+        XCUIElementTypeCheckBox, XCUIElementTypeRadioButton,
     };
-    NSString *roleNames[] = {@"button", @"text", @"textField", @"textView", @"image", @"switch", @"slider"};
+    NSString *roleNames[] = {@"button", @"text", @"textField", @"textView", @"image", @"switch", @"slider",
+                             @"link", @"cell", @"checkBox", @"radioButton"};
 
     // The visualizer is a split view: the master sample list (46+ "*.json" rows)
     // stays visible alongside the rendered-card pane (the "ChatWindow" table).
@@ -900,7 +907,8 @@
     XCUIElement *chatWindow = testApp.tables[@"ChatWindow"];
     id scanRoot = ([chatWindow exists]) ? (id)chatWindow : (id)testApp;
 
-    for (int t = 0; t < 7; t++) {
+    const int scanTypeCount = (int)(sizeof(scanTypes) / sizeof(scanTypes[0]));
+    for (int t = 0; t < scanTypeCount; t++) {
         XCUIElementQuery *q = [scanRoot descendantsMatchingType:scanTypes[t]];
         NSUInteger count = q.count;
         for (NSUInteger i = 0; i < count && i < 50; i++) {

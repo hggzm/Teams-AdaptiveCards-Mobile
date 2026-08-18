@@ -20,6 +20,26 @@ def run_cmd(cmd, timeout=15):
     except Exception as e:
         return -1, "", str(e)
 
+
+def run_test_streaming(cmd, log_path, timeout):
+    """Run the xcuitest suite, streaming stdout+stderr straight to log_path.
+
+    capture_output buffers in memory and TimeoutExpired throws it all away, so a
+    timeout used to yield an empty log and no explanation for the missing scenario
+    dumps. Streaming means a killed run still leaves everything it managed to emit.
+    Returns (returncode, timed_out).
+    """
+    with open(log_path, "w") as log:
+        proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, text=True)
+        try:
+            return proc.wait(timeout=timeout), False
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+            log.write("\n--- KILLED: exceeded {}s timeout ---\n".format(timeout))
+            log.flush()
+            return -1, True
+
 print("=" * 60)
 print("iOS A11y Overlay Pipeline (CoreGraphics)")
 print("UDID: {}".format(UDID))
@@ -49,7 +69,7 @@ os.makedirs(XCUI_DIR, exist_ok=True)
 # 3. Run XCUITests (they draw overlays natively via CoreGraphics)
 print("[TEST] Running A11yDump XCUITests...")
 start_time = time.time()
-rc, stdout, stderr = run_cmd([
+rc, timed_out = run_test_streaming([
     "xcodebuild", "test-without-building",
     "-workspace", "source/ios/AdaptiveCards/AdaptiveCards.xcworkspace",
     "-scheme", "ADCIOSVisualizer",
@@ -73,12 +93,21 @@ rc, stdout, stderr = run_cmd([
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_Interactive_keyboard",
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_InputLabel_link_swipe",
     "CODE_SIGN_IDENTITY=-", "CODE_SIGNING_REQUIRED=NO", "CODE_SIGNING_ALLOWED=NO",
-], timeout=1500)
+], os.path.join(OUT_DIR, "xcuitest.log"), timeout=2400)
 test_dur = time.time() - start_time
-print("[TEST] Completed in {:.1f}s (exit: {})".format(test_dur, rc))
+print("[TEST] Completed in {:.1f}s (exit: {}, timed_out: {})".format(test_dur, rc, timed_out))
 
-with open(os.path.join(OUT_DIR, "xcuitest.log"), "w") as f:
-    f.write(stdout + "\n--- STDERR ---\n" + stderr)
+# The log is already on disk, streamed. Read it back so the parsing below is unchanged.
+with open(os.path.join(OUT_DIR, "xcuitest.log"), errors="replace") as f:
+    stdout = f.read()
+
+if timed_out:
+    print("!" * 60)
+    print("[TEST] TIMED OUT after {:.0f}s - the suite was killed mid-run.".format(test_dur))
+    print("[TEST] Scenarios after the kill point captured NOTHING. Absence of a")
+    print("[TEST] scenario dump in this run means UNKNOWN, never 'no elements'.")
+    print("[TEST] Do not cite this run as before/after evidence.")
+    print("!" * 60)
 
 # Parse results
 for line in stdout.split("\n"):
@@ -86,6 +115,20 @@ for line in stdout.split("\n"):
         print("  " + line.strip())
     if "A11Y_" in line:
         print("  " + line.strip().split("] ", 1)[-1] if "] " in line else line.strip())
+
+# Record whether this run is trustworthy as evidence. A partial run must never be
+# indistinguishable from a complete one in the artifacts.
+n_dumps = len([f for f in os.listdir(XCUI_DIR) if f.endswith("_elements.json")]) \
+    if os.path.isdir(XCUI_DIR) else 0
+with open(os.path.join(OUT_DIR, "run_status.json"), "w") as f:
+    json.dump({
+        "timed_out": bool(timed_out),
+        "returncode": rc,
+        "test_duration_sec": round(test_dur, 1),
+        "scenario_dumps_captured": n_dumps,
+        "evidence_usable": (not timed_out) and rc == 0,
+    }, f, indent=2)
+print("[STATUS] evidence_usable={} dumps={}".format((not timed_out) and rc == 0, n_dumps))
 
 # 4. Stop recording
 time.sleep(2)
