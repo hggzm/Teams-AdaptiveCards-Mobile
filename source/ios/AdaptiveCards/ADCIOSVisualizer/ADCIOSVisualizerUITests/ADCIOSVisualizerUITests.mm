@@ -1559,7 +1559,12 @@
 /// WI#5539188 — InputLabelPosition 'Click here for action' link not reachable via swipe.
 - (void)testA11yMAS_InputLabel_link_swipe
 {
-    [self a11ymasScanCard:@"v1.6" type:@"Elements" card:@"InputLabelPosition.json"
+    // InputLabelPosition.json contains neither "Click here for action" nor any
+    // RichTextBlock TextRun with a selectAction, so this scenario was scanning a card
+    // without the construct under test - and expectedLabels then logged A11YMAS_REPRO
+    // every run, which read like the bug reproducing. WI#5539188 names InputLabel.json,
+    // which has four such TextRuns.
+    [self a11ymasScanCard:@"v1.5" type:@"Elements" card:@"InputLabel.json"
                 stateName:@"a11ymas_5539188_inputlabel_link"
            expectedLabels:@[ @"Click here for action" ]
                        wi:@"5539188"];
