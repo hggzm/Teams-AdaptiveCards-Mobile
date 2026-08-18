@@ -1392,14 +1392,47 @@
 /// control by label, then capture the post-action state. Logs element counts and
 /// the first few labels in reading order so focus movement after the action is
 /// observable in the element trees + screenshots.
+/// Tap the first *hittable* element carrying this exact label.
+///
+/// tapByAccessibilityLabel: subscripts by label, which is ambiguous when several elements
+/// share one. ActionModeTestCard renders three "..." buttons and the first match is the
+/// non-hittable `Root Overflow Actions (...)` container, so the subscript path failed and
+/// WI#5536765 recorded no activation at all - only a _before state, never an _after.
+- (BOOL)tapFirstHittableWithLabel:(NSString *)label
+{
+    NSPredicate *pred = [NSPredicate predicateWithFormat:@"label == %@", label];
+    XCUIElementQuery *q = [[testApp descendantsMatchingType:XCUIElementTypeAny]
+                           matchingPredicate:pred];
+    NSUInteger count = q.count;
+    for (NSUInteger i = 0; i < count && i < 20; i++) {
+        XCUIElement *e = [q elementBoundByIndex:i];
+        if ([e exists] && [e isHittable]) {
+            [e tap];
+            NSLog(@"A11Y_NAV: tapped '%@' (match %lu of %lu)",
+                  label, (unsigned long)(i + 1), (unsigned long)count);
+            return YES;
+        }
+    }
+    return [self tapByAccessibilityLabel:label];
+}
+
 - (void)a11ymasActivate:(NSString *)version
                    type:(NSString *)type
                    card:(NSString *)card
             actionLabel:(NSString *)actionLabel
+              thenLabel:(NSString *)thenLabel
               stateName:(NSString *)stateName
                      wi:(NSString *)wi
 {
-    BOOL navigated = [self navigateToCardByA11y:version type:type card:card];
+    // Direct load first. The sample picker gives every row an identical accessibility
+    // frame, so isHittable is position-dependent and navigation is racy; a11ymasScanCard:
+    // was moved to direct load for exactly that reason and these interaction helpers were
+    // left behind. That is why WI#5532354 never produced a dump in any run - navigation
+    // failed and the helper returned before saveA11yState:.
+    BOOL navigated = [self launchDirectlyWithCard:version type:type card:card];
+    if (!navigated) {
+        navigated = [self navigateToCardByA11y:version type:type card:card];
+    }
     XCTAssertTrue(navigated, @"A11YMAS WI#%@: should navigate to %@", wi, card);
     if (!navigated) { return; }
 
@@ -1409,7 +1442,7 @@
     NSLog(@"A11YMAS_FOCUS: WI#%@ before action: %lu elements, first='%@'",
           wi, (unsigned long)before.count, firstBefore);
 
-    if (![self tapByAccessibilityLabel:actionLabel]) {
+    if (![self tapFirstHittableWithLabel:actionLabel]) {
         NSLog(@"A11YMAS_REPRO: WI#%@ action control '%@' NOT reachable", wi, actionLabel);
         return;
     }
@@ -1421,6 +1454,27 @@
     NSString *firstAfter = after.count > 0 ? after[0][@"label"] : @"(none)";
     NSLog(@"A11YMAS_FOCUS: WI#%@ after action: %lu elements, first='%@'",
           wi, (unsigned long)after.count, firstAfter);
+
+    // Second step. These bugs are about where focus lands once the transient UI goes
+    // away, so the dismissal has to actually be performed - activating the control that
+    // opens it and stopping there measures nothing the bug describes.
+    if (thenLabel.length == 0) { return; }
+    if (![self tapFirstHittableWithLabel:thenLabel]) {
+        NSLog(@"A11YMAS_REPRO: WI#%@ dismiss control '%@' NOT reachable", wi, thenLabel);
+        return;
+    }
+    NSLog(@"A11YMAS_FOCUS: WI#%@ dismissed via '%@'", wi, thenLabel);
+    [NSThread sleepForTimeInterval:1.5];
+
+    [self saveA11yState:[NSString stringWithFormat:@"%@_afterdismiss", stateName]];
+    NSArray *dismissed = [self discoverAccessibleElements];
+    NSString *firstDismissed = dismissed.count > 0 ? dismissed[0][@"label"] : @"(none)";
+    XCUIElement *kbFocus = [[[testApp descendantsMatchingType:XCUIElementTypeAny]
+        matchingPredicate:[NSPredicate predicateWithFormat:@"hasKeyboardFocus == true"]]
+        elementBoundByIndex:0];
+    NSString *focused = ([kbFocus exists] && kbFocus.label.length > 0) ? kbFocus.label : @"(none)";
+    NSLog(@"A11YMAS_FOCUS: WI#%@ after dismiss: %lu elements, first='%@', keyboardFocus='%@'",
+          wi, (unsigned long)dismissed.count, firstDismissed, focused);
 }
 
 // ===== A-group: missing accessible name / role =====
@@ -1480,8 +1534,13 @@
 /// WI#5526561 — ActivityUpdate: focus not retained when activating dismiss.
 - (void)testA11yMAS_ActivityUpdate_dismissFocus
 {
+    // ActivityUpdate.json has exactly four actions - Set due date, Send, Comment, OK -
+    // and no control named "dismiss". Re-activating the ShowCard toggle is what collapses
+    // the expanded card, so that is the dismissal the bug can be describing. Previously
+    // this scenario only expanded, and never exercised the dismissal at all.
     [self a11ymasActivate:@"v1.5" type:@"Scenarios" card:@"ActivityUpdate.json"
               actionLabel:@"Set due date"
+                thenLabel:@"Set due date"
                 stateName:@"a11ymas_5526561_activity_dismiss"
                        wi:@"5526561"];
 }
@@ -1489,8 +1548,12 @@
 /// WI#5536765 — ActionModeTestCard: focus not retained activating Cancel under More(...).
 - (void)testA11yMAS_ActionMode_cancelFocus
 {
+    // The "Cancel" the bug names is not a card action - ActionModeTestCard.json has no
+    // such title. It is the UIAlertAction that ACROverflowTarget.mm adds to the overflow
+    // action sheet. So the interaction is two steps: open More (...), then Cancel.
     [self a11ymasActivate:@"v1.5" type:@"Tests" card:@"ActionModeTestCard.json"
               actionLabel:@"..."
+                thenLabel:@"Cancel"
                 stateName:@"a11ymas_5536765_actionmode_cancel"
                        wi:@"5536765"];
 }
@@ -1509,7 +1572,13 @@
         expectedLabels:(NSArray<NSString *> *)expectedLabels
                      wi:(NSString *)wi
 {
-    BOOL navigated = [self navigateToCardByA11y:version type:type card:card];
+    // Same racy-picker problem as a11ymasActivate: - the sample list gives every row
+    // an identical accessibility frame, so isHittable is position-dependent. Direct
+    // load first, picker only as a fallback.
+    BOOL navigated = [self launchDirectlyWithCard:version type:type card:card];
+    if (!navigated) {
+        navigated = [self navigateToCardByA11y:version type:type card:card];
+    }
     XCTAssertTrue(navigated, @"A11YMAS WI#%@: should navigate to %@", wi, card);
     if (!navigated) { return; }
 
@@ -1592,7 +1661,13 @@
                   stateName:(NSString *)stateName
                          wi:(NSString *)wi
 {
-    BOOL navigated = [self navigateToCardByA11y:version type:type card:card];
+    // Same racy-picker problem as a11ymasActivate: - the sample list gives every row
+    // an identical accessibility frame, so isHittable is position-dependent. Direct
+    // load first, picker only as a fallback.
+    BOOL navigated = [self launchDirectlyWithCard:version type:type card:card];
+    if (!navigated) {
+        navigated = [self navigateToCardByA11y:version type:type card:card];
+    }
     XCTAssertTrue(navigated, @"A11YMAS WI#%@: should navigate to %@", wi, card);
     if (!navigated) { return; }
 
