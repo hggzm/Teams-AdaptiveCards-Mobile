@@ -495,7 +495,7 @@
     [textField typeText:@"Input inside popover\n"];
     
     // Click on overflow button
-    XCUIElement *overflowButton = [testApp.buttons elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label CONTAINS[c] %@", @"More options"]];
+    XCUIElement *overflowButton = [testApp.buttons elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label CONTAINS[c] %@", @"..."]];
     XCTAssertTrue(overflowButton.exists);
     [overflowButton tap];
     
@@ -554,7 +554,7 @@
     [textField typeText:@"Input inside popover\n"];
     
     // Click on overflow button
-    XCUIElement *overflowButton = [testApp.buttons elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label CONTAINS[c] %@", @"More options"]];
+    XCUIElement *overflowButton = [testApp.buttons elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label CONTAINS[c] %@", @"..."]];
     XCTAssertTrue(overflowButton.exists);
     [overflowButton tap];
     
@@ -731,7 +731,7 @@
     [textField typeText:@"1234\n"];
     
     // Click on overflow button
-    XCUIElement *overflowButton = [testApp.buttons elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label CONTAINS[c] %@", @"More options"]];
+    XCUIElement *overflowButton = [testApp.buttons elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label CONTAINS[c] %@", @"..."]];
     XCTAssertTrue(overflowButton.exists);
     [overflowButton tap];
     
@@ -797,7 +797,7 @@
     [textField typeText:@"1234\n"];
     
     // Click on overflow button
-    XCUIElement *overflowButton = [testApp.buttons elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label CONTAINS[c] %@", @"More options"]];
+    XCUIElement *overflowButton = [testApp.buttons elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label CONTAINS[c] %@", @"..."]];
     XCTAssertTrue(overflowButton.exists);
     [overflowButton tap];
     
@@ -874,135 +874,842 @@
     [element tap];
 }
 
-#pragma mark - Magic File Injection Tests
 
-/// Renders whatever card is in samples/v1.3/Tests/MagicFileInjectionTest.json
-/// and takes a screenshot for visual inspection.
-- (void)testMagicFileInjection
+#pragma mark - Accessibility-Driven UI Automation
+
+/// Discover all accessible elements in VoiceOver reading order.
+/// Returns an array of dictionaries with label, value, role, frame, identifier.
+/// This is the iOS equivalent of Android's AccessibilityNodeInfo traversal.
+- (NSArray *)discoverAccessibleElements
 {
-    [self openCardForVersion:@"v1.3" forCardType:@"Tests" withCardName:@"MagicFileInjectionTest.json"];
+    NSMutableArray *elements = [NSMutableArray array];
     
-    // Wait for the card to fully render
-    [NSThread sleepForTimeInterval:2];
-    
-    // Take screenshot of the initial render (before any interaction)
-    XCUIScreenshot *screenshot1 = [testApp screenshot];
-    XCTAttachment *attachment1 = [XCTAttachment attachmentWithScreenshot:screenshot1];
-    attachment1.name = @"MagicFileInjection_01_Initial";
-    attachment1.lifetime = XCTAttachmentLifetimeKeepAlways;
-    [self addAttachment:attachment1];
-    
-    // Scroll down to find the Sources toggle area
-    XCUIElement *chatWindow = testApp.tables[@"ChatWindow"];
-    
-    // Swipe up to scroll down to the Sources area
-    [chatWindow swipeUp];
-    [NSThread sleepForTimeInterval:1];
-    
-    // Take screenshot after scrolling to show Sources area
-    XCUIScreenshot *screenshot1b = [testApp screenshot];
-    XCTAttachment *attachment1b = [XCTAttachment attachmentWithScreenshot:screenshot1b];
-    attachment1b.name = @"MagicFileInjection_01b_ScrolledToSources";
-    attachment1b.lifetime = XCTAttachmentLifetimeKeepAlways;
-    [self addAttachment:attachment1b];
-    
-    // The ColumnSet with selectAction becomes a single accessibility element
-    // Look for the "Sources" text within buttons or other accessible elements
-    XCUIElement *sourcesButton = nil;
-    
-    // Try finding as a button (ColumnSet with selectAction becomes a button-like element)
-    XCUIElementQuery *buttons = chatWindow.buttons;
-    for (NSUInteger i = 0; i < buttons.count; i++)
+    // Query each VoiceOver-relevant element type in order
+    // Link, cell, checkBox and radioButton were absent here, which made whole classes
+    // of fix unmeasurable: anything whose purpose is to surface a link range or a choice
+    // cell as its own accessibility element produced a byte-identical dump, and that read
+    // as "the fix does nothing" when the scanner simply never asked for those types.
+    XCUIElementType scanTypes[] = {
+        XCUIElementTypeButton, XCUIElementTypeStaticText,
+        XCUIElementTypeTextField, XCUIElementTypeTextView,
+        XCUIElementTypeImage, XCUIElementTypeSwitch, XCUIElementTypeSlider,
+        XCUIElementTypeLink, XCUIElementTypeCell,
+        XCUIElementTypeCheckBox, XCUIElementTypeRadioButton,
+    };
+    NSString *roleNames[] = {@"button", @"text", @"textField", @"textView", @"image", @"switch", @"slider",
+                             @"link", @"cell", @"checkBox", @"radioButton"};
 
-    {
-        XCUIElement *btn = [buttons elementBoundByIndex:i];
-        NSString *label = btn.label;
-        if (label && ([label containsString:@"Sources"] || [label containsString:@"sources"])) {
-            sourcesButton = btn;
+    // The visualizer is a split view: the master sample list (46+ "*.json" rows)
+    // stays visible alongside the rendered-card pane (the "ChatWindow" table).
+    // Scanning the whole app conflates both, drowning card content in list rows.
+    // Scope the scan to the ChatWindow when it exists so element dumps reflect the
+    // card under test; fall back to the whole app otherwise.
+    XCUIElement *chatWindow = testApp.tables[@"ChatWindow"];
+    id scanRoot = ([chatWindow exists]) ? (id)chatWindow : (id)testApp;
+
+    const int scanTypeCount = (int)(sizeof(scanTypes) / sizeof(scanTypes[0]));
+    for (int t = 0; t < scanTypeCount; t++) {
+        XCUIElementQuery *q = [scanRoot descendantsMatchingType:scanTypes[t]];
+        NSUInteger count = q.count;
+        for (NSUInteger i = 0; i < count && i < 50; i++) {
+            @try {
+                XCUIElement *elem = [q elementBoundByIndex:i];
+                if (!elem.exists) continue;
+                NSString *label = elem.label ?: @"";
+                if (label.length == 0) continue;
+                NSString *value = elem.value ? [NSString stringWithFormat:@"%@", elem.value] : @"";
+                NSString *identifier = elem.identifier ?: @"";
+                CGRect frame = elem.frame;
+                if (frame.size.width < 5 || frame.size.height < 5) continue;
+                if (frame.size.width > 390 && frame.size.height > 800) continue;
+                
+                [elements addObject:@{
+                    @"label": label,
+                    @"value": value,
+                    @"role": roleNames[t],
+                    @"identifier": identifier,
+                    @"frame": @{@"x": @(frame.origin.x), @"y": @(frame.origin.y),
+                                @"width": @(frame.size.width), @"height": @(frame.size.height)},
+                    @"isEnabled": @(elem.isEnabled),
+                    @"isSelected": @(elem.isSelected),
+                    @"isHittable": @(elem.isHittable),
+                }];
+            } @catch (NSException *e) { continue; }
+        }
+    }
+    
+    // Sort by position (reading order: top-to-bottom, left-to-right)
+    [elements sortUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
+        CGFloat ay = [a[@"frame"][@"y"] floatValue];
+        CGFloat by = [b[@"frame"][@"y"] floatValue];
+        if (fabs(ay - by) > 10) return ay < by ? NSOrderedAscending : NSOrderedDescending;
+        CGFloat ax = [a[@"frame"][@"x"] floatValue];
+        CGFloat bx = [b[@"frame"][@"x"] floatValue];
+        return ax < bx ? NSOrderedAscending : NSOrderedDescending;
+    }];
+    
+    return elements;
+}
+
+/// Find and tap an element by its accessibility label. Returns YES if found.
+/// This is the core of a11y-driven navigation — find by label, not coordinates.
+/// Scroll a known-but-off-screen element into view by swiping up on the
+/// first scroll/table container, up to a few times, until it is hittable.
+- (BOOL)scrollElementIntoView:(XCUIElement *)element
+{
+    if (![element exists]) { return NO; }
+    if ([element isHittable]) { return YES; }
+    // The sample list is the SECOND table (index 1) in the split view, matching
+    // openCardForVersion. Fall back to table 0 / first scroll view / the app.
+    XCUIElement *scroller = [[testApp tables] elementBoundByIndex:1];
+    if (![scroller exists]) { scroller = [[testApp tables] elementBoundByIndex:0]; }
+    if (![scroller exists]) { scroller = [[testApp scrollViews] elementBoundByIndex:0]; }
+    if (![scroller exists]) { scroller = testApp; }
+    // The sample lists run to 60+ rows and every row reports the SAME accessibility
+    // frame, so `isHittable` only becomes true once the row physically occupies that
+    // rect. Eight swipes reached cards mid-list (FluentIcon.RTL succeeded) but not ones
+    // lower down: CompoundButtonSample, FoodOrder and
+    // ColumnSet.Input.ChoiceSet.VerticalStretch all exhausted the budget and failed
+    // navigation, so their scenarios produced no evidence at all.
+    // Do NOT add a "list stopped moving" early exit keyed on the first visible
+    // staticText: that row is a static header, so it never changes and the loop bails
+    // after two swipes. Run 31523879793 tried it and regressed RatingInput from pass to
+    // fail and lost FoodOrder again, which run 31520125257 had captured with the plain
+    // budget below. The budget is bounded and the job timeout (70m) accommodates it.
+    for (int i = 0; i < 30 && [element exists] && ![element isHittable]; i++) {
+        [scroller swipeUp];
+    }
+    if ([element exists] && [element isHittable]) {
+        return YES;
+    }
+    // The row may sit above the starting scroll position; sweep back the other way.
+    for (int i = 0; i < 30 && [element exists] && ![element isHittable]; i++) {
+        [scroller swipeDown];
+    }
+    return [element exists] && [element isHittable];
+}
+
+- (BOOL)tapByAccessibilityLabel:(NSString *)label
+{
+    // Try buttons first (most common interactive element)
+    XCUIElement *button = testApp.buttons[label];
+    if ([button exists] && [button isHittable]) {
+        [button tap];
+        NSLog(@"A11Y_NAV: tapped button '%@'", label);
+        return YES;
+    }
+    
+    // Try static texts (table cells, list items)
+    XCUIElement *text = testApp.staticTexts[label];
+    if ([text exists] && [text isHittable]) {
+        [text tap];
+        NSLog(@"A11Y_NAV: tapped text '%@'", label);
+        return YES;
+    }
+    
+    // Try any element type
+    NSPredicate *pred = [NSPredicate predicateWithFormat:@"label == %@", label];
+    XCUIElement *any = [[testApp descendantsMatchingType:XCUIElementTypeAny] elementMatchingPredicate:pred];
+    if ([any exists] && [any isHittable]) {
+        [any tap];
+        NSLog(@"A11Y_NAV: tapped element '%@'", label);
+        return YES;
+    }
+    
+    // Off-screen in a long list: scroll the matching element into view, then tap.
+    NSPredicate *labelPred = [NSPredicate predicateWithFormat:@"label == %@", label];
+    XCUIElement *offscreen = [[testApp descendantsMatchingType:XCUIElementTypeAny]
+                              elementMatchingPredicate:labelPred];
+    if ([offscreen exists] && [self scrollElementIntoView:offscreen]) {
+        [offscreen tap];
+        NSLog(@"A11Y_NAV: scrolled+tapped '%@'", label);
+        return YES;
+    }
+
+    NSLog(@"A11Y_NAV: element '%@' not found or not hittable", label);
+    return NO;
+}
+
+/// Navigate to a card by name using only accessibility navigation.
+/// Discovers the menu structure and navigates using labels.
+- (BOOL)navigateToCardByA11y:(NSString *)version type:(NSString *)type card:(NSString *)cardName
+{
+    // Step 1: Find and tap version button via a11y label
+    if (![self tapByAccessibilityLabel:version]) {
+        NSLog(@"A11Y_NAV: version '%@' not accessible", version);
+        return NO;
+    }
+    [NSThread sleepForTimeInterval:0.5];
+    
+    // Step 2: Find and tap card type via a11y label
+    if (![self tapByAccessibilityLabel:type]) {
+        NSLog(@"A11Y_NAV: type '%@' not accessible", type);
+        return NO;
+    }
+    [NSThread sleepForTimeInterval:0.5];
+    
+    // Step 3: Find and tap card name via a11y label
+    if (![self tapByAccessibilityLabel:cardName]) {
+        NSLog(@"A11Y_NAV: card '%@' not accessible", cardName);
+        return NO;
+    }
+    [NSThread sleepForTimeInterval:1.5]; // Wait for card to render
+    
+    NSLog(@"A11Y_NAV: navigated to %@/%@/%@", version, type, cardName);
+    return YES;
+}
+
+/// Save a11y state: element tree + screenshot to /tmp/a11y-xcui/
+- (void)saveA11yState:(NSString *)name
+{
+    NSArray *elements = [self discoverAccessibleElements];
+    
+    // Write element JSON
+    NSString *dir = @"/tmp/a11y-xcui";
+    [[NSFileManager defaultManager] createDirectoryAtPath:dir
+                              withIntermediateDirectories:YES attributes:nil error:nil];
+    
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:elements
+                                                       options:NSJSONWritingPrettyPrinted error:nil];
+    NSString *elemPath = [NSString stringWithFormat:@"%@/%@_elements.json", dir, name];
+    [jsonData writeToFile:elemPath atomically:YES];
+    
+    // Screenshot
+    XCUIScreenshot *screenshot = [XCUIScreen.mainScreen screenshot];
+    NSString *shotPath = [NSString stringWithFormat:@"%@/%@.png", dir, name];
+    [screenshot.PNGRepresentation writeToFile:shotPath atomically:YES];
+    
+    NSLog(@"A11Y_STATE: %@ -> %lu elements", name, (unsigned long)elements.count);
+    
+    // Log VoiceOver reading order
+    for (NSUInteger i = 0; i < elements.count && i < 20; i++) {
+        NSDictionary *e = elements[i];
+        NSString *voiceoverReads = e[@"label"];
+        if ([e[@"value"] length] > 0) {
+            voiceoverReads = [NSString stringWithFormat:@"%@, %@", voiceoverReads, e[@"value"]];
+        }
+        NSLog(@"A11Y_VO: %lu. [%@] %@", (unsigned long)(i + 1), e[@"role"], voiceoverReads);
+    }
+}
+
+#pragma mark - A11y Automation Test: Navigate Any Card
+
+/// Accessibility-driven automation: navigate to a card, interact with
+/// interactive elements (buttons, ShowCards), and capture a11y state at each step.
+/// All navigation uses accessibility labels only — no coordinates, no view hierarchy.
+- (void)testA11yAutomation_ActivityUpdate
+{
+    NSLog(@"A11Y_AUTO: === Starting ActivityUpdate a11y automation ===");
+    
+    // Navigate using a11y labels only
+    BOOL navigated = [self navigateToCardByA11y:@"v1.5" type:@"Scenarios" card:@"ActivityUpdate.json"];
+    XCTAssertTrue(navigated, @"Should navigate to ActivityUpdate via a11y labels");
+    
+    // Capture initial card state
+    [self saveA11yState:@"auto_activity_initial"];
+    
+    // Discover all interactive elements on the rendered card
+    NSArray *elements = [self discoverAccessibleElements];
+    NSLog(@"A11Y_AUTO: Found %lu accessible elements on card", (unsigned long)elements.count);
+    
+    // Find all buttons (interactive elements VoiceOver can activate)
+    NSMutableArray *buttons = [NSMutableArray array];
+    for (NSDictionary *e in elements) {
+        if ([e[@"role"] isEqualToString:@"button"] && [e[@"isHittable"] boolValue]) {
+            [buttons addObject:e];
+        }
+    }
+    NSLog(@"A11Y_AUTO: %lu hittable buttons found", (unsigned long)buttons.count);
+    
+    // Try to find ShowCard buttons (Comment, Set due date) via a11y label
+    BOOL foundComment = NO;
+    for (NSDictionary *btn in buttons) {
+        if ([btn[@"label"] isEqualToString:@"Comment"]) {
+            foundComment = YES;
+            NSLog(@"A11Y_AUTO: Found ShowCard button 'Comment' via a11y label");
+            
+            // Tap it to expand ShowCard
+            [self tapByAccessibilityLabel:@"Comment"];
+            [NSThread sleepForTimeInterval:1.5];
+            
+            // Capture expanded state
+            [self saveA11yState:@"auto_activity_showcard_expanded"];
+            
+            // Verify new elements appeared (the ShowCard content)
+            NSArray *expandedElements = [self discoverAccessibleElements];
+            XCTAssertGreaterThan(expandedElements.count, elements.count,
+                @"Expanded ShowCard should have more a11y elements than collapsed");
+            NSLog(@"A11Y_AUTO: ShowCard expanded: %lu -> %lu elements",
+                  (unsigned long)elements.count, (unsigned long)expandedElements.count);
+            
             break;
         }
     }
     
-    // Also try staticTexts
-    if (!sourcesButton)
-
-    {
-        XCUIElement *sourcesText = chatWindow.staticTexts[@"Sources"];
-        if ([sourcesText exists] && [sourcesText isHittable])
-
-        {
-            sourcesButton = sourcesText;
+    if (!foundComment) {
+        NSLog(@"A11Y_AUTO: 'Comment' button not found — listing all button labels:");
+        for (NSDictionary *btn in buttons) {
+            NSLog(@"A11Y_AUTO:   button: '%@'", btn[@"label"]);
         }
     }
+}
+
+/// Accessibility-driven automation for ExpenseReport card.
+/// Demonstrates navigating to a different card and finding ToggleVisibility.
+- (void)testA11yAutomation_ExpenseReport
+{
+    NSLog(@"A11Y_AUTO: === Starting ExpenseReport a11y automation ===");
     
-    // Try any element matching "Sources"
-    if (!sourcesButton)
-
-    {
-        XCUIElementQuery *anyElements = [chatWindow descendantsMatchingType:XCUIElementTypeAny];
-        for (NSUInteger i = 0; i < MIN(anyElements.count, 100); i++) {
-            XCUIElement *elem = [anyElements elementBoundByIndex:i];
-            NSString *label = elem.label;
-            if (label && [label containsString:@"Sources"] && elem.isHittable)
-
-            {
-                sourcesButton = elem;
-                break;
+    // Navigate using a11y labels
+    BOOL navigated = [self navigateToCardByA11y:@"v1.5" type:@"Scenarios" card:@"ExpenseReport.json"];
+    XCTAssertTrue(navigated, @"Should navigate to ExpenseReport via a11y labels");
+    
+    // Capture card state
+    [self saveA11yState:@"auto_expense_initial"];
+    
+    // Discover elements
+    NSArray *elements = [self discoverAccessibleElements];
+    NSLog(@"A11Y_AUTO: Found %lu accessible elements", (unsigned long)elements.count);
+    
+    // Find any button that might be a ShowCard (Reject, Approve)
+    for (NSDictionary *e in elements) {
+        if ([e[@"role"] isEqualToString:@"button"]) {
+            NSString *label = e[@"label"];
+            if ([label isEqualToString:@"Reject"] || [label isEqualToString:@"Approve"]) {
+                NSLog(@"A11Y_AUTO: Found action button '%@' via a11y label", label);
             }
         }
     }
-    
-    if (sourcesButton)
+}
 
+/// Generic card automation: navigate to ANY card and dump its a11y tree.
+/// This can be parameterized to test any card in the sample set.
+- (void)testA11yAutomation_InputForm
+{
+    NSLog(@"A11Y_AUTO: === Starting InputForm a11y automation ===");
     
-    {
-        [sourcesButton tap];
-        [NSThread sleepForTimeInterval:1];
-        
-        // Take screenshot after first tap (should be expanded)
-        XCUIScreenshot *screenshot2 = [testApp screenshot];
-        XCTAttachment *attachment2 = [XCTAttachment attachmentWithScreenshot:screenshot2];
-        attachment2.name = @"MagicFileInjection_02_AfterFirstTap_ShouldBeExpanded";
-        attachment2.lifetime = XCTAttachmentLifetimeKeepAlways;
-        [self addAttachment:attachment2];
-        
-        // Wait 2 more seconds to see if it auto-collapses (the bug)
-        [NSThread sleepForTimeInterval:2];
-        
-        // Take screenshot to check if it stayed expanded
-        XCUIScreenshot *screenshot3 = [testApp screenshot];
-        XCTAttachment *attachment3 = [XCTAttachment attachmentWithScreenshot:screenshot3];
-        attachment3.name = @"MagicFileInjection_03_After2sWait_ShouldStillBeExpanded";
-        attachment3.lifetime = XCTAttachmentLifetimeKeepAlways;
-        [self addAttachment:attachment3];
-        
-        // Tap again to collapse
-        if ([sourcesButton exists] && [sourcesButton isHittable])
+    BOOL navigated = [self navigateToCardByA11y:@"v1.5" type:@"Scenarios" card:@"InputForm.json"];
+    if (!navigated) {
+        // Try v1.3 Elements path
+        navigated = [self navigateToCardByA11y:@"v1.3" type:@"Elements" card:@"Input.Text.ErrorMessage.json"];
+    }
+    XCTAssertTrue(navigated, @"Should navigate to an input card via a11y labels");
+    
+    [self saveA11yState:@"auto_input_initial"];
+    
+    // Find text fields (input elements)
+    NSArray *elements = [self discoverAccessibleElements];
+    NSMutableArray *inputs = [NSMutableArray array];
+    for (NSDictionary *e in elements) {
+        if ([e[@"role"] isEqualToString:@"textField"] || [e[@"role"] isEqualToString:@"textView"]) {
+            [inputs addObject:e];
+            NSLog(@"A11Y_AUTO: Found input '%@' (id: '%@')", e[@"label"], e[@"identifier"]);
+        }
+    }
+    NSLog(@"A11Y_AUTO: %lu input fields found on card", (unsigned long)inputs.count);
+}
 
-        {
-            [sourcesButton tap];
-            [NSThread sleepForTimeInterval:1];
-            
-            // Take screenshot after second tap (should be collapsed again)
-            XCUIScreenshot *screenshot4 = [testApp screenshot];
-            XCTAttachment *attachment4 = [XCTAttachment attachmentWithScreenshot:screenshot4];
-            attachment4.name = @"MagicFileInjection_04_AfterSecondTap_ShouldBeCollapsed";
-            attachment4.lifetime = XCTAttachmentLifetimeKeepAlways;
-            [self addAttachment:attachment4];
+
+
+/// Toggle visibility double-fire validation.
+/// Navigates to a ToggleVisibility card, taps the toggle, waits, and verifies
+/// that the toggled content stays visible (not auto-collapsed by double-fire).
+/// On iOS 26, the Gestures framework re-delivers touchesEnded twice — without
+/// the _hasFiredActionForCurrentTouch guard, the toggle fires twice (open+close).
+- (void)testToggleVisibilityDoubleFire
+{
+    NSLog(@"TOGGLE_DOUBLE_FIRE: === Starting toggle double-fire validation ===");
+
+    // Navigate to the ToggleVisibility test card
+    BOOL navigated = [self navigateToCardByA11y:@"v1.2" type:@"Elements" card:@"Action.ToggleVisibility.json"];
+    if (!navigated) {
+        // Fallback: try the Tests directory
+        navigated = [self navigateToCardByA11y:@"v1.2" type:@"Tests" card:@"ToggleVisibility.AllElements.json"];
+    }
+    XCTAssertTrue(navigated, @"Should navigate to a ToggleVisibility card");
+
+    // Capture initial state
+    [self saveA11yState:@"toggle_initial"];
+    NSArray *initialElements = [self discoverAccessibleElements];
+    NSUInteger initialCount = initialElements.count;
+    NSLog(@"TOGGLE_DOUBLE_FIRE: Initial element count: %lu", (unsigned long)initialCount);
+
+    // Find a toggle-able element (button or tappable element)
+    // Look for "Toggle!" or similar button labels
+    BOOL tapped = NO;
+    for (NSString *label in @[@"Toggle!", @"Toggle", @"Sources", @"Show", @"Expand"]) {
+        if ([self tapByAccessibilityLabel:label]) {
+            NSLog(@"TOGGLE_DOUBLE_FIRE: Tapped toggle button: '%@'", label);
+            tapped = YES;
+            break;
         }
     }
 
-    else
-
-    {
-        // Even if we can't find Sources, take a screenshot showing what's visible
-        XCUIScreenshot *screenshotFail = [testApp screenshot];
-        XCTAttachment *attachFail = [XCTAttachment attachmentWithScreenshot:screenshotFail];
-        attachFail.name = @"MagicFileInjection_FAIL_CouldNotFindSources";
-        attachFail.lifetime = XCTAttachmentLifetimeKeepAlways;
-        [self addAttachment:attachFail];
-        XCTFail(@"Could not find 'Sources' element to tap for toggle visibility test");
+    if (!tapped) {
+        // Try tapping the first button we find
+        for (NSDictionary *e in initialElements) {
+            if ([e[@"role"] isEqualToString:@"button"]) {
+                NSString *label = e[@"label"];
+                if ([self tapByAccessibilityLabel:label]) {
+                    NSLog(@"TOGGLE_DOUBLE_FIRE: Tapped first available button: '%@'", label);
+                    tapped = YES;
+                    break;
+                }
+            }
+        }
     }
+    XCTAssertTrue(tapped, @"Should find and tap a toggle element");
+
+    // Wait 2 seconds to let any double-fire settle
+    // On the buggy path (no guard), the second touchesEnded fires within ~50ms
+    // after the first one, so 2s is more than enough to see if it collapsed back
+    [NSThread sleepForTimeInterval:2.0];
+
+    // Capture post-toggle state
+    [self saveA11yState:@"toggle_after_tap"];
+    NSArray *afterElements = [self discoverAccessibleElements];
+    NSUInteger afterCount = afterElements.count;
+    NSLog(@"TOGGLE_DOUBLE_FIRE: After toggle element count: %lu", (unsigned long)afterCount);
+
+    // The element count should have changed (expanded = more elements visible)
+    // If the toggle fired twice (bug), count would be same as initial (collapsed back)
+    if (afterCount != initialCount) {
+        NSLog(@"TOGGLE_DOUBLE_FIRE: PASS — Element count changed from %lu to %lu (toggle persisted)",
+              (unsigned long)initialCount, (unsigned long)afterCount);
+    } else {
+        NSLog(@"TOGGLE_DOUBLE_FIRE: WARNING — Element count unchanged (%lu). "
+              "Toggle may have double-fired or card has no expandable content at this path.",
+              (unsigned long)initialCount);
+    }
+
+    // Tap again to collapse — verify round-trip
+    [NSThread sleepForTimeInterval:0.5];
+    tapped = NO;
+    for (NSString *label in @[@"Toggle!", @"Toggle", @"Sources", @"Hide", @"Collapse"]) {
+        if ([self tapByAccessibilityLabel:label]) {
+            tapped = YES;
+            break;
+        }
+    }
+    [NSThread sleepForTimeInterval:2.0];
+
+    [self saveA11yState:@"toggle_after_second_tap"];
+    NSArray *finalElements = [self discoverAccessibleElements];
+    NSUInteger finalCount = finalElements.count;
+    NSLog(@"TOGGLE_DOUBLE_FIRE: Final element count after 2nd tap: %lu", (unsigned long)finalCount);
+
+    // After 2nd tap, should be back to initial state
+    NSLog(@"TOGGLE_DOUBLE_FIRE: Round-trip test: initial=%lu, expanded=%lu, collapsed=%lu",
+          (unsigned long)initialCount, (unsigned long)afterCount, (unsigned long)finalCount);
+    NSLog(@"TOGGLE_DOUBLE_FIRE: === Test complete ===");
+}
+
+
+#pragma mark - A11YMAS Batch A/C: Name-Role + Focus-Retention Repro Scenarios
+
+/// A-group helper: navigate to a card, optionally tap a label to expand
+/// (e.g. a ShowCard), dump the a11y tree, and report whether each expected
+/// control label is reachable with a non-generic accessible name.
+/// Relaunch with the card rendered directly, bypassing the sample picker.
+/// See -[ViewController loadSampleCardFromLaunchArgumentsIfPresent] for why: every picker
+/// row shares one accessibility frame, so tapping a named row is racy and several
+/// scenarios never reached their card.
+- (BOOL)launchDirectlyWithCard:(NSString *)version type:(NSString *)type card:(NSString *)card
+{
+    NSString *spec = [NSString stringWithFormat:@"%@/%@/%@", version, type, card];
+    [testApp terminate];
+    testApp.launchArguments = @[ @"ui-testing", @"-a11yCard", spec ];
+    [testApp launch];
+
+    // Wait for the card to render, but do NOT gate on a minimum element count.
+    //
+    // An earlier version required `count > 2`. That is wrong here: the defects under
+    // test include a container collapsing to a SINGLE accessibility element - the Sev1
+    // TooltipTestCard measured exactly n=1 on the unfixed tree. With a >2 gate that card
+    // never satisfied the wait, the helper reported "no content", the scan fell back to
+    // the racy picker, and the scenario never captured. The readiness check was hiding
+    // precisely the defect it was meant to measure.
+    //
+    // Settle first so an async render is not sampled half-built, then accept whatever the
+    // accessibility tree reports, however small.
+    [NSThread sleepForTimeInterval:6.0];
+    NSUInteger elementCount = [self discoverAccessibleElements].count;
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:20.0];
+    while (elementCount == 0 && [deadline timeIntervalSinceNow] > 0) {
+        [NSThread sleepForTimeInterval:1.0];
+        elementCount = [self discoverAccessibleElements].count;
+    }
+    NSLog(@"A11Y_NAV: direct-loaded '%@' (%lu elements)", spec, (unsigned long)elementCount);
+    return elementCount > 0;
+}
+
+- (void)a11ymasScanCard:(NSString *)version
+                   type:(NSString *)type
+                   card:(NSString *)card
+          tapToExpand:(NSString *)expandLabel
+              stateName:(NSString *)stateName
+        expectedLabels:(NSArray<NSString *> *)expectedLabels
+                     wi:(NSString *)wi
+{
+    // Direct load first; fall back to picker navigation if the hook is unavailable.
+    BOOL navigated = [self launchDirectlyWithCard:version type:type card:card];
+    if (!navigated) {
+        navigated = [self navigateToCardByA11y:version type:type card:card];
+    }
+    XCTAssertTrue(navigated, @"A11YMAS WI#%@: should navigate to %@", wi, card);
+    if (!navigated) { return; }
+
+    if (expandLabel.length > 0) {
+        if ([self tapByAccessibilityLabel:expandLabel]) {
+            NSLog(@"A11YMAS_SCAN: WI#%@ expanded via '%@'", wi, expandLabel);
+            [NSThread sleepForTimeInterval:1.5];
+        } else {
+            NSLog(@"A11YMAS_REPRO: WI#%@ expand control '%@' NOT reachable", wi, expandLabel);
+        }
+    }
+
+    [self saveA11yState:stateName];
+    NSArray *elements = [self discoverAccessibleElements];
+    NSLog(@"A11YMAS_SCAN: WI#%@ card=%@ elements=%lu", wi, card, (unsigned long)elements.count);
+
+    for (NSString *expected in expectedLabels) {
+        BOOL found = NO;
+        for (NSDictionary *e in elements) {
+            if ([e[@"label"] rangeOfString:expected options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                found = YES;
+                NSLog(@"A11YMAS_OK: WI#%@ '%@' present as role=%@ value='%@'",
+                      wi, expected, e[@"role"], e[@"value"]);
+                break;
+            }
+        }
+        if (!found) {
+            NSLog(@"A11YMAS_REPRO: WI#%@ missing accessible name/role: '%@'", wi, expected);
+        }
+    }
+}
+
+/// C-group helper: navigate, capture the pre-action a11y state, activate a
+/// control by label, then capture the post-action state. Logs element counts and
+/// the first few labels in reading order so focus movement after the action is
+/// observable in the element trees + screenshots.
+/// Tap the first *hittable* element carrying this exact label.
+///
+/// tapByAccessibilityLabel: subscripts by label, which is ambiguous when several elements
+/// share one. ActionModeTestCard renders three "..." buttons and the first match is the
+/// non-hittable `Root Overflow Actions (...)` container, so the subscript path failed and
+/// WI#5536765 recorded no activation at all - only a _before state, never an _after.
+- (BOOL)tapFirstHittableWithLabel:(NSString *)label
+{
+    NSPredicate *pred = [NSPredicate predicateWithFormat:@"label == %@", label];
+    XCUIElementQuery *q = [[testApp descendantsMatchingType:XCUIElementTypeAny]
+                           matchingPredicate:pred];
+    NSUInteger count = q.count;
+    for (NSUInteger i = 0; i < count && i < 20; i++) {
+        XCUIElement *e = [q elementBoundByIndex:i];
+        if ([e exists] && [e isHittable]) {
+            [e tap];
+            NSLog(@"A11Y_NAV: tapped '%@' (match %lu of %lu)",
+                  label, (unsigned long)(i + 1), (unsigned long)count);
+            return YES;
+        }
+    }
+    return [self tapByAccessibilityLabel:label];
+}
+
+- (void)a11ymasActivate:(NSString *)version
+                   type:(NSString *)type
+                   card:(NSString *)card
+            actionLabel:(NSString *)actionLabel
+              thenLabel:(NSString *)thenLabel
+              stateName:(NSString *)stateName
+                     wi:(NSString *)wi
+{
+    // Direct load first. The sample picker gives every row an identical accessibility
+    // frame, so isHittable is position-dependent and navigation is racy; a11ymasScanCard:
+    // was moved to direct load for exactly that reason and these interaction helpers were
+    // left behind. That is why WI#5532354 never produced a dump in any run - navigation
+    // failed and the helper returned before saveA11yState:.
+    BOOL navigated = [self launchDirectlyWithCard:version type:type card:card];
+    if (!navigated) {
+        navigated = [self navigateToCardByA11y:version type:type card:card];
+    }
+    XCTAssertTrue(navigated, @"A11YMAS WI#%@: should navigate to %@", wi, card);
+    if (!navigated) { return; }
+
+    [self saveA11yState:[NSString stringWithFormat:@"%@_before", stateName]];
+    NSArray *before = [self discoverAccessibleElements];
+    NSString *firstBefore = before.count > 0 ? before[0][@"label"] : @"(none)";
+    NSLog(@"A11YMAS_FOCUS: WI#%@ before action: %lu elements, first='%@'",
+          wi, (unsigned long)before.count, firstBefore);
+
+    if (![self tapFirstHittableWithLabel:actionLabel]) {
+        NSLog(@"A11YMAS_REPRO: WI#%@ action control '%@' NOT reachable", wi, actionLabel);
+        return;
+    }
+    NSLog(@"A11YMAS_FOCUS: WI#%@ activated '%@'", wi, actionLabel);
+    [NSThread sleepForTimeInterval:1.5];
+
+    [self saveA11yState:[NSString stringWithFormat:@"%@_after", stateName]];
+    NSArray *after = [self discoverAccessibleElements];
+    NSString *firstAfter = after.count > 0 ? after[0][@"label"] : @"(none)";
+    NSLog(@"A11YMAS_FOCUS: WI#%@ after action: %lu elements, first='%@'",
+          wi, (unsigned long)after.count, firstAfter);
+
+    // Second step. These bugs are about where focus lands once the transient UI goes
+    // away, so the dismissal has to actually be performed - activating the control that
+    // opens it and stopping there measures nothing the bug describes.
+    if (thenLabel.length == 0) { return; }
+    if (![self tapFirstHittableWithLabel:thenLabel]) {
+        NSLog(@"A11YMAS_REPRO: WI#%@ dismiss control '%@' NOT reachable", wi, thenLabel);
+        return;
+    }
+    NSLog(@"A11YMAS_FOCUS: WI#%@ dismissed via '%@'", wi, thenLabel);
+    [NSThread sleepForTimeInterval:1.5];
+
+    [self saveA11yState:[NSString stringWithFormat:@"%@_afterdismiss", stateName]];
+    NSArray *dismissed = [self discoverAccessibleElements];
+    NSString *firstDismissed = dismissed.count > 0 ? dismissed[0][@"label"] : @"(none)";
+    XCUIElement *kbFocus = [[[testApp descendantsMatchingType:XCUIElementTypeAny]
+        matchingPredicate:[NSPredicate predicateWithFormat:@"hasKeyboardFocus == true"]]
+        elementBoundByIndex:0];
+    NSString *focused = ([kbFocus exists] && kbFocus.label.length > 0) ? kbFocus.label : @"(none)";
+    NSLog(@"A11YMAS_FOCUS: WI#%@ after dismiss: %lu elements, first='%@', keyboardFocus='%@'",
+          wi, (unsigned long)dismissed.count, firstDismissed, focused);
+}
+
+// ===== A-group: missing accessible name / role =====
+
+/// WI#5428631 / WI#5428632 — ShowCard ChoiceSet dropdown role + menu-item names.
+- (void)testA11yMAS_FoodOrderShowCard_dropdown
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Scenarios" card:@"FoodOrder.json"
+              tapToExpand:@"Steak"
+                stateName:@"a11ymas_5428632_foodorder_showcard"
+           expectedLabels:@[ @"Rare", @"Medium-Rare", @"Well-done" ]
+                       wi:@"5428632"];
+}
+
+/// WI#5539328 — ColumnSet.Input.ChoiceSet.VerticalStretch combo box accessible name.
+- (void)testA11yMAS_ColumnSetChoiceSet_name
+{
+    [self a11ymasScanCard:@"v1.1" type:@"Tests" card:@"ColumnSet.Input.ChoiceSet.VerticalStretch.json"
+              tapToExpand:nil
+                stateName:@"a11ymas_5539328_columnset_choiceset"
+           expectedLabels:@[ @"ChoiceSet" ]
+                       wi:@"5539328"];
+}
+
+/// WI#5539505 — InputStyle: text field beside 'Est. Delivery' has no accessible name.
+- (void)testA11yMAS_InputStyle_fieldName
+{
+    [self a11ymasScanCard:@"v1.6" type:@"Elements" card:@"InputStyle.json"
+              tapToExpand:nil
+                stateName:@"a11ymas_5539505_inputstyle"
+           expectedLabels:@[ @"Est. Delivery", @"Product Name" ]
+                       wi:@"5539505"];
+}
+
+/// WI#5532275 — CompoundButton role not announced.
+- (void)testA11yMAS_CompoundButton_role
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Scenarios" card:@"CompoundButtonSample.json"
+              tapToExpand:nil
+                stateName:@"a11ymas_5532275_compoundbutton"
+           expectedLabels:@[ @"Summarize", @"View active work items", @"Give feedback" ]
+                       wi:@"5532275"];
+}
+
+/// WI#5536877 — AdaptiveCard.Rtl.False: phantom 'button' announced with no visual control.
+- (void)testA11yMAS_RtlFalse_phantomButton
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Tests" card:@"AdaptiveCard.Rtl.False.json"
+              tapToExpand:nil
+                stateName:@"a11ymas_5536877_rtlfalse"
+           expectedLabels:@[ @"Column 1", @"Column 2", @"Column 3" ]
+                       wi:@"5536877"];
+}
+
+// ===== C-group: focus retention after action =====
+
+/// WI#5526561 — ActivityUpdate: focus not retained when activating dismiss.
+- (void)testA11yMAS_ActivityUpdate_dismissFocus
+{
+    // ActivityUpdate.json has exactly four actions - Set due date, Send, Comment, OK -
+    // and no control named "dismiss". Re-activating the ShowCard toggle is what collapses
+    // the expanded card, so that is the dismissal the bug can be describing. Previously
+    // this scenario only expanded, and never exercised the dismissal at all.
+    [self a11ymasActivate:@"v1.5" type:@"Scenarios" card:@"ActivityUpdate.json"
+              actionLabel:@"Set due date"
+                thenLabel:@"Set due date"
+                stateName:@"a11ymas_5526561_activity_dismiss"
+                       wi:@"5526561"];
+}
+
+/// WI#5536765 — ActionModeTestCard: focus not retained activating Cancel under More(...).
+- (void)testA11yMAS_ActionMode_cancelFocus
+{
+    // The "Cancel" the bug names is not a card action - ActionModeTestCard.json has no
+    // such title. It is the UIAlertAction that ACROverflowTarget.mm adds to the overflow
+    // action sheet. So the interaction is two steps: open More (...), then Cancel.
+    [self a11ymasActivate:@"v1.5" type:@"Tests" card:@"ActionModeTestCard.json"
+              actionLabel:@"..."
+                thenLabel:@"Cancel"
+                stateName:@"a11ymas_5536765_actionmode_cancel"
+                       wi:@"5536765"];
+}
+
+
+#pragma mark - A11YMAS Batch B: Swipe-Accessibility Repro Scenarios
+
+/// Helper: navigate to a card, dump its a11y tree, and report whether any of the
+/// expected control labels are reachable via VoiceOver. Logs A11YMAS_REPRO when a
+/// expected control is NOT reachable (the swipe-accessibility bug), and A11YMAS_OK
+/// when reachable (post-fix). Always dumps <name>_elements.json for the pipeline.
+- (void)a11ymasScanCard:(NSString *)version
+                   type:(NSString *)type
+                   card:(NSString *)card
+              stateName:(NSString *)stateName
+        expectedLabels:(NSArray<NSString *> *)expectedLabels
+                     wi:(NSString *)wi
+{
+    // Same racy-picker problem as a11ymasActivate: - the sample list gives every row
+    // an identical accessibility frame, so isHittable is position-dependent. Direct
+    // load first, picker only as a fallback.
+    BOOL navigated = [self launchDirectlyWithCard:version type:type card:card];
+    if (!navigated) {
+        navigated = [self navigateToCardByA11y:version type:type card:card];
+    }
+    XCTAssertTrue(navigated, @"A11YMAS WI#%@: should navigate to %@", wi, card);
+    if (!navigated) { return; }
+
+    [self saveA11yState:stateName];
+    NSArray *elements = [self discoverAccessibleElements];
+    NSLog(@"A11YMAS_SCAN: WI#%@ card=%@ elements=%lu", wi, card, (unsigned long)elements.count);
+
+    NSMutableSet *reachable = [NSMutableSet set];
+    for (NSDictionary *e in elements) {
+        if ([e[@"label"] length] > 0) { [reachable addObject:e[@"label"]]; }
+    }
+    for (NSString *expected in expectedLabels) {
+        BOOL found = NO;
+        for (NSString *label in reachable) {
+            if ([label rangeOfString:expected options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                found = YES;
+                break;
+            }
+        }
+        if (found) {
+            NSLog(@"A11YMAS_OK: WI#%@ reachable: '%@'", wi, expected);
+        } else {
+            NSLog(@"A11YMAS_REPRO: WI#%@ NOT reachable via swipe: '%@'", wi, expected);
+        }
+    }
+}
+
+/// WI#5535831 — RatingInput stars not reachable via swipe gesture.
+- (void)testA11yMAS_RatingInput_swipe
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Scenarios" card:@"RatingInput.json"
+                stateName:@"a11ymas_5535831_rating_input"
+           expectedLabels:@[ @"Rate 1 Star", @"Rate 3 Star", @"Rate 5 Star" ]
+                       wi:@"5535831"];
+}
+
+/// WI#5533268 — FluentIcon.RTL icons ("RTL is supported") not reachable via swipe.
+- (void)testA11yMAS_FluentIconRTL_swipe
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Scenarios" card:@"FluentIcon.RTL.json"
+                stateName:@"a11ymas_5533268_fluenticon_rtl"
+           expectedLabels:@[ @"RTL is supported" ]
+                       wi:@"5533268"];
+}
+
+/// WI#5536935 — TooltipTestCard controls not reachable via swipe (Sev1).
+- (void)testA11yMAS_TooltipTestCard_swipe
+{
+    [self a11ymasScanCard:@"v1.5" type:@"Tests" card:@"TooltipTestCard.json"
+                stateName:@"a11ymas_5536935_tooltip"
+           expectedLabels:@[ @"Submit", @"Action" ]
+                       wi:@"5536935"];
+}
+
+/// WI#5539188 — InputLabelPosition 'Click here for action' link not reachable via swipe.
+- (void)testA11yMAS_InputLabel_link_swipe
+{
+    // InputLabelPosition.json contains neither "Click here for action" nor any
+    // RichTextBlock TextRun with a selectAction, so this scenario was scanning a card
+    // without the construct under test - and expectedLabels then logged A11YMAS_REPRO
+    // every run, which read like the bug reproducing. WI#5539188 names InputLabel.json,
+    // which has four such TextRuns.
+    [self a11ymasScanCard:@"v1.5" type:@"Elements" card:@"InputLabel.json"
+                stateName:@"a11ymas_5539188_inputlabel_link"
+           expectedLabels:@[ @"Click here for action" ]
+                       wi:@"5539188"];
+}
+
+
+#pragma mark - A11YMAS Batch D: Keyboard-Accessibility Repro Scenarios
+
+/// D-group helper: navigate to a card, then walk focus with the HW Tab key,
+/// recording how many distinct controls receive keyboard focus. Logs
+/// A11YMAS_KBD with the focused-element count so we can see whether interactive
+/// controls are reachable via keyboard (the bug: count stays at 0 / does not
+/// advance into the card).
+- (void)a11ymasKeyboardWalk:(NSString *)version
+                       type:(NSString *)type
+                       card:(NSString *)card
+                  stateName:(NSString *)stateName
+                         wi:(NSString *)wi
+{
+    // Same racy-picker problem as a11ymasActivate: - the sample list gives every row
+    // an identical accessibility frame, so isHittable is position-dependent. Direct
+    // load first, picker only as a fallback.
+    BOOL navigated = [self launchDirectlyWithCard:version type:type card:card];
+    if (!navigated) {
+        navigated = [self navigateToCardByA11y:version type:type card:card];
+    }
+    XCTAssertTrue(navigated, @"A11YMAS WI#%@: should navigate to %@", wi, card);
+    if (!navigated) { return; }
+
+    [self saveA11yState:stateName];
+
+    // Drive the hardware keyboard: press Tab several times and capture which
+    // element holds keyboard focus (hasKeyboardFocus) after each press.
+    NSMutableSet *focusedLabels = [NSMutableSet set];
+    for (int i = 0; i < 12; i++) {
+        [testApp typeKey:XCUIKeyboardKeyTab modifierFlags:XCUIKeyModifierNone];
+        [NSThread sleepForTimeInterval:0.3];
+        XCUIElement *focused = [[[testApp descendantsMatchingType:XCUIElementTypeAny]
+            matchingPredicate:[NSPredicate predicateWithFormat:@"hasKeyboardFocus == true"]]
+            elementBoundByIndex:0];
+        if ([focused exists] && focused.label.length > 0) {
+            [focusedLabels addObject:focused.label];
+        }
+    }
+    NSLog(@"A11YMAS_KBD: WI#%@ card=%@ distinctKeyboardFocusable=%lu",
+          wi, card, (unsigned long)focusedLabels.count);
+    for (NSString *l in focusedLabels) {
+        NSLog(@"A11YMAS_KBD:   focusable: '%@'", l);
+    }
+    if (focusedLabels.count == 0) {
+        NSLog(@"A11YMAS_REPRO: WI#%@ no card control reachable via keyboard Tab", wi);
+    }
+}
+
+/// WI#5532354 — CompoundButtonSample controls not reachable via tab / ctrl+tab.
+- (void)testA11yMAS_CompoundButton_keyboard
+{
+    [self a11ymasKeyboardWalk:@"v1.5" type:@"Scenarios" card:@"CompoundButtonSample.json"
+                    stateName:@"a11ymas_5532354_compoundbutton_kbd"
+                           wi:@"5532354"];
+}
+
+/// WI#5428636 — interactive controls (ActionModeTestCard actions) not keyboard-accessible.
+- (void)testA11yMAS_Interactive_keyboard
+{
+    [self a11ymasKeyboardWalk:@"v1.5" type:@"Tests" card:@"ActionModeTestCard.json"
+                    stateName:@"a11ymas_5428636_interactive_kbd"
+                           wi:@"5428636"];
 }
 
 @end

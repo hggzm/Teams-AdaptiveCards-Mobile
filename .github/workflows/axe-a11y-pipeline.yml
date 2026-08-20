@@ -1,0 +1,234 @@
+name: AXe A11y Overlay Pipeline
+
+on:
+  push:
+    branches: [ 'proxy/**' ]
+    paths:
+      - '.github/workflows/axe-a11y-pipeline.yml'
+      - '.github/scripts/a11y_axe_pipeline.py'
+      - 'source/ios/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: axe-pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  axe-pipeline:
+    name: 'AXe A11y Overlay Pipeline'
+    runs-on: macos-15
+    # 40 was not enough once the suite grew to 13 scenarios: run 31520125257
+    # was cancelled mid-suite at the limit, losing three scenarios that had
+    # captured fine previously.
+    timeout-minutes: 70
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install tools
+      run: |
+        brew tap cameroncooke/axe
+        # Homebrew refuses formulae from third-party taps until the tap is trusted.
+        # Without this the whole job dies at step 1 and every later step is skipped,
+        # which surfaces confusingly as "No files were found with the provided path:
+        # /tmp/axe-output/" at the upload step.
+        brew trust cameroncooke/axe || brew trust --formula cameroncooke/axe/axe
+        brew install axe ffmpeg
+        axe --version 2>/dev/null || axe --help | head -1
+        ffmpeg -version | head -1
+
+    - name: Boot Simulator
+      run: |
+        SIM=$(xcrun simctl list devices available --json | python3 -c "
+        import json, sys
+        d = json.load(sys.stdin)['devices']
+        for r, devs in d.items():
+          if 'iOS' in r:
+            for dev in devs:
+              if 'iPhone' in dev['name']:
+                print(dev['udid']); sys.exit(0)
+        ")
+        echo "SIM_UDID=$SIM" >> $GITHUB_ENV
+        xcrun simctl boot "$SIM" 2>/dev/null || true
+        xcrun simctl bootstatus "$SIM" -b 2>/dev/null || sleep 5
+        echo "Booted: $SIM"
+
+    - name: Build ADCIOSVisualizer for testing
+      run: |
+        cd source/ios/AdaptiveCards
+        gem install cocoapods 2>/dev/null || true
+        pod install --repo-update 2>&1 | tail -10 || true
+
+        # Build for testing — capture full output and check exit code
+        xcodebuild build-for-testing \
+          -workspace AdaptiveCards.xcworkspace \
+          -scheme ADCIOSVisualizer \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee /tmp/xcode-build.log | tail -30
+        BUILD_EXIT=${PIPESTATUS[0]}
+        if [ "$BUILD_EXIT" -ne 0 ]; then
+          echo "::error::TEST BUILD FAILED (exit $BUILD_EXIT)"
+          echo "=== Last 50 lines of build log ==="
+          tail -50 /tmp/xcode-build.log
+          echo "=== Compile errors ==="
+          grep -i "error:" /tmp/xcode-build.log | head -20
+          exit 1
+        fi
+        echo "Build succeeded"
+
+    - name: Install Pillow for overlay drawing
+      run: pip3 install --break-system-packages Pillow
+
+    - name: Run AXe a11y pipeline
+      run: |
+        mkdir -p /tmp/axe-output
+        python3 .github/scripts/a11y_axe_pipeline.py \
+          "$SIM_UDID" \
+          /tmp/axe-output \
+          2>&1 | tee /tmp/axe-output/pipeline.log
+
+    - name: Run snapshot tests (assertions)
+      run: |
+        cd source/ios/SnapshotTests
+        mkdir -p Snapshots/Baselines Snapshots/Failures Snapshots/Diffs
+        rm -f Snapshots/.record_mode
+
+        xcodebuild test \
+          -scheme "VisualSnapshotTests-Package" \
+          -sdk iphonesimulator \
+          -destination "platform=iOS Simulator,id=$SIM_UDID" \
+          -only-testing:VisualSnapshotTests/A11yInteractionSnapshotTests \
+          CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+          2>&1 | tee /tmp/axe-output/snapshot-test.log || true
+
+        PASSED=$(grep -c "Test Case.*passed" /tmp/axe-output/snapshot-test.log 2>/dev/null || echo "0")
+        FAILED=$(grep -c "Test Case.*failed" /tmp/axe-output/snapshot-test.log 2>/dev/null || echo "0")
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Snapshot Test Results: $PASSED passed, $FAILED failed" >> $GITHUB_STEP_SUMMARY
+
+    - name: Validate results
+      if: always()
+      run: |
+        echo "### AXe A11y Pipeline Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        # Check video
+        VIDEO="/tmp/axe-output/voiceover_demo.mp4"
+        if [ -f "$VIDEO" ]; then
+          SIZE=$(wc -c < "$VIDEO")
+          DUR=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$VIDEO" 2>/dev/null || echo "?")
+          echo "#### Video" >> $GITHUB_STEP_SUMMARY
+          echo "- Size: $SIZE bytes, Duration: ${DUR}s" >> $GITHUB_STEP_SUMMARY
+
+          # Frame change check
+          ffmpeg -y -i "$VIDEO" -vf "select=eq(n\,5)" -frames:v 1 /tmp/fc_a.png 2>/dev/null
+          ffmpeg -y -i "$VIDEO" -vf "select=eq(n\,50)" -frames:v 1 /tmp/fc_b.png 2>/dev/null
+          if [ -f /tmp/fc_a.png ] && [ -f /tmp/fc_b.png ]; then
+            HA=$(md5 -q /tmp/fc_a.png); HB=$(md5 -q /tmp/fc_b.png)
+            [ "$HA" != "$HB" ] && echo "- **DYNAMIC** (frames differ)" >> $GITHUB_STEP_SUMMARY || echo "- **STATIC**" >> $GITHUB_STEP_SUMMARY
+          fi
+          rm -f /tmp/fc_a.png /tmp/fc_b.png
+        else
+          echo "#### Video: NONE" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        # Check annotated screenshots
+        ANN_COUNT=$(ls /tmp/axe-output/annotated/*.png 2>/dev/null | wc -l | tr -d ' ')
+        A11Y_COUNT=$(ls /tmp/axe-output/*_elements.json 2>/dev/null | wc -l | tr -d ' ')
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Annotated Screenshots: $ANN_COUNT | A11y Captures: $A11Y_COUNT" >> $GITHUB_STEP_SUMMARY
+
+        # List annotated screenshots
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Annotated Screenshots (with a11y overlays)" >> $GITHUB_STEP_SUMMARY
+        for f in /tmp/axe-output/annotated_*.png; do
+          if [ -f "$f" ]; then
+            NAME=$(basename "$f")
+            SZ=$(wc -c < "$f")
+            echo "- **$NAME**: $SZ bytes" >> $GITHUB_STEP_SUMMARY
+          fi
+        done
+
+        # Show a11y elements using the pipeline script
+        if [ -f /tmp/axe-output/03_activity_card_rendered_elements.json ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### ActivityUpdate A11y Tree" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          python3 .github/scripts/a11y_print_elements.py /tmp/axe-output/03_activity_card_rendered_elements.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(no data)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        fi
+
+        # Show timeline
+        if [ -f /tmp/axe-output/timeline.json ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Timeline" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          python3 .github/scripts/a11y_print_timeline.py /tmp/axe-output/timeline.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(no data)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Deploy to GitHub Pages
+      if: always()
+      run: |
+        # This step force-pushes gh-pages. Running it when the pipeline produced nothing
+        # republishes an EMPTY gallery and destroys evidence that upstream PRs may be
+        # linking to - which is exactly what happened when the brew-trust failure left
+        # the site reporting "0 ELEMENTS / 0 SCENARIOS" with a 404 transcript.
+        # Keep if: always() so partial runs still publish what they captured, but refuse
+        # to publish nothing over something.
+        if [ -z "$(ls -A /tmp/axe-output 2>/dev/null)" ]; then
+          echo "::warning::No pipeline output; skipping Pages deploy so published evidence is preserved."
+          exit 0
+        fi
+
+        PAGES_DIR=/tmp/axe-pages
+        mkdir -p "$PAGES_DIR"
+
+        # Copy all outputs
+        cp /tmp/axe-output/*.mp4 "$PAGES_DIR/" 2>/dev/null || true
+        cp /tmp/axe-output/*.png "$PAGES_DIR/" 2>/dev/null || true
+        cp /tmp/axe-output/*.json "$PAGES_DIR/" 2>/dev/null || true
+        cp /tmp/axe-output/annotated_*.png "$PAGES_DIR/" 2>/dev/null || true
+        cp /tmp/axe-output/annotated/*.png "$PAGES_DIR/" 2>/dev/null || true
+        cp source/ios/SnapshotTests/Snapshots/Baselines/*.png "$PAGES_DIR/" 2>/dev/null || true
+
+        # Simple HTML gallery
+        python3 .github/scripts/a11y_gallery.py "$PAGES_DIR" 2>/dev/null || true
+
+        cd "$PAGES_DIR"
+        git init
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add -A
+        git commit -m "Deploy AXe a11y pipeline for run ${{ github.run_id }}"
+        git push --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:gh-pages
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        P="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+        echo "#### [Gallery]($P)" >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload all artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: axe-a11y-pipeline
+        path: /tmp/axe-output/
+        retention-days: 30
+# trigger: 20260319161110
+# force trigger: Thu Mar 19 17:05:46 UTC 2026
+# trigger
+# cg overlay trigger
+# speed fix
+# targeted queries
+# pillow
+# revert cg
+# clean build
+# timeout 600
+# green overlays
+# in-app inspector

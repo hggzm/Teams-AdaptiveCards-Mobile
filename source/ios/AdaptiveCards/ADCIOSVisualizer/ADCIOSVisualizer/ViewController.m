@@ -243,6 +243,9 @@ UIColor* defaultButtonBackgroundColor;
     
     /// Directly Load A certain page for faster debugging
 //       [self loadSamplesDirectlyWithVersion:@"v1.5" type:@"Elements" index:17];
+
+    // UI tests may name a card to render straight away, bypassing the sample picker.
+    [self loadSampleCardFromLaunchArgumentsIfPresent];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -627,6 +630,11 @@ UIColor* defaultButtonBackgroundColor;
     // delete button
     self.deleteAllRowsButton = [self buildButton:@"Delete All Cards" selector:@selector(deleteAllRows:)];
     [layout[0] addArrangedSubview:self.deleteAllRowsButton];
+    
+    // A11y Inspector button — shows accessibility overlay on rendered card
+    UIButton *a11yBtn = [self buildButton:@"A11y" selector:@selector(toggleAccessibilityInspector)];
+    a11yBtn.backgroundColor = [UIColor colorWithRed:0 green:0.6 blue:0.3 alpha:1];
+    [layout[0] addArrangedSubview:a11yBtn];
 
     UIView *padding1 = [[UIView alloc] init];
     [layout[1] addArrangedSubview:padding1];
@@ -826,6 +834,42 @@ UIColor* defaultButtonBackgroundColor;
     }
 }
 
+/// Test hook. `-a11yCard v1.5/Scenarios/CompoundButtonSample.json` renders that card at
+/// launch instead of driving the sample picker.
+///
+/// The picker is unusable from XCUITest: every row reports the *same* accessibility frame,
+/// so `isHittable` only resolves for whichever row happens to occupy that rect. Tapping a
+/// named row is therefore position dependent and racy - across four pipeline runs the
+/// tooltip and rating scenarios kept trading places and CompoundButton never navigated at
+/// all, so those work items produced no evidence.
+///
+/// Returns NO when the argument is absent, so normal runs are completely unaffected.
+- (BOOL)loadSampleCardFromLaunchArgumentsIfPresent
+{
+    NSArray<NSString *> *arguments = [[NSProcessInfo processInfo] arguments];
+    NSUInteger flagIndex = [arguments indexOfObject:@"-a11yCard"];
+    if (flagIndex == NSNotFound || flagIndex + 1 >= arguments.count) {
+        return NO;
+    }
+
+    NSString *spec = arguments[flagIndex + 1];
+    NSString *cardPath = [[[NSBundle mainBundle] bundlePath]
+        stringByAppendingPathComponent:[NSString stringWithFormat:@"samples/%@", spec]];
+
+    NSError *error = nil;
+    NSString *json = [NSString stringWithContentsOfFile:cardPath
+                                               encoding:NSUTF8StringEncoding
+                                                  error:&error];
+    if (!json.length) {
+        NSLog(@"A11Y_DIRECT: failed to load '%@': %@", spec, error.localizedDescription);
+        return NO;
+    }
+
+    NSLog(@"A11Y_DIRECT: loaded '%@'", spec);
+    [self update:json];
+    return YES;
+}
+
 - (BOOL)appIsBeingTested
 {
     // Add this line for test recording: return YES;
@@ -900,4 +944,259 @@ UIColor* defaultButtonBackgroundColor;
         NSLog(@"Not enough JSON files found in Elements directory. Found: %lu", (unsigned long)jsonFiles.count);
     }
 }
+
+#pragma mark - In-App Accessibility Inspector
+
+/// Walk the UIAccessibility tree of the given view, returning all
+/// accessible elements with their properties. This uses the SAME
+/// UIAccessibility APIs that VoiceOver uses at runtime.
+- (NSArray *)walkAccessibilityTree:(UIView *)rootView
+{
+    NSMutableArray *elements = [NSMutableArray array];
+    [self _walkAccessibilityNode:rootView depth:0 into:elements];
+    return elements;
+}
+
+- (void)_walkAccessibilityNode:(id)node depth:(int)depth into:(NSMutableArray *)elements
+{
+    if (depth > 15) return;
+    
+    // Check if this node IS an accessibility element (VoiceOver would focus it)
+    if ([node isAccessibilityElement]) {
+        NSString *label = [node accessibilityLabel] ?: @"";
+        NSString *value = [node accessibilityValue] ?: @"";
+        NSString *hint = [node accessibilityHint] ?: @"";
+        CGRect frame = [node accessibilityFrame]; // screen coordinates
+        UIAccessibilityTraits traits = [node accessibilityTraits];
+        
+        // Map traits to readable strings (same as VoiceOver announcements)
+        NSMutableArray *traitNames = [NSMutableArray array];
+        if (traits & UIAccessibilityTraitButton) [traitNames addObject:@"button"];
+        if (traits & UIAccessibilityTraitLink) [traitNames addObject:@"link"];
+        if (traits & UIAccessibilityTraitImage) [traitNames addObject:@"image"];
+        if (traits & UIAccessibilityTraitStaticText) [traitNames addObject:@"staticText"];
+        if (traits & UIAccessibilityTraitHeader) [traitNames addObject:@"header"];
+        if (traits & UIAccessibilityTraitSelected) [traitNames addObject:@"selected"];
+        if (traits & UIAccessibilityTraitAdjustable) [traitNames addObject:@"adjustable"];
+        if (traits & UIAccessibilityTraitNotEnabled) [traitNames addObject:@"disabled"];
+        if (traits & UIAccessibilityTraitUpdatesFrequently) [traitNames addObject:@"updatesFrequently"];
+        if ([traitNames count] == 0) [traitNames addObject:@"none"];
+        
+        if (label.length > 0) {
+            [elements addObject:@{
+                @"label": label,
+                @"value": value,
+                @"hint": hint,
+                @"traits": [traitNames componentsJoinedByString:@","],
+                @"frame": @{
+                    @"x": @(frame.origin.x),
+                    @"y": @(frame.origin.y),
+                    @"width": @(frame.size.width),
+                    @"height": @(frame.size.height),
+                },
+                @"depth": @(depth),
+                @"canActivate": @([node respondsToSelector:@selector(accessibilityActivate)]),
+            }];
+        }
+        // VoiceOver doesn't recurse into isAccessibilityElement containers
+        // (they are leaf nodes in the a11y tree)
+        return;
+    }
+    
+    // Not an accessibility element — check if it's a container
+    // Use accessibilityElements (ordered by VoiceOver) if available
+    if ([node respondsToSelector:@selector(accessibilityElements)]) {
+        NSArray *a11yElements = [node accessibilityElements];
+        if (a11yElements.count > 0) {
+            for (id child in a11yElements) {
+                [self _walkAccessibilityNode:child depth:depth + 1 into:elements];
+            }
+            return;
+        }
+    }
+    
+    // Fall back to accessibilityElementCount / accessibilityElementAtIndex:
+    if ([node respondsToSelector:@selector(accessibilityElementCount)]) {
+        NSInteger count = [node accessibilityElementCount];
+        if (count != NSNotFound && count > 0) {
+            for (NSInteger i = 0; i < count; i++) {
+                id child = [node accessibilityElementAtIndex:i];
+                if (child) {
+                    [self _walkAccessibilityNode:child depth:depth + 1 into:elements];
+                }
+            }
+            return;
+        }
+    }
+    
+    // Fall back to subviews (UIView hierarchy)
+    if ([node isKindOfClass:[UIView class]]) {
+        for (UIView *subview in [(UIView *)node subviews]) {
+            [self _walkAccessibilityNode:subview depth:depth + 1 into:elements];
+        }
+    }
+}
+
+/// Draw accessibility overlay boxes on the rendered card.
+/// Creates transparent colored rectangles at each element's accessibilityFrame.
+- (void)showAccessibilityOverlay
+{
+    // Remove any existing overlay
+    [self hideAccessibilityOverlay];
+    
+    // Find the card rendering view (ACR Root View)
+    UIView *cardContainer = nil;
+    for (UIView *subview in self.view.subviews) {
+        if ([subview.accessibilityLabel containsString:@"ACR Root View"] ||
+            [NSStringFromClass([subview class]) containsString:@"ACR"]) {
+            cardContainer = subview;
+            break;
+        }
+    }
+    if (!cardContainer) {
+        // Use the main content area
+        cardContainer = self.view;
+    }
+    
+    NSArray *elements = [self walkAccessibilityTree:cardContainer];
+    NSLog(@"A11Y_INSPECTOR: Found %lu accessible elements", (unsigned long)elements.count);
+    
+    // Create overlay view
+    UIView *overlay = [[UIView alloc] initWithFrame:self.view.bounds];
+    overlay.tag = 99999; // Tag for removal
+    overlay.userInteractionEnabled = NO;
+    overlay.backgroundColor = [UIColor clearColor];
+    
+    UIColor *boxColor = [UIColor colorWithRed:0 green:0.78 blue:0.33 alpha:1]; // iOS green
+    
+    for (NSUInteger i = 0; i < elements.count && i < 30; i++) {
+        NSDictionary *elem = elements[i];
+        NSDictionary *frame = elem[@"frame"];
+        
+        // accessibilityFrame is in screen coordinates; convert to overlay coords
+        CGRect screenRect = CGRectMake(
+            [frame[@"x"] floatValue],
+            [frame[@"y"] floatValue],
+            [frame[@"width"] floatValue],
+            [frame[@"height"] floatValue]
+        );
+        CGRect localRect = [self.view convertRect:screenRect fromView:nil];
+        
+        if (localRect.size.width < 5 || localRect.size.height < 5) continue;
+        
+        // Green border box (like VoiceOver focus rectangle)
+        UIView *box = [[UIView alloc] initWithFrame:localRect];
+        box.backgroundColor = [boxColor colorWithAlphaComponent:0.1];
+        box.layer.borderColor = [boxColor colorWithAlphaComponent:0.8].CGColor;
+        box.layer.borderWidth = 2.0;
+        box.layer.cornerRadius = 4.0;
+        
+        // Number label
+        UILabel *numLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 22, 22)];
+        numLabel.text = [NSString stringWithFormat:@"%lu", (unsigned long)(i + 1)];
+        numLabel.textAlignment = NSTextAlignmentCenter;
+        numLabel.font = [UIFont boldSystemFontOfSize:11];
+        numLabel.textColor = [UIColor whiteColor];
+        numLabel.backgroundColor = boxColor;
+        numLabel.layer.cornerRadius = 11;
+        numLabel.clipsToBounds = YES;
+        [box addSubview:numLabel];
+        
+        [overlay addSubview:box];
+        
+        // Build VoiceOver announcement string
+        NSString *voiceoverReads = elem[@"label"];
+        if ([elem[@"value"] length] > 0) {
+            voiceoverReads = [NSString stringWithFormat:@"%@, %@", voiceoverReads, elem[@"value"]];
+        }
+        NSLog(@"A11Y_VO: %lu. [%@] %@ (%.0f,%.0f %.0fx%.0f)",
+              (unsigned long)(i + 1), elem[@"traits"], voiceoverReads,
+              screenRect.origin.x, screenRect.origin.y,
+              screenRect.size.width, screenRect.size.height);
+    }
+    
+    [self.view addSubview:overlay];
+    
+    // Also save the tree as JSON for external consumption
+    NSString *jsonPath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"a11y_inspector_tree.json"];
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:elements
+                                                       options:NSJSONWritingPrettyPrinted error:nil];
+    [jsonData writeToFile:jsonPath atomically:YES];
+    NSLog(@"A11Y_INSPECTOR: Tree saved to %@", jsonPath);
+}
+
+- (void)hideAccessibilityOverlay
+{
+    UIView *existing = [self.view viewWithTag:99999];
+    [existing removeFromSuperview];
+}
+
+/// Activate an element by its accessibility label — uses accessibilityActivate()
+/// which is the exact method VoiceOver calls when the user double-taps.
+/// No HID event injection, no coordinate-based tapping. Pure accessibility API.
+- (BOOL)activateElementByLabel:(NSString *)label inView:(UIView *)rootView
+{
+    // Walk the tree to find the element
+    NSArray *elements = [self walkAccessibilityTree:rootView];
+    
+    for (NSDictionary *elem in elements) {
+        if ([elem[@"label"] isEqualToString:label]) {
+            // Find the actual UIView/element that has this label
+            id target = [self _findAccessibilityElement:label inNode:rootView];
+            if (target && [target respondsToSelector:@selector(accessibilityActivate)]) {
+                BOOL activated = [target accessibilityActivate];
+                NSLog(@"A11Y_ACTIVATE: '%@' -> accessibilityActivate() = %@",
+                      label, activated ? @"YES" : @"NO");
+                return activated;
+            } else {
+                NSLog(@"A11Y_ACTIVATE: '%@' found but accessibilityActivate not available", label);
+                // Fall back to sending touchUpInside if it's a UIControl
+                if ([target isKindOfClass:[UIControl class]]) {
+                    [(UIControl *)target sendActionsForControlEvents:UIControlEventTouchUpInside];
+                    NSLog(@"A11Y_ACTIVATE: '%@' -> sendActionsForControlEvents (UIControl fallback)", label);
+                    return YES;
+                }
+            }
+        }
+    }
+    
+    NSLog(@"A11Y_ACTIVATE: '%@' not found", label);
+    return NO;
+}
+
+- (id)_findAccessibilityElement:(NSString *)label inNode:(id)node
+{
+    if ([node isAccessibilityElement] && [[node accessibilityLabel] isEqualToString:label]) {
+        return node;
+    }
+    
+    if ([node respondsToSelector:@selector(accessibilityElements)]) {
+        for (id child in [node accessibilityElements]) {
+            id found = [self _findAccessibilityElement:label inNode:child];
+            if (found) return found;
+        }
+    }
+    
+    if ([node isKindOfClass:[UIView class]]) {
+        for (UIView *sub in [(UIView *)node subviews]) {
+            id found = [self _findAccessibilityElement:label inNode:sub];
+            if (found) return found;
+        }
+    }
+    
+    return nil;
+}
+
+/// Toggle the a11y inspector overlay on the current card
+- (void)toggleAccessibilityInspector
+{
+    UIView *existing = [self.view viewWithTag:99999];
+    if (existing) {
+        [self hideAccessibilityOverlay];
+        NSLog(@"A11Y_INSPECTOR: Overlay hidden");
+    } else {
+        [self showAccessibilityOverlay];
+    }
+}
+
 @end
