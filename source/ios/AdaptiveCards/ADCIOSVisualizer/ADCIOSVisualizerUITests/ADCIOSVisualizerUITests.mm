@@ -1675,6 +1675,29 @@
 
     // Drive the hardware keyboard: press Tab several times and capture which
     // element holds keyboard focus (hasKeyboardFocus) after each press.
+    // Positive control. A bare distinctKeyboardFocusable=0 cannot tell us whether the
+    // card's controls are unreachable or whether Tab simply does nothing in this harness,
+    // so probe first and say which it is. If the probe also finds nothing, the result
+    // below is UNMEASURABLE, not a reproduction.
+    NSMutableSet *probeLabels = [NSMutableSet set];
+    for (int i = 0; i < 6; i++) {
+        [testApp typeKey:XCUIKeyboardKeyTab modifierFlags:XCUIKeyModifierNone];
+        [NSThread sleepForTimeInterval:0.3];
+        XCUIElement *pf = [[[testApp descendantsMatchingType:XCUIElementTypeAny]
+            matchingPredicate:[NSPredicate predicateWithFormat:@"hasKeyboardFocus == true"]]
+            elementBoundByIndex:0];
+        if ([pf exists] && pf.label.length > 0) { [probeLabels addObject:pf.label]; }
+    }
+    NSLog(@"A11YMAS_KBD_PROBE: WI#%@ anythingFocusableAnywhere=%lu", wi,
+          (unsigned long)probeLabels.count);
+    for (NSString *l in probeLabels) {
+        NSLog(@"A11YMAS_KBD_PROBE:   focus landed on: '%@'", l);
+    }
+    if (probeLabels.count == 0) {
+        NSLog(@"A11YMAS_KBD_PROBE: WI#%@ Tab moved focus NOWHERE in the whole app - "
+               "keyboard results for this run are UNMEASURABLE, not a repro", wi);
+    }
+
     NSMutableSet *focusedLabels = [NSMutableSet set];
     for (int i = 0; i < 12; i++) {
         [testApp typeKey:XCUIKeyboardKeyTab modifierFlags:XCUIKeyModifierNone];

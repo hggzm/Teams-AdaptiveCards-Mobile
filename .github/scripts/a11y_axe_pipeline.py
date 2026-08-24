@@ -93,7 +93,7 @@ rc, timed_out = run_test_streaming([
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_Interactive_keyboard",
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_InputLabel_link_swipe",
     "CODE_SIGN_IDENTITY=-", "CODE_SIGNING_REQUIRED=NO", "CODE_SIGNING_ALLOWED=NO",
-], os.path.join(OUT_DIR, "xcuitest.log"), timeout=2400)
+], os.path.join(OUT_DIR, "xcuitest.log"), timeout=3000)
 test_dur = time.time() - start_time
 print("[TEST] Completed in {:.1f}s (exit: {}, timed_out: {})".format(test_dur, rc, timed_out))
 
