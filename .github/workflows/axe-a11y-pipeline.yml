@@ -53,22 +53,32 @@ jobs:
                 print(dev['udid']); sys.exit(0)
         ")
         echo "SIM_UDID=$SIM" >> $GITHUB_ENV
-        # Full Keyboard Access has to be on before the accessibility daemon starts, or Tab
-        # does not move focus and the keyboard scenarios measure nothing. Write the device
-        # preferences plist directly while the simulator is still shut down - the previous
-        # boot -> write -> shutdown -> boot sequence cost roughly 900s and tipped the suite
-        # past its timeout.
-        PREFS="$HOME/Library/Developer/CoreSimulator/Devices/$SIM/data/Library/Preferences"
-        mkdir -p "$PREFS"
-        defaults write "$PREFS/com.apple.Accessibility" FullKeyboardAccessEnabled -bool true 2>/dev/null || true
-        defaults write "$PREFS/com.apple.Accessibility" FullKeyboardAccessAppearanceEnabled -bool true 2>/dev/null || true
-
         xcrun simctl boot "$SIM" 2>/dev/null || true
         xcrun simctl bootstatus "$SIM" -b 2>/dev/null || sleep 5
         echo "Booted: $SIM"
 
+        # Full Keyboard Access. Tab does not move focus on iOS without it, so the keyboard
+        # scenarios measure nothing when it is off.
+        #
+        # Seeding the preferences plist before first boot was tried and does NOT work - the
+        # first boot initialises the data container and the pre-seeded file does not survive
+        # (the read came back "unreadable"). Writing through a booted simulator and then
+        # restarting so the accessibility daemon reloads is the sequence that produced
+        # "FullKeyboardAccessEnabled = 1". It costs a second boot; the suite timeout is set
+        # to 3000s to absorb that.
+        xcrun simctl spawn "$SIM" defaults write com.apple.Accessibility FullKeyboardAccessEnabled -bool true 2>/dev/null || true
+        xcrun simctl spawn "$SIM" defaults write com.apple.Accessibility FullKeyboardAccessAppearanceEnabled -bool true 2>/dev/null || true
+        echo "FKA after write, before restart = $(xcrun simctl spawn "$SIM" defaults read com.apple.Accessibility FullKeyboardAccessEnabled 2>/dev/null || echo unreadable)"
+
+        xcrun simctl shutdown "$SIM" 2>/dev/null || true
+        xcrun simctl boot "$SIM" 2>/dev/null || true
+        xcrun simctl bootstatus "$SIM" -b 2>/dev/null || sleep 5
+
         FKA=$(xcrun simctl spawn "$SIM" defaults read com.apple.Accessibility FullKeyboardAccessEnabled 2>/dev/null || echo "unreadable")
         echo "FullKeyboardAccessEnabled = $FKA"
+        if [ "$FKA" != "1" ]; then
+          echo "::warning::Full Keyboard Access is NOT enabled - keyboard scenario results are unmeasurable"
+        fi
 
     - name: Build ADCIOSVisualizer for testing
       run: |
