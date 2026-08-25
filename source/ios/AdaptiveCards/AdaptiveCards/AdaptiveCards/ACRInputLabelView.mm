@@ -148,19 +148,27 @@
         self.inputView = inputView;
         self.label.isAccessibilityElement = NO;
         self.isAccessibilityElement = NO;
+        // A RichTextBlock label drags the wording of any selectAction link into the input's
+        // accessible name. VoiceOver then announces the link text as part of the field name,
+        // where it cannot be activated, and announces it again on reaching the link itself.
+        //
+        // This is checked before either source is chosen: the name can come from the shared
+        // C++ label or from the rendered label view, and the flattened link text reaches it
+        // either way. accessibleLabelTextExcludingLinks returns nil when the rendered label
+        // has no links, so labels without links keep their existing behaviour exactly.
+        NSString *labelWithoutLinks = [self accessibleLabelTextExcludingLinks];
         std::string label = TextInput().getLabel(inputBlck->GetId());
-        if (!label.empty())
+        if (labelWithoutLinks)
+        {
+            inputView.accessibilityLabel = labelWithoutLinks;
+        }
+        else if (!label.empty())
         {
             inputView.accessibilityLabel = [NSString stringWithUTF8String:label.c_str()];
         }
         else
         {
-            // A RichTextBlock label flattens to plain text through .text, which drags the
-            // wording of any selectAction link into the field's accessible name. VoiceOver
-            // then announces the link text as part of the field name, where it cannot be
-            // activated, and announces it again on reaching the link itself.
-            NSString *labelWithoutLinks = [self accessibleLabelTextExcludingLinks];
-            inputView.accessibilityLabel = labelWithoutLinks ?: self.label.text;
+            inputView.accessibilityLabel = self.label.text;
         }
         
         if (inputBlck->GetIsRequired() && inputView.accessibilityLabel)
