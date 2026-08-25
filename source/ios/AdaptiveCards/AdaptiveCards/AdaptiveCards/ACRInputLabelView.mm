@@ -155,7 +155,12 @@
         }
         else
         {
-            inputView.accessibilityLabel = self.label.text;
+            // A RichTextBlock label flattens to plain text through .text, which drags the
+            // wording of any selectAction link into the field's accessible name. VoiceOver
+            // then announces the link text as part of the field name, where it cannot be
+            // activated, and announces it again on reaching the link itself.
+            NSString *labelWithoutLinks = [self accessibleLabelTextExcludingLinks];
+            inputView.accessibilityLabel = labelWithoutLinks ?: self.label.text;
         }
         
         if (inputBlck->GetIsRequired() && inputView.accessibilityLabel)
@@ -215,6 +220,39 @@
     }
     [self setRtl:rootView.context.rtl];
     return self;
+}
+
+/// The label's text with any link ranges removed.
+///
+/// Returns nil when the label carries no links, or when removing them leaves nothing, so
+/// callers fall back to the existing behaviour and only genuine link pollution changes.
+- (NSString *)accessibleLabelTextExcludingLinks
+{
+    NSAttributedString *attributed = self.label.attributedText;
+    if (attributed.length == 0) {
+        return nil;
+    }
+
+    __block BOOL hasLink = NO;
+    NSMutableString *plain = [NSMutableString string];
+    [attributed enumerateAttribute:NSLinkAttributeName
+                           inRange:NSMakeRange(0, attributed.length)
+                           options:0
+                        usingBlock:^(id value, NSRange range, BOOL *stop) {
+                            if (value) {
+                                hasLink = YES;
+                                return;
+                            }
+                            [plain appendString:[attributed.string substringWithRange:range]];
+                        }];
+
+    if (!hasLink) {
+        return nil;
+    }
+
+    NSString *trimmed = [plain stringByTrimmingCharactersInSet:
+                         [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    return trimmed.length > 0 ? trimmed : nil;
 }
 
 - (void)addAccessibleItems:(NSArray *)items
