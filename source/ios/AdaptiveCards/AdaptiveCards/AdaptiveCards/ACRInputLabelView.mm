@@ -148,14 +148,18 @@
         self.inputView = inputView;
         self.label.isAccessibilityElement = NO;
         self.isAccessibilityElement = NO;
+        // DIAGNOSTIC ONLY - never graduates. Two attempts at fixing the link-text
+        // pollution in input names measured as exact no-ops, which suggests this code is
+        // not what produces the polluted label. Tag each branch so the element dump says
+        // whether this runs at all, and if so which source won.
         std::string label = TextInput().getLabel(inputBlck->GetId());
         if (!label.empty())
         {
-            inputView.accessibilityLabel = [NSString stringWithUTF8String:label.c_str()];
+            inputView.accessibilityLabel = [@"ZQB " stringByAppendingString:[NSString stringWithUTF8String:label.c_str()]];
         }
         else
         {
-            inputView.accessibilityLabel = self.label.text;
+            inputView.accessibilityLabel = [@"ZQC " stringByAppendingString:(self.label.text ?: @"")];
         }
         
         if (inputBlck->GetIsRequired() && inputView.accessibilityLabel)
