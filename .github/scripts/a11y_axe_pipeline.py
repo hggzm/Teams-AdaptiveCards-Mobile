@@ -121,15 +121,22 @@ for line in stdout.split("\n"):
 # indistinguishable from a complete one in the artifacts.
 n_dumps = len([f for f in os.listdir(XCUI_DIR) if f.endswith("_elements.json")]) \
     if os.path.isdir(XCUI_DIR) else 0
+# rc 65 is xcodebuild's "a test assertion failed". That is the NORMAL outcome here: the
+# scenarios assert on the buggy behaviour, so a run that correctly reproduces a bug exits
+# 65 while producing perfectly good evidence. Gating on rc == 0 made this flag read False
+# on every run including clean controls, which is worse than not having the flag at all.
+# Only a timeout, a harness/infrastructure failure, or an empty capture invalidates dumps.
+evidence_usable = (not timed_out) and rc in (0, 65) and n_dumps > 0
+
 with open(os.path.join(OUT_DIR, "run_status.json"), "w") as f:
     json.dump({
         "timed_out": bool(timed_out),
         "returncode": rc,
         "test_duration_sec": round(test_dur, 1),
         "scenario_dumps_captured": n_dumps,
-        "evidence_usable": (not timed_out) and rc == 0,
+        "evidence_usable": evidence_usable,
     }, f, indent=2)
-print("[STATUS] evidence_usable={} dumps={}".format((not timed_out) and rc == 0, n_dumps))
+print("[STATUS] evidence_usable={} dumps={} rc={}".format(evidence_usable, n_dumps, rc))
 
 # 4. Stop recording
 time.sleep(2)
