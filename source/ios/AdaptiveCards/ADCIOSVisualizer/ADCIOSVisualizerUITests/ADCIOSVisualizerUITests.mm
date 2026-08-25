@@ -1635,15 +1635,19 @@
 
 /// WI#5539230 — Input.Text.InlineAction: the inline action button's name.
 ///
-/// ACRInputRenderer already sets button.accessibilityLabel from the action title, so this
-/// scenario exists to find out whether that button reaches the accessibility tree at all -
-/// it is wrapped by ACRQuickReplyView and then by ACRInputLabelView, either of which could
-/// swallow it.
+/// The card carries two inline actions and no string "Inline Action" anywhere, so the
+/// original expectation here could never match and logged a repro every run regardless of
+/// behaviour. The real names are the Action.Submit's tooltip ("Send", icon-only, no title)
+/// and the Action.OpenUrl's title ("Reply").
+///
+/// Note the scanner drops elements whose accessibility label is empty, so an unnamed
+/// button is absent from the dump rather than present-and-blank. A missing "Send" button
+/// IS the defect, not a gap in the capture.
 - (void)testA11yMAS_InlineAction_buttonName
 {
     [self a11ymasScanCard:@"v1.3" type:@"Elements" card:@"Input.Text.InlineAction.json"
                 stateName:@"a11ymas_5539230_inlineaction"
-           expectedLabels:@[ @"Inline Action" ]
+           expectedLabels:@[ @"Send", @"Reply" ]
                        wi:@"5539230"];
 }
 
