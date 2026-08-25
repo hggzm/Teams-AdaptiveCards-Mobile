@@ -233,18 +233,29 @@
         return nil;
     }
 
-    __block BOOL hasLink = NO;
+    // Walked with attribute:atIndex:longestEffectiveRange:inRange: rather than
+    // enumerateAttribute:usingBlock:. This is an Objective-C++ translation unit, where a
+    // block parameter list starting `id value` is parsed as a C++ type-id and the block
+    // collapses to `int (^)()`.
+    BOOL hasLink = NO;
     NSMutableString *plain = [NSMutableString string];
-    [attributed enumerateAttribute:NSLinkAttributeName
-                           inRange:NSMakeRange(0, attributed.length)
-                           options:0
-                        usingBlock:^(id value, NSRange range, BOOL *stop) {
-                            if (value) {
-                                hasLink = YES;
-                                return;
-                            }
-                            [plain appendString:[attributed.string substringWithRange:range]];
-                        }];
+    NSUInteger location = 0;
+    while (location < attributed.length) {
+        NSRange effective = NSMakeRange(0, 0);
+        NSObject *link = [attributed attribute:NSLinkAttributeName
+                                       atIndex:location
+                         longestEffectiveRange:&effective
+                                       inRange:NSMakeRange(location, attributed.length - location)];
+        if (effective.length == 0) {
+            break;
+        }
+        if (link != nil) {
+            hasLink = YES;
+        } else {
+            [plain appendString:[attributed.string substringWithRange:effective]];
+        }
+        location = NSMaxRange(effective);
+    }
 
     if (!hasLink) {
         return nil;
