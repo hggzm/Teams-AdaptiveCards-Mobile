@@ -1633,6 +1633,20 @@
                        wi:@"5536935"];
 }
 
+/// WI#5539230 — Input.Text.InlineAction: the inline action button's name.
+///
+/// ACRInputRenderer already sets button.accessibilityLabel from the action title, so this
+/// scenario exists to find out whether that button reaches the accessibility tree at all -
+/// it is wrapped by ACRQuickReplyView and then by ACRInputLabelView, either of which could
+/// swallow it.
+- (void)testA11yMAS_InlineAction_buttonName
+{
+    [self a11ymasScanCard:@"v1.3" type:@"Elements" card:@"Input.Text.InlineAction.json"
+                stateName:@"a11ymas_5539230_inlineaction"
+           expectedLabels:@[ @"Inline Action" ]
+                       wi:@"5539230"];
+}
+
 /// WI#5539188 — InputLabelPosition 'Click here for action' link not reachable via swipe.
 - (void)testA11yMAS_InputLabel_link_swipe
 {

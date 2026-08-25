@@ -92,6 +92,7 @@ rc, timed_out = run_test_streaming([
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_CompoundButton_keyboard",
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_Interactive_keyboard",
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_InputLabel_link_swipe",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_InlineAction_buttonName",
     "CODE_SIGN_IDENTITY=-", "CODE_SIGNING_REQUIRED=NO", "CODE_SIGNING_ALLOWED=NO",
 ], os.path.join(OUT_DIR, "xcuitest.log"), timeout=3000)
 test_dur = time.time() - start_time
