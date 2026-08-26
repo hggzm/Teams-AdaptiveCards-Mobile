@@ -1,0 +1,62 @@
+[
+  {
+    "frame" : {
+      "y" : 277.66666666666669,
+      "x" : 24,
+      "width" : 328.33333333333331,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Text input with an inline action",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 348.66666666666669,
+      "x" : 24,
+      "width" : 307,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Text input with an inline action with no icon",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 348.66666666666669,
+      "x" : 339,
+      "width" : 39,
+      "height" : 34
+    },
+    "role" : "link",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Reply",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 356.66666666666669,
+      "x" : 339,
+      "width" : 39,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Reply",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]
