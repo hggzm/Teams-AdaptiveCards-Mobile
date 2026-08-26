@@ -1,0 +1,512 @@
+[
+  {
+    "frame" : {
+      "y" : 258.66666666666669,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "id:textInputId00, required, label: ID 00",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 312.66666666666669,
+      "x" : 32,
+      "width" : 338,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : true,
+    "identifier" : "textInputId00",
+    "label" : "RichTextBlock 4 This is the first text run.  This is the second text run.  \nRequired",
+    "value" : "Placeholder 00",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 356.66666666666669,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "id:textInputId01, not required, label: ID 01",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 410.66666666666669,
+      "x" : 32,
+      "width" : 338,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : true,
+    "identifier" : "textInputId01",
+    "label" : "RichTextBlock 2 This is the first text run.  This is the second text run.  ",
+    "value" : "Placeholder 01",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 454.66666666666669,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "id:textInputId02, required, label: ID 02",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 508.66666666666669,
+      "x" : 32,
+      "width" : 338,
+      "height" : 34.000000000000057
+    },
+    "role" : "textField",
+    "isHittable" : true,
+    "identifier" : "textInputId02",
+    "label" : "ID 02 *\nRequired",
+    "value" : "Placeholder 02",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 552.66666666666674,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "id:textInputId03, not required, label: ID 03 [No Match]",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 606.66666666666674,
+      "x" : 32,
+      "width" : 338,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : true,
+    "identifier" : "textInputId03",
+    "label" : "ID 03",
+    "value" : "Placeholder 03",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 650.66666666666674,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "id:textInputId04, required, no label [No Match]",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 755.66666666666663,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "RichTextBlock 1 labelFor:textInputId00",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 781.66666666666663,
+      "x" : 288.33333333333331,
+      "width" : 81.666666666666686,
+      "height" : 17.666666666666742
+    },
+    "role" : "link",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Click here for action.",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 826.33333333333337,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "RichTextBlock 2 labelFor:textInputId01",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 852.33333333333337,
+      "x" : 290.33333333333331,
+      "width" : 79.666666666666686,
+      "height" : 17.666666666666515
+    },
+    "role" : "link",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Click here for action.",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 897,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "RichTextBlock 3 labelFor:textInputId000 [No Match]",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 923,
+      "x" : 290.66666666666669,
+      "width" : 79.333333333333314,
+      "height" : 17.666666666666629
+    },
+    "role" : "link",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Click here for action.",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 967.66666666666663,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "RichTextBlock 4 labelFor:textInputId00 [Duplicate with RichTextBlock 1]",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 993.66666666666663,
+      "x" : 290.66666666666669,
+      "width" : 79.333333333333314,
+      "height" : 17.666666666666742
+    },
+    "role" : "link",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Click here for action.",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1054.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "id:textInputId10, required, label: ID 10",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1108.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : false,
+    "identifier" : "textInputId10",
+    "label" : "Fourth Block\nRequired",
+    "value" : "Placeholder 10",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1152.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "id:textInputId11, not required, label: ID 11",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1206.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : false,
+    "identifier" : "textInputId11",
+    "label" : "Second Block",
+    "value" : "Placeholder 11",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1250.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "id:textInputId12, required, label: ID 12",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1304.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : false,
+    "identifier" : "textInputId12",
+    "label" : "ID 12 *\nRequired",
+    "value" : "Placeholder 12",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1348.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "id:textInputId13, not required, label: ID 13 [No Match]",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1402.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : false,
+    "identifier" : "textInputId13",
+    "label" : "ID 13",
+    "value" : "Placeholder 13",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1446.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "id:textInputId14, required, no label [No Match]",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1551.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "TextBlock 1 labelFor:textInputId10",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1578.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "First Block *",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1605.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "TextBlock 2 labelFor:textInputId11",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1632.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Second Block",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1659.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "TextBlock 3 labelFor:textInputId100 [No Match]",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1686.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Third Block",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1713.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "TextBlock 4 labelFor:textInputId10 [Duplicate with TextBlock 1]",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1740.3333333333333,
+      "x" : 32,
+      "width" : 338,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Fourth Block *",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]
