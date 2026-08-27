@@ -66,6 +66,12 @@ jobs:
         # restarting so the accessibility daemon reloads is the sequence that produced
         # "FullKeyboardAccessEnabled = 1". It costs a second boot; the suite timeout is set
         # to 3000s to absorb that.
+        # Turn the simulator's accessibility SERVER on. Without an AX client attached,
+        # accessibilityFrame can resolve to zero and elements read as unreachable - a false
+        # negative that looks exactly like a real defect. These two flags make frames resolve
+        # as an assistive client actually sees them.
+        xcrun simctl spawn "$SIM" defaults write com.apple.Accessibility ApplicationAccessibilityEnabled -int 1 2>/dev/null || true
+        xcrun simctl spawn "$SIM" defaults write com.apple.Accessibility AccessibilityEnabled -int 1 2>/dev/null || true
         xcrun simctl spawn "$SIM" defaults write com.apple.Accessibility FullKeyboardAccessEnabled -bool true 2>/dev/null || true
         xcrun simctl spawn "$SIM" defaults write com.apple.Accessibility FullKeyboardAccessAppearanceEnabled -bool true 2>/dev/null || true
         echo "FKA after write, before restart = $(xcrun simctl spawn "$SIM" defaults read com.apple.Accessibility FullKeyboardAccessEnabled 2>/dev/null || echo unreadable)"
