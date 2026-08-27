@@ -886,14 +886,17 @@ UIColor* defaultButtonBackgroundColor;
     // Let the card finish laying out; colours read before layout can be defaults.
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         NSArray *elements = [self walkAccessibilityTree:self.view];
-        NSLog(@"A11Y_COLOR_BEGIN count=%lu", (unsigned long)elements.count);
-        for (NSDictionary *element in elements) {
-            NSData *data = [NSJSONSerialization dataWithJSONObject:element options:0 error:nil];
-            if (data) {
-                NSLog(@"A11Y_COLOR: %@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
-            }
-        }
-        NSLog(@"A11Y_COLOR_END");
+        // Written to a file rather than logged: NSLog from the app process does not reach
+        // the xcodebuild run log, only the test process does. The pipeline lifts this out
+        // of the simulator's data container afterwards.
+        NSString *dumpPath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"a11y_color_dump.json"];
+        NSError *writeError = nil;
+        NSData *payload = [NSJSONSerialization dataWithJSONObject:elements
+                                                          options:NSJSONWritingPrettyPrinted
+                                                            error:&writeError];
+        BOOL wrote = [payload writeToFile:dumpPath atomically:YES];
+        NSLog(@"A11Y_COLOR_FILE: wrote=%d count=%lu path=%@ err=%@",
+              wrote, (unsigned long)elements.count, dumpPath, writeError.localizedDescription);
     });
 }
 

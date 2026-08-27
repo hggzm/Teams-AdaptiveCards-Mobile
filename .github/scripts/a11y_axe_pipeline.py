@@ -151,17 +151,34 @@ def _contrast_ratio(fg_hex, bg_hex):
     return (l1 + 0.05) / (l2 + 0.05)
 
 
-def build_contrast_report(log_text, out_dir):
+def collect_color_dump(udid, out_dir):
+    """Lift the inspector's colour dump out of the simulator's data container.
+
+    Globbed rather than resolved through the bundle identifier, which is indirect in this
+    project and would be one more thing to drift.
+    """
+    pattern = os.path.expanduser(
+        "~/Library/Developer/CoreSimulator/Devices/{}/data/Containers/Data/Application/"
+        "*/tmp/a11y_color_dump.json".format(udid))
+    matches = sorted(glob.glob(pattern), key=os.path.getmtime, reverse=True)
+    if not matches:
+        print("[CONTRAST] no colour dump found under the simulator container")
+        return None
+    dest = os.path.join(out_dir, "a11y_color_dump.json")
+    shutil.copy(matches[0], dest)
+    print("[CONTRAST] collected colour dump: {}".format(matches[0]))
+    return dest
+
+
+def build_contrast_report(dump_path, out_dir):
     """Score every foreground sample against its background and write contrast_report.json."""
     records = []
-    for line in log_text.split("\n"):
-        marker = "A11Y_COLOR: "
-        if marker not in line:
-            continue
+    if dump_path and os.path.exists(dump_path):
         try:
-            records.append(json.loads(line.split(marker, 1)[1].strip()))
-        except Exception:
-            continue
+            with open(dump_path) as f:
+                records = json.load(f)
+        except Exception as exc:
+            print("[CONTRAST] could not read dump: {}".format(exc))
 
     findings = []
     for rec in records:
@@ -222,7 +239,7 @@ print("[STATUS] evidence_usable={} dumps={} rc={}".format(evidence_usable, n_dum
 # rc for the same reason evidence_usable does: a scenario that reproduces a defect exits
 # non-zero while still producing perfectly good measurements.
 try:
-    build_contrast_report(stdout, OUT_DIR)
+    build_contrast_report(collect_color_dump(UDID, OUT_DIR), OUT_DIR)
 except Exception as exc:
     print("[CONTRAST] report failed: {}".format(exc))
 
