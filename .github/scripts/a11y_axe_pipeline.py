@@ -121,6 +121,85 @@ for line in stdout.split("\n"):
 # indistinguishable from a complete one in the artifacts.
 n_dumps = len([f for f in os.listdir(XCUI_DIR) if f.endswith("_elements.json")]) \
     if os.path.isdir(XCUI_DIR) else 0
+# ---------------------------------------------------------------------------
+# Contrast
+#
+# Parsed from the A11Y_COLOR lines the in-app inspector emits under -a11yColorDump.
+# Every foreground the inspector could see is scored, each tagged with the property it
+# came from, because the failure this exists to prevent was reading one property and
+# missing another: a placeholder measured through textColor reported 14:1 for glyphs that
+# are actually about 1.67:1.
+# ---------------------------------------------------------------------------
+def _srgb_to_linear(c):
+    c = c / 255.0
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def _relative_luminance(hex_color):
+    h = hex_color.lstrip("#")
+    r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+    return (0.2126 * _srgb_to_linear(r)
+            + 0.7152 * _srgb_to_linear(g)
+            + 0.0722 * _srgb_to_linear(b))
+
+
+def _contrast_ratio(fg_hex, bg_hex):
+    l1, l2 = _relative_luminance(fg_hex), _relative_luminance(bg_hex)
+    if l1 < l2:
+        l1, l2 = l2, l1
+    return (l1 + 0.05) / (l2 + 0.05)
+
+
+def build_contrast_report(log_text, out_dir):
+    """Score every foreground sample against its background and write contrast_report.json."""
+    records = []
+    for line in log_text.split("\n"):
+        marker = "A11Y_COLOR: "
+        if marker not in line:
+            continue
+        try:
+            records.append(json.loads(line.split(marker, 1)[1].strip()))
+        except Exception:
+            continue
+
+    findings = []
+    for rec in records:
+        colors = rec.get("colors") or {}
+        background = (colors.get("background") or {}).get("hex")
+        for sample in colors.get("foregrounds") or []:
+            fg = sample.get("hex")
+            if not fg or not background:
+                continue
+            ratio = _contrast_ratio(fg, background)
+            findings.append({
+                "label": rec.get("label", ""),
+                "viewClass": colors.get("viewClass", ""),
+                "source": sample.get("source", ""),
+                "foreground": fg,
+                "background": background,
+                "ratio": round(ratio, 3),
+                # 4.5:1 is the WCAG AA threshold for normal-size text.
+                "passesAA": ratio >= 4.5,
+            })
+
+    findings.sort(key=lambda f: f["ratio"])
+    report = {
+        "elements_with_color": len(records),
+        "samples_scored": len(findings),
+        "below_AA": [f for f in findings if not f["passesAA"]],
+        "all": findings,
+    }
+    path = os.path.join(out_dir, "contrast_report.json")
+    with open(path, "w") as f:
+        json.dump(report, f, indent=2)
+    print("[CONTRAST] scored {} samples across {} elements; {} below 4.5:1".format(
+        len(findings), len(records), len(report["below_AA"])))
+    for f in report["below_AA"][:10]:
+        print("[CONTRAST]   {:.3f}:1  {}  ({} on {})  {!r}".format(
+            f["ratio"], f["source"], f["foreground"], f["background"], f["label"][:40]))
+    return report
+
+
 # rc 65 is xcodebuild's "a test assertion failed". That is the NORMAL outcome here: the
 # scenarios assert on the buggy behaviour, so a run that correctly reproduces a bug exits
 # 65 while producing perfectly good evidence. Gating on rc == 0 made this flag read False

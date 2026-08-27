@@ -1314,6 +1314,27 @@
 /// See -[ViewController loadSampleCardFromLaunchArgumentsIfPresent] for why: every picker
 /// row shares one accessibility frame, so tapping a named row is racy and several
 /// scenarios never reached their card.
+/// WI#5536079 — confirm the ChoiceSet placeholder contrast Ashley Rocha reported.
+///
+/// This scenario exists to validate the harness, not the SDK. The reported 1.674:1 was
+/// previously answered "not reproduced, measured 14.088:1" by an external tool that read
+/// the text field's textColor - the colour typed text would use - rather than the
+/// placeholder, which is a separate property drawn by UIKit in the system default. The
+/// work item was closed on that reading and has since been reopened with a real fix.
+///
+/// The harness is only rectified once this run independently reports a placeholder ratio
+/// close to the reported figure. Until then it is still blind to the same class of defect.
+- (void)testA11yMAS_ChoiceSetPlaceholderContrast_5536079
+{
+    NSString *spec = @"v1.5/Scenarios/RestaurantOrder.json";
+    [testApp terminate];
+    testApp.launchArguments = @[ @"ui-testing", @"-a11yCard", spec, @"-a11yColorDump" ];
+    [testApp launch];
+    // The dump fires ~2s after render; give it room before the app is torn down.
+    [NSThread sleepForTimeInterval:8.0];
+    NSLog(@"A11YMAS_COLOR_SCENARIO: wi=5536079 card=%@", spec);
+}
+
 - (BOOL)launchDirectlyWithCard:(NSString *)version type:(NSString *)type card:(NSString *)card
 {
     NSString *spec = [NSString stringWithFormat:@"%@/%@/%@", version, type, card];

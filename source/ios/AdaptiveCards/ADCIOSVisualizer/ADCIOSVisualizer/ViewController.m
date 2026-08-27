@@ -867,7 +867,34 @@ UIColor* defaultButtonBackgroundColor;
 
     NSLog(@"A11Y_DIRECT: loaded '%@'", spec);
     [self update:json];
+    [self dumpColorRecordsIfRequested];
     return YES;
+}
+
+/// Test hook. With `-a11yColorDump`, log one A11Y_COLOR line per accessible element once
+/// the card has laid out, so the pipeline can compute contrast from the run log.
+///
+/// This exists because contrast was previously measured by an external one-off tool that
+/// is not reproducible in CI, and which reported a placeholder's contrast by reading the
+/// wrong property. Emitting the colours from inside the app makes the measurement
+/// repeatable and reviewable.
+- (void)dumpColorRecordsIfRequested
+{
+    if (![[[NSProcessInfo processInfo] arguments] containsObject:@"-a11yColorDump"]) {
+        return;
+    }
+    // Let the card finish laying out; colours read before layout can be defaults.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        NSArray *elements = [self walkAccessibilityTree:self.view];
+        NSLog(@"A11Y_COLOR_BEGIN count=%lu", (unsigned long)elements.count);
+        for (NSDictionary *element in elements) {
+            NSData *data = [NSJSONSerialization dataWithJSONObject:element options:0 error:nil];
+            if (data) {
+                NSLog(@"A11Y_COLOR: %@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+            }
+        }
+        NSLog(@"A11Y_COLOR_END");
+    });
 }
 
 - (BOOL)appIsBeingTested
@@ -957,6 +984,178 @@ UIColor* defaultButtonBackgroundColor;
     return elements;
 }
 
+#pragma mark - Colour sampling
+
+/// Resolve a colour against the node's traits, so dynamic and system colours report the
+/// value actually on screen in the current appearance rather than their unresolved form.
+- (NSDictionary *)_colorDictFor:(UIColor *)color inView:(UIView *)view
+{
+    if (!color) {
+        return nil;
+    }
+    UIColor *resolved = color;
+    if (@available(iOS 13.0, *)) {
+        if (view) {
+            resolved = [color resolvedColorWithTraitCollection:view.traitCollection];
+        }
+    }
+    CGFloat r = 0, g = 0, b = 0, a = 0;
+    if (![resolved getRed:&r green:&g blue:&b alpha:&a]) {
+        CGFloat w = 0;
+        if ([resolved getWhite:&w alpha:&a]) {
+            r = g = b = w;
+        } else {
+            return nil;
+        }
+    }
+    return @{
+        @"hex" : [NSString stringWithFormat:@"#%02X%02X%02X",
+                                            (int)round(r * 255.0), (int)round(g * 255.0), (int)round(b * 255.0)],
+        @"alpha" : @(a),
+    };
+}
+
+/// Every foreground colour a user could actually see on this node, each tagged with the
+/// property it came from.
+///
+/// All of them are emitted rather than one being chosen. A UITextField's placeholder is a
+/// separate property from its textColor: sampling only the latter reports the colour that
+/// typed text *would* use and completely misses the grey placeholder glyphs on screen.
+/// That is exactly how a ~1.67:1 placeholder was once measured as 14:1. A UIButton is the
+/// same trap through titleColorForState:, and a UILabel through per-range attributedText
+/// colours. Picking one property is the bug; reporting all of them is the fix.
+- (NSArray<NSDictionary *> *)_foregroundSamplesForNode:(id)node
+{
+    NSMutableArray<NSDictionary *> *samples = [NSMutableArray array];
+    if (![node isKindOfClass:[UIView class]]) {
+        return samples;
+    }
+    UIView *view = (UIView *)node;
+
+    void (^add)(UIColor *, NSString *) = ^(UIColor *c, NSString *source) {
+        NSDictionary *d = [self _colorDictFor:c inView:view];
+        if (d) {
+            NSMutableDictionary *m = [d mutableCopy];
+            m[@"source"] = source;
+            [samples addObject:m];
+        }
+    };
+
+    if ([view isKindOfClass:[UITextField class]]) {
+        UITextField *field = (UITextField *)view;
+        add(field.textColor, @"textColor");
+        NSAttributedString *attributed = field.attributedPlaceholder;
+        if (attributed.length > 0) {
+            UIColor *placeholderColor = [attributed attribute:NSForegroundColorAttributeName
+                                                      atIndex:0
+                                               effectiveRange:NULL];
+            add(placeholderColor ?: UIColor.placeholderTextColor, @"attributedPlaceholder");
+        } else if (field.placeholder.length > 0) {
+            // No attributed placeholder set, so UIKit draws it in the system default.
+            add(UIColor.placeholderTextColor, @"placeholder(systemDefault)");
+        }
+    }
+
+    if ([view isKindOfClass:[UILabel class]]) {
+        UILabel *label = (UILabel *)view;
+        add(label.textColor, @"textColor");
+        NSAttributedString *attributed = label.attributedText;
+        if (attributed.length > 0) {
+            [attributed enumerateAttribute:NSForegroundColorAttributeName
+                                   inRange:NSMakeRange(0, attributed.length)
+                                   options:0
+                                usingBlock:^(id value, NSRange range, __unused BOOL *stop) {
+                                    if ([value isKindOfClass:[UIColor class]]) {
+                                        add((UIColor *)value,
+                                            [NSString stringWithFormat:@"attributedText[%lu..%lu]",
+                                                                       (unsigned long)range.location,
+                                                                       (unsigned long)NSMaxRange(range)]);
+                                    }
+                                }];
+        }
+    }
+
+    if ([view isKindOfClass:[UIButton class]]) {
+        UIButton *button = (UIButton *)view;
+        add([button titleColorForState:UIControlStateNormal], @"titleColor.normal");
+        add([button titleColorForState:UIControlStateDisabled], @"titleColor.disabled");
+        add(button.titleLabel.textColor, @"titleLabel.textColor");
+    }
+
+    return samples;
+}
+
+/// The first ancestor that actually paints. Walking up matters because card elements are
+/// routinely laid on clear containers, and the colour a user sees behind the glyphs is the
+/// first opaque one above them.
+- (NSDictionary *)_backgroundForNode:(id)node
+{
+    if (![node isKindOfClass:[UIView class]]) {
+        return nil;
+    }
+    UIView *view = (UIView *)node;
+    while (view) {
+        NSDictionary *d = [self _colorDictFor:view.backgroundColor inView:view];
+        if (d && [d[@"alpha"] doubleValue] > 0.01) {
+            NSMutableDictionary *m = [d mutableCopy];
+            m[@"source"] = NSStringFromClass([view class]);
+            return m;
+        }
+        view = view.superview;
+    }
+    return nil;
+}
+
+/// Reports whether the node's text does not fit the box it was given, and whether any
+/// ancestor clips. Allocated height is not the same as rendered text: a label can be given
+/// room and still be truncated by lineBreakMode, or clipped by a superview.
+- (NSDictionary *)_layoutFitForNode:(id)node
+{
+    if (![node isKindOfClass:[UILabel class]]) {
+        return nil;
+    }
+    UILabel *label = (UILabel *)node;
+    if (label.bounds.size.width < 1) {
+        return nil;
+    }
+    CGSize needed = [label sizeThatFits:CGSizeMake(label.bounds.size.width, CGFLOAT_MAX)];
+    BOOL clippedByAncestor = NO;
+    for (UIView *v = label.superview; v != nil; v = v.superview) {
+        if (v.clipsToBounds) {
+            clippedByAncestor = YES;
+            break;
+        }
+    }
+    return @{
+        @"neededHeight" : @(needed.height),
+        @"actualHeight" : @(label.bounds.size.height),
+        @"overflows" : @(needed.height > label.bounds.size.height + 0.5),
+        @"clippedByAncestor" : @(clippedByAncestor),
+    };
+}
+
+/// Colour and layout facts for one node, or an empty dictionary when it is not a view.
+- (NSDictionary *)_colorRecordForNode:(id)node
+{
+    NSMutableDictionary *record = [NSMutableDictionary dictionary];
+    NSArray *foregrounds = [self _foregroundSamplesForNode:node];
+    if (foregrounds.count > 0) {
+        record[@"foregrounds"] = foregrounds;
+    }
+    NSDictionary *background = [self _backgroundForNode:node];
+    if (background) {
+        record[@"background"] = background;
+    }
+    NSDictionary *fit = [self _layoutFitForNode:node];
+    if (fit) {
+        record[@"layout"] = fit;
+    }
+    if ([node isKindOfClass:[UIView class]]) {
+        record[@"viewClass"] = NSStringFromClass([node class]);
+    }
+    return record;
+}
+
 - (void)_walkAccessibilityNode:(id)node depth:(int)depth into:(NSMutableArray *)elements
 {
     if (depth > 15) return;
@@ -995,6 +1194,7 @@ UIColor* defaultButtonBackgroundColor;
                     @"height": @(frame.size.height),
                 },
                 @"depth": @(depth),
+                @"colors": [self _colorRecordForNode:node],
                 @"canActivate": @([node respondsToSelector:@selector(accessibilityActivate)]),
             }];
         }
