@@ -2,7 +2,7 @@ import subprocess
 #!/usr/bin/env python3
 """Simplified pipeline: XCUITest draws overlays natively via CoreGraphics.
 This script just orchestrates: record video, run tests, collect outputs."""
-import subprocess, json, os, sys, time, shutil
+import subprocess, json, os, sys, time, shutil, glob
 
 subprocess.run([sys.executable, "-m", "pip", "install", "-q", "Pillow"], capture_output=True)
 
