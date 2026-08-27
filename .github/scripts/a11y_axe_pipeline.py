@@ -217,6 +217,14 @@ with open(os.path.join(OUT_DIR, "run_status.json"), "w") as f:
     }, f, indent=2)
 print("[STATUS] evidence_usable={} dumps={} rc={}".format(evidence_usable, n_dumps, rc))
 
+# Score the colours the in-app inspector logged under -a11yColorDump. Runs regardless of
+# rc for the same reason evidence_usable does: a scenario that reproduces a defect exits
+# non-zero while still producing perfectly good measurements.
+try:
+    build_contrast_report(stdout, OUT_DIR)
+except Exception as exc:
+    print("[CONTRAST] report failed: {}".format(exc))
+
 # 4. Stop recording
 time.sleep(2)
 if has_axe:
