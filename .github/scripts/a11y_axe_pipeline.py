@@ -151,6 +151,29 @@ def _contrast_ratio(fg_hex, bg_hex):
     return (l1 + 0.05) / (l2 + 0.05)
 
 
+def _composite(fg_hex, fg_alpha, bg_hex):
+    """Blend a translucent foreground onto its background.
+
+    Required, not cosmetic: UIColor.placeholderText is #3C3C43 at alpha 0.3. Scoring the
+    opaque value reports ~9.8:1 for glyphs that actually render at ~1.7:1 - i.e. it
+    reports a colour nobody can see, which is the original defect in miniature.
+    """
+    try:
+        alpha = float(fg_alpha)
+    except (TypeError, ValueError):
+        alpha = 1.0
+    if alpha >= 0.999:
+        return fg_hex
+    f = fg_hex.lstrip("#")
+    b = bg_hex.lstrip("#")
+    out = []
+    for i in (0, 2, 4):
+        fc = int(f[i:i + 2], 16)
+        bc = int(b[i:i + 2], 16)
+        out.append(int(round(alpha * fc + (1.0 - alpha) * bc)))
+    return "#{:02X}{:02X}{:02X}".format(*out)
+
+
 def collect_color_dump(udid, out_dir):
     """Lift the inspector's colour dump out of the simulator's data container.
 
@@ -188,12 +211,16 @@ def build_contrast_report(dump_path, out_dir):
             fg = sample.get("hex")
             if not fg or not background:
                 continue
-            ratio = _contrast_ratio(fg, background)
+            effective = _composite(fg, sample.get("alpha", 1.0), background)
+            ratio = _contrast_ratio(effective, background)
             findings.append({
                 "label": rec.get("label", ""),
                 "viewClass": colors.get("viewClass", ""),
                 "source": sample.get("source", ""),
                 "foreground": fg,
+                "alpha": sample.get("alpha", 1.0),
+                # What is actually painted, once alpha is blended onto the background.
+                "effective": effective,
                 "background": background,
                 "ratio": round(ratio, 3),
                 # 4.5:1 is the WCAG AA threshold for normal-size text.
@@ -213,8 +240,9 @@ def build_contrast_report(dump_path, out_dir):
     print("[CONTRAST] scored {} samples across {} elements; {} below 4.5:1".format(
         len(findings), len(records), len(report["below_AA"])))
     for f in report["below_AA"][:10]:
-        print("[CONTRAST]   {:.3f}:1  {}  ({} on {})  {!r}".format(
-            f["ratio"], f["source"], f["foreground"], f["background"], f["label"][:40]))
+        print("[CONTRAST]   {:.3f}:1  {}  ({}@{} -> {} on {})  {!r}".format(
+            f["ratio"], f["source"], f["foreground"], f.get("alpha", 1.0),
+            f.get("effective", f["foreground"]), f["background"], f["label"][:40]))
     return report
 
 

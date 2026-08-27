@@ -885,7 +885,19 @@ UIColor* defaultButtonBackgroundColor;
     }
     // Let the card finish laying out; colours read before layout can be defaults.
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        NSArray *elements = [self walkAccessibilityTree:self.view];
+        // Scope to the rendered card. Walking self.view also scores the visualizer's own
+        // chrome - the version buttons and the A11y toggle - which are not card content and
+        // drown the findings that matter.
+        UIView *cardContainer = nil;
+        for (UIView *subview in self.view.subviews) {
+            if ([subview.accessibilityLabel containsString:@"ACR Root View"] ||
+                [NSStringFromClass([subview class]) containsString:@"ACR"]) {
+                cardContainer = subview;
+                break;
+            }
+        }
+        NSArray *elements = [self walkAccessibilityTree:(cardContainer ?: self.view)];
+        NSLog(@"A11Y_COLOR_SCOPE: %@", cardContainer ? NSStringFromClass([cardContainer class]) : @"self.view(fallback)");
         // Written to a file rather than logged: NSLog from the app process does not reach
         // the xcodebuild run log, only the test process does. The pipeline lifts this out
         // of the simulator's data container afterwards.
