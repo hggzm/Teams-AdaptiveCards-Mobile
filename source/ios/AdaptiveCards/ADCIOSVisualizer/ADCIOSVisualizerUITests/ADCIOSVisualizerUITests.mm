@@ -1328,10 +1328,14 @@
 {
     NSString *spec = @"v1.5/Scenarios/RestaurantOrder.json";
     [testApp terminate];
-    testApp.launchArguments = @[ @"ui-testing", @"-a11yCard", spec, @"-a11yColorDump" ];
+    // "both" captures light and dark from the same rendered card, so a divergent AA verdict
+    // is attributable to colour resolution rather than to two separate launches.
+    testApp.launchArguments = @[ @"ui-testing", @"-a11yCard", spec,
+                                 @"-a11yColorDump", @"-a11yAppearance", @"both" ];
     [testApp launch];
-    // The dump fires ~2s after render; give it room before the app is torn down.
-    [NSThread sleepForTimeInterval:8.0];
+    // Two appearance passes: 2s settle, then 1.5s per pass plus the walk. Generous so the
+    // app is not torn down mid-dump.
+    [NSThread sleepForTimeInterval:16.0];
     NSLog(@"A11YMAS_COLOR_SCENARIO: wi=5536079 card=%@", spec);
 }
 

@@ -880,36 +880,93 @@ UIColor* defaultButtonBackgroundColor;
 /// repeatable and reviewable.
 - (void)dumpColorRecordsIfRequested
 {
-    if (![[[NSProcessInfo processInfo] arguments] containsObject:@"-a11yColorDump"]) {
+    NSArray<NSString *> *arguments = [[NSProcessInfo processInfo] arguments];
+    if (![arguments containsObject:@"-a11yColorDump"]) {
         return;
     }
-    // Let the card finish laying out; colours read before layout can be defaults.
+
+    // -a11yAppearance light | dark | both. Defaults to both, because a contrast defect that
+    // only shows in one appearance is the common case: a static colour passes on white and
+    // fails on black, and measuring one appearance reports it as fixed.
+    NSString *requested = @"both";
+    NSUInteger flagIndex = [arguments indexOfObject:@"-a11yAppearance"];
+    if (flagIndex != NSNotFound && flagIndex + 1 < arguments.count) {
+        requested = [arguments[flagIndex + 1] lowercaseString];
+    }
+
+    NSMutableArray<NSString *> *passes = [NSMutableArray array];
+    if ([requested isEqualToString:@"both"] || [requested isEqualToString:@"light"]) {
+        [passes addObject:@"light"];
+    }
+    if ([requested isEqualToString:@"both"] || [requested isEqualToString:@"dark"]) {
+        [passes addObject:@"dark"];
+    }
+    if (passes.count == 0) {
+        [passes addObject:@"light"];
+    }
+
+    // Let the card lay out before the first pass; colours read pre-layout can be defaults.
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        // Scope to the rendered card. Walking self.view also scores the visualizer's own
-        // chrome - the version buttons and the A11y toggle - which are not card content and
-        // drown the findings that matter.
-        UIView *cardContainer = nil;
-        for (UIView *subview in self.view.subviews) {
-            if ([subview.accessibilityLabel containsString:@"ACR Root View"] ||
-                [NSStringFromClass([subview class]) containsString:@"ACR"]) {
-                cardContainer = subview;
-                break;
-            }
-        }
-        NSArray *elements = [self walkAccessibilityTree:(cardContainer ?: self.view)];
-        NSLog(@"A11Y_COLOR_SCOPE: %@", cardContainer ? NSStringFromClass([cardContainer class]) : @"self.view(fallback)");
-        // Written to a file rather than logged: NSLog from the app process does not reach
-        // the xcodebuild run log, only the test process does. The pipeline lifts this out
-        // of the simulator's data container afterwards.
-        NSString *dumpPath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"a11y_color_dump.json"];
-        NSError *writeError = nil;
-        NSData *payload = [NSJSONSerialization dataWithJSONObject:elements
-                                                          options:NSJSONWritingPrettyPrinted
-                                                            error:&writeError];
-        BOOL wrote = [payload writeToFile:dumpPath atomically:YES];
-        NSLog(@"A11Y_COLOR_FILE: wrote=%d count=%lu path=%@ err=%@",
-              wrote, (unsigned long)elements.count, dumpPath, writeError.localizedDescription);
+        [self dumpColorRecordsForPasses:passes atIndex:0];
     });
+}
+
+/// Walks the passes one at a time. Each appearance is applied, given a beat to propagate
+/// through the trait collection, then dumped - sequential rather than concurrent so the
+/// second pass cannot sample colours resolved for the first.
+- (void)dumpColorRecordsForPasses:(NSArray<NSString *> *)passes atIndex:(NSUInteger)index
+{
+    if (index >= passes.count) {
+        NSLog(@"A11Y_COLOR_DONE: %lu pass(es)", (unsigned long)passes.count);
+        return;
+    }
+
+    NSString *appearance = passes[index];
+    UIUserInterfaceStyle style = [appearance isEqualToString:@"dark"] ? UIUserInterfaceStyleDark
+                                                                     : UIUserInterfaceStyleLight;
+    if (@available(iOS 13.0, *)) {
+        self.view.window.overrideUserInterfaceStyle = style;
+        self.view.overrideUserInterfaceStyle = style;
+    }
+
+    // A beat for the override to propagate before colours are resolved against it.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self writeColorDumpForAppearance:appearance];
+        [self dumpColorRecordsForPasses:passes atIndex:index + 1];
+    });
+}
+
+/// Scope to the rendered card. Walking self.view also scores the visualizer's own chrome -
+/// the version buttons and the A11y toggle - which are not card content.
+- (UIView *)cardContainerForColorDump
+{
+    for (UIView *subview in self.view.subviews) {
+        if ([subview.accessibilityLabel containsString:@"ACR Root View"] ||
+            [NSStringFromClass([subview class]) containsString:@"ACR"]) {
+            return subview;
+        }
+    }
+    return self.view;
+}
+
+- (void)writeColorDumpForAppearance:(NSString *)appearance
+{
+    UIView *root = [self cardContainerForColorDump];
+    NSArray *elements = [self walkAccessibilityTree:root];
+
+    // Written to a file rather than logged: NSLog from the app process does not reach the
+    // xcodebuild run log, only the test process does. The pipeline lifts these out of the
+    // simulator's data container afterwards.
+    NSString *name = [NSString stringWithFormat:@"a11y_color_dump_%@.json", appearance];
+    NSString *dumpPath = [NSTemporaryDirectory() stringByAppendingPathComponent:name];
+    NSError *writeError = nil;
+    NSData *payload = [NSJSONSerialization dataWithJSONObject:elements
+                                                      options:NSJSONWritingPrettyPrinted
+                                                        error:&writeError];
+    BOOL wrote = [payload writeToFile:dumpPath atomically:YES];
+    NSLog(@"A11Y_COLOR_FILE: appearance=%@ wrote=%d count=%lu scope=%@ path=%@ err=%@",
+          appearance, wrote, (unsigned long)elements.count,
+          NSStringFromClass([root class]), dumpPath, writeError.localizedDescription);
 }
 
 - (BOOL)appIsBeingTested

@@ -174,6 +174,62 @@ def _composite(fg_hex, fg_alpha, bg_hex):
     return "#{:02X}{:02X}{:02X}".format(*out)
 
 
+def collect_color_dumps(udid, out_dir):
+    """Lift each appearance's dump out of the simulator container. Returns {appearance: path}."""
+    found = {}
+    for appearance in ("light", "dark"):
+        pattern = os.path.expanduser(
+            "~/Library/Developer/CoreSimulator/Devices/{}/data/Containers/Data/Application/"
+            "*/tmp/a11y_color_dump_{}.json".format(udid, appearance))
+        matches = sorted(glob.glob(pattern), key=os.path.getmtime, reverse=True)
+        if matches:
+            dest = os.path.join(out_dir, "a11y_color_dump_{}.json".format(appearance))
+            shutil.copy(matches[0], dest)
+            found[appearance] = dest
+            print("[CONTRAST] collected {} dump: {}".format(appearance, matches[0]))
+    if not found:
+        print("[CONTRAST] no appearance dumps found under the simulator container")
+    return found
+
+
+def compare_appearances(reports, out_dir):
+    """Report samples whose AA verdict differs between appearances.
+
+    This is the case a single-appearance check misses: a static colour can pass on white
+    and fail on black, and measuring only light reports it as fixed.
+    """
+    if len(reports) < 2:
+        print("[CONTRAST] only one appearance captured; no comparison")
+        return None
+    def key(f):
+        return (f.get("label", ""), f.get("source", ""))
+    light = {key(f): f for f in reports.get("light", {}).get("all", [])}
+    dark = {key(f): f for f in reports.get("dark", {}).get("all", [])}
+    rows = []
+    for k in sorted(set(light) | set(dark)):
+        l, d = light.get(k), dark.get(k)
+        rows.append({
+            "label": k[0], "source": k[1],
+            "light_ratio": l["ratio"] if l else None,
+            "light_passes": l["passesAA"] if l else None,
+            "dark_ratio": d["ratio"] if d else None,
+            "dark_passes": d["passesAA"] if d else None,
+            "divergent": bool(l and d and l["passesAA"] != d["passesAA"]),
+        })
+    divergent = [r for r in rows if r["divergent"]]
+    out = {"rows": rows, "divergent": divergent}
+    with open(os.path.join(out_dir, "contrast_appearance_comparison.json"), "w") as f:
+        json.dump(out, f, indent=2)
+    print("[CONTRAST] appearance comparison: {} samples, {} pass in one appearance and fail in the other"
+          .format(len(rows), len(divergent)))
+    for r in divergent[:10]:
+        print("[CONTRAST]   light {:>7} / dark {:>7}  {}  {!r}".format(
+            "%.3f" % r["light_ratio"] if r["light_ratio"] else "-",
+            "%.3f" % r["dark_ratio"] if r["dark_ratio"] else "-",
+            r["source"], r["label"][:36]))
+    return out
+
+
 def collect_color_dump(udid, out_dir):
     """Lift the inspector's colour dump out of the simulator's data container.
 
@@ -193,7 +249,7 @@ def collect_color_dump(udid, out_dir):
     return dest
 
 
-def build_contrast_report(dump_path, out_dir):
+def build_contrast_report(dump_path, out_dir, suffix=""):
     """Score every foreground sample against its background and write contrast_report.json."""
     records = []
     if dump_path and os.path.exists(dump_path):
@@ -234,7 +290,7 @@ def build_contrast_report(dump_path, out_dir):
         "below_AA": [f for f in findings if not f["passesAA"]],
         "all": findings,
     }
-    path = os.path.join(out_dir, "contrast_report.json")
+    path = os.path.join(out_dir, "contrast_report{}.json".format(suffix))
     with open(path, "w") as f:
         json.dump(report, f, indent=2)
     print("[CONTRAST] scored {} samples across {} elements; {} below 4.5:1".format(
@@ -267,7 +323,15 @@ print("[STATUS] evidence_usable={} dumps={} rc={}".format(evidence_usable, n_dum
 # rc for the same reason evidence_usable does: a scenario that reproduces a defect exits
 # non-zero while still producing perfectly good measurements.
 try:
-    build_contrast_report(collect_color_dump(UDID, OUT_DIR), OUT_DIR)
+    _dumps = collect_color_dumps(UDID, OUT_DIR)
+    _reports = {}
+    for _appearance, _path in _dumps.items():
+        _reports[_appearance] = build_contrast_report(
+            _path, OUT_DIR, suffix="_{}".format(_appearance))
+    if not _dumps:
+        # Fall back to the single-appearance file from before the split.
+        build_contrast_report(collect_color_dump(UDID, OUT_DIR), OUT_DIR)
+    compare_appearances(_reports, OUT_DIR)
 except Exception as exc:
     print("[CONTRAST] report failed: {}".format(exc))
 
