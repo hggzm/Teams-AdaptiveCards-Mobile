@@ -124,6 +124,12 @@ jobs:
 
     - name: Run snapshot tests (assertions)
       run: |
+        if [ ! -d source/ios/SnapshotTests ]; then
+          echo "::notice::source/ios/SnapshotTests is not present on this branch; skipping snapshot assertions."
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Snapshot Test Results: skipped (SnapshotTests package not on this branch)" >> $GITHUB_STEP_SUMMARY
+          exit 0
+        fi
         cd source/ios/SnapshotTests
         mkdir -p Snapshots/Baselines Snapshots/Failures Snapshots/Diffs
         rm -f Snapshots/.record_mode
@@ -220,7 +226,17 @@ jobs:
         mkdir -p "$PAGES_DIR"
 
         # Copy all outputs
-        cp /tmp/axe-output/*.mp4 "$PAGES_DIR/" 2>/dev/null || true
+        # GitHub hard-rejects any file >100 MB. raw_recording.mp4 routinely exceeds it,
+        # which previously failed the whole deploy. Copy only what will actually push.
+        for f in /tmp/axe-output/*.mp4; do
+          [ -e "$f" ] || continue
+          SZ=$(stat -f%z "$f" 2>/dev/null || stat -c%s "$f" 2>/dev/null || echo 0)
+          if [ "$SZ" -ge $((95 * 1024 * 1024)) ]; then
+            echo "::warning::Skipping $(basename "$f") ($((SZ / 1024 / 1024)) MB) - over GitHub's 100 MB file limit."
+          else
+            cp "$f" "$PAGES_DIR/" 2>/dev/null || true
+          fi
+        done
         cp /tmp/axe-output/*.png "$PAGES_DIR/" 2>/dev/null || true
         cp /tmp/axe-output/*.json "$PAGES_DIR/" 2>/dev/null || true
         cp /tmp/axe-output/annotated_*.png "$PAGES_DIR/" 2>/dev/null || true
@@ -234,6 +250,11 @@ jobs:
         git init
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
+        # Safety net: nothing oversized may reach the push, whatever produced it.
+        find . -type f -size +95M -print0 2>/dev/null | while IFS= read -r -d "" big; do
+          echo "::warning::Dropping oversized artifact before deploy: $big"
+          rm -f "$big"
+        done
         git add -A
         git commit -m "Deploy AXe a11y pipeline for run ${{ github.run_id }}"
         git push --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:gh-pages
