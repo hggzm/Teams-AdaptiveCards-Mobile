@@ -1,0 +1,11 @@
+# Force LF on all text so Linux/Windows CI parity stays stable, regardless of
+# the platform a contributor commits from.
+* text=auto eol=lf
+
+*.swift   text eol=lf
+*.json    text eol=lf
+*.md      text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.sh      text eol=lf
+*.ps1     text eol=lf
