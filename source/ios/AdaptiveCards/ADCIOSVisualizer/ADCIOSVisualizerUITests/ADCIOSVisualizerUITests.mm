@@ -9,6 +9,10 @@
 #import "AdaptiveCards/ACOHostConfigPrivate.h"
 #import <AdaptiveCards/AdaptiveCards.h>
 #import <XCTest/XCTest.h>
+
+/// Upper bound for popover/bottom-sheet transitions. Generous on purpose: this is a
+/// ceiling for a wait that normally returns in well under a second, not a fixed delay.
+static const NSTimeInterval kACRPopoverTimeout = 10.0;
 #include <string>
 
 @interface ADCIOSVisualizerUITests : XCTestCase
@@ -825,13 +829,18 @@
     XCTAssertTrue(lessContentTextView.exists, @"'Less Content' TextView should exist");
     [self dismissPopoverBottomSheet];
     XCUIElement *containerButton = [testApp.buttons elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label == %@", @"This Container is clickable and will show a popover"]];
-    XCTAssertTrue(containerButton.exists && containerButton.isHittable, @"'This Container is clickable and will show a popover' button should exist and be hittable");
+    XCTAssertTrue([containerButton waitForExistenceWithTimeout:kACRPopoverTimeout] && containerButton.isHittable, @"'This Container is clickable and will show a popover' button should exist and be hittable");
     [containerButton tap];
     XCUIElement *popoverTextView = [testApp.textViews elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label == %@", @"This is a popover"]];
     XCTAssertTrue(popoverTextView.exists, @"'This is a popover' TextView should exist");
     [self dismissPopoverBottomSheet];
-    XCUIElement *popoverIcon = [testApp.buttons elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label == %@", @", Click me to show a popover"]];
-    XCTAssertTrue(popoverIcon.exists && popoverIcon.isHittable, @"Button ', Click me to show a popover' should exist and be hittable");
+    // Matched with CONTAINS rather than == on purpose. The composed label currently carries
+    // a leading ", " because configureForAccessibilityLabel joins an empty title component
+    // (UtiliOS.mm: `if (action.title)` is a nil-check, and an absent title arrives as @"").
+    // Asserting the exact string would pin the test to that artifact and break the moment
+    // it is fixed; matching on the tooltip text is correct either way.
+    XCUIElement *popoverIcon = [testApp.buttons elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label CONTAINS[c] %@", @"Click me to show a popover"]];
+    XCTAssertTrue([popoverIcon waitForExistenceWithTimeout:kACRPopoverTimeout] && popoverIcon.isHittable, @"Button 'Click me to show a popover' should exist and be hittable");
     [popoverIcon tap];
     popoverTextView = [testApp.textViews elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label == %@", @"This Popover is made with Adaptive Card elements, it supports actions and is fully accessible."]];
     XCTAssertTrue(popoverTextView.exists, @"The icon popover TextView with the expected label should exist");
@@ -858,9 +867,17 @@
 - (void) dismissPopoverBottomSheet
 {
     XCUIElement *dismissButton = [testApp.buttons elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label == %@", @"Dismiss"]];
-    XCTAssertTrue(dismissButton.exists && dismissButton.isHittable, @"'Dismiss' button should exist and be hittable");
+    XCTAssertTrue([dismissButton waitForExistenceWithTimeout:kACRPopoverTimeout] && dismissButton.isHittable, @"'Dismiss' button should exist and be hittable");
     [dismissButton tap];
 
+    // The bottom sheet dismisses with an animation. Returning as soon as the tap is
+    // delivered makes every caller race that animation: the element underneath already
+    // exists, but is still covered by the outgoing sheet, so isHittable reports NO.
+    // Wait for the sheet to actually leave the hierarchy before handing control back.
+    [self expectationForPredicate:[NSPredicate predicateWithFormat:@"exists == NO"]
+                        evaluatedWithObject:dismissButton
+                                    handler:nil];
+    [self waitForExpectationsWithTimeout:kACRPopoverTimeout handler:nil];
 }
 
 - (void) checkAndTap:(XCUIElement *)element
