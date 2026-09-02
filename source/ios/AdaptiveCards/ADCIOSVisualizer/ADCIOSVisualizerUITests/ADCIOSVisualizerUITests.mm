@@ -840,8 +840,16 @@ static const NSTimeInterval kACRPopoverTimeout = 10.0;
     // Asserting the exact string would pin the test to that artifact and break the moment
     // it is fixed; matching on the tooltip text is correct either way.
     XCUIElement *popoverIcon = [testApp.buttons elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label CONTAINS[c] %@", @"Click me to show a popover"]];
-    XCTAssertTrue([popoverIcon waitForExistenceWithTimeout:kACRPopoverTimeout] && popoverIcon.isHittable, @"Button 'Click me to show a popover' should exist and be hittable");
-    [popoverIcon tap];
+    XCTAssertTrue([popoverIcon waitForExistenceWithTimeout:kACRPopoverTimeout], @"Button 'Click me to show a popover' should exist");
+    // Deliberately not asserting isHittable here. isHittable is a passive query: it
+    // reports NO for any element currently outside the viewport and never scrolls to
+    // find out. This icon sits below the fold once the card returns to its resting
+    // scroll position after the preceding dismissal, so the assertion was really
+    // testing "is currently on screen", which was never the intent. checkAndTap
+    // scrolls it into view and then taps - the same helper this test already uses for
+    // the Progress Bar button below, and tapping still fails loudly if it is
+    // genuinely unreachable.
+    [self checkAndTap:popoverIcon];
     popoverTextView = [testApp.textViews elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label == %@", @"This Popover is made with Adaptive Card elements, it supports actions and is fully accessible."]];
     XCTAssertTrue(popoverTextView.exists, @"The icon popover TextView with the expected label should exist");
     [self dismissPopoverBottomSheet];
