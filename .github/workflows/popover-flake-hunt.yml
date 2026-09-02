@@ -1,0 +1,135 @@
+name: Popover Flake Hunt
+
+# Proxy-only instrument. Never graduates upstream.
+#
+# testPopoverRendering has been intermittently failing for a long time and is now
+# failing consistently, blocking unrelated PRs. A single green CI run does not prove
+# a flake is fixed - it only proves one sample passed. This workflow runs the test N
+# times against a single build and reports the observed pass rate, so "the flake is
+# gone" becomes a measurement instead of a claim.
+#
+# Usage: run once on the unfixed baseline, once on the fix, and compare pass rates.
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: "How many times to repeat the test"
+        default: "10"
+      test:
+        description: "Test identifier to repeat"
+        default: "ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testPopoverRendering"
+      min_pass_rate:
+        description: "Fail the job below this pass rate (percent)"
+        default: "100"
+  push:
+    branches:
+      - "proxy/fix-popover-test-flake"
+      - "proxy/flake-main-fixed"
+
+concurrency:
+  group: popover-flake-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flake-hunt:
+    runs-on: macos-15
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select and boot simulator
+        run: |
+          SIM=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)['devices']
+          for rt in sorted(d, reverse=True):
+              for dev in d[rt]:
+                  if 'iPhone' in dev['name']:
+                      print(dev['udid']); sys.exit(0)
+          sys.exit(1)")
+          echo "SIM_UDID=$SIM" >> $GITHUB_ENV
+          echo "Using simulator $SIM"
+          xcrun simctl boot "$SIM" 2>/dev/null || true
+          xcrun simctl bootstatus "$SIM" -b 2>/dev/null || sleep 5
+
+      - name: Pod install
+        working-directory: source/ios/AdaptiveCards
+        run: pod install --repo-update 2>&1 | tail -10 || true
+
+      - name: Build for testing (once)
+        working-directory: source/ios/AdaptiveCards
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -workspace AdaptiveCards.xcworkspace \
+            -scheme ADCIOSVisualizer \
+            -sdk iphonesimulator \
+            -destination "platform=iOS Simulator,id=$SIM_UDID" \
+            CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee /tmp/build.log | tail -20
+          echo "BUILD_EXIT=$?"
+
+      - name: Repeat the test and measure the pass rate
+        working-directory: source/ios/AdaptiveCards
+        run: |
+          RUNS="${{ github.event.inputs.runs || '10' }}"
+          TEST="${{ github.event.inputs.test || 'ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testPopoverRendering' }}"
+          MIN="${{ github.event.inputs.min_pass_rate || '100' }}"
+
+          PASS=0; FAIL=0; FAILED_ITERS=""
+          for i in $(seq 1 "$RUNS"); do
+            echo "::group::iteration $i/$RUNS"
+            # Reset between iterations so each sample is independent. Without this a
+            # single wedged simulator state would taint every subsequent run and the
+            # pass rate would measure the harness rather than the test.
+            xcrun simctl terminate "$SIM_UDID" com.microsoft.ADCIOSVisualizer 2>/dev/null || true
+
+            if xcodebuild test-without-building \
+                 -workspace AdaptiveCards.xcworkspace \
+                 -scheme ADCIOSVisualizer \
+                 -sdk iphonesimulator \
+                 -destination "platform=iOS Simulator,id=$SIM_UDID" \
+                 -only-testing:"$TEST" \
+                 CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+                 > "/tmp/iter_$i.log" 2>&1; then
+              PASS=$((PASS + 1)); echo "iteration $i: PASS"
+            else
+              FAIL=$((FAIL + 1)); FAILED_ITERS="$FAILED_ITERS $i"; echo "iteration $i: FAIL"
+              grep -E "error:|XCTAssert|Failing tests:" "/tmp/iter_$i.log" | head -8 || true
+            fi
+            echo "::endgroup::"
+          done
+
+          RATE=$(python3 -c "print(round(100.0 * $PASS / max($RUNS,1), 1))")
+          {
+            echo "### Popover Flake Hunt"
+            echo ""
+            echo "| metric | value |"
+            echo "|---|---|"
+            echo "| test | \`$TEST\` |"
+            echo "| iterations | $RUNS |"
+            echo "| passed | $PASS |"
+            echo "| failed | $FAIL |"
+            echo "| **pass rate** | **$RATE%** |"
+            echo "| commit | \`${GITHUB_SHA:0:9}\` |"
+            [ -n "$FAILED_ITERS" ] && echo "| failed iterations |$FAILED_ITERS |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "PASS=$PASS FAIL=$FAIL RATE=$RATE%"
+          # Single-line python only. A multi-line -c block here would have to sit at the
+          # YAML block indent to survive scalar parsing, which is a silent footgun.
+          BELOW=$(python3 -c "print(1 if $RATE < float('$MIN') else 0)")
+          if [ "$BELOW" = "1" ]; then
+            echo "::error::pass rate ${RATE}% is below the ${MIN}% floor - flake NOT resolved"
+            exit 1
+          fi
+          echo "pass rate ${RATE}% meets the ${MIN}% floor"
+
+      - name: Upload iteration logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: popover-flake-logs
+          path: /tmp/iter_*.log
+          if-no-files-found: ignore
