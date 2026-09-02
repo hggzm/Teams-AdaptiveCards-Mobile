@@ -1,0 +1,5654 @@
+[
+  {
+    "scenario": "a11ymas_5428632_foodorder_showcard",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Your registration is almost complete",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          250,
+          378,
+          270
+        ],
+        "voiceover_reads": "Your registration is almost complete.  textView"
+      },
+      {
+        "index": 2,
+        "label": "What type of food do you prefer?",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          281,
+          378,
+          298
+        ],
+        "voiceover_reads": "What type of food do you prefer?.  textView"
+      },
+      {
+        "index": 3,
+        "label": "Steak cut with fries",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          24,
+          308,
+          104,
+          388
+        ],
+        "voiceover_reads": "Steak cut with fries.  image"
+      },
+      {
+        "index": 4,
+        "label": "Fried chicken with lettuce",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          115,
+          308,
+          195,
+          388
+        ],
+        "voiceover_reads": "Fried chicken with lettuce.  image"
+      },
+      {
+        "index": 5,
+        "label": "Tofu topped with red sauce",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          206,
+          308,
+          285,
+          388
+        ],
+        "voiceover_reads": "Tofu topped with red sauce.  image"
+      },
+      {
+        "index": 6,
+        "label": "Steak",
+        "value": "card expanded",
+        "role": "button",
+        "bounds": [
+          24,
+          398,
+          378,
+          436
+        ],
+        "voiceover_reads": "Steak, card expanded.  button"
+      },
+      {
+        "index": 7,
+        "label": "Steak",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          191,
+          408,
+          230,
+          426
+        ],
+        "voiceover_reads": "Steak.  text"
+      },
+      {
+        "index": 8,
+        "label": "Chicken",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          451,
+          378,
+          489
+        ],
+        "voiceover_reads": "Chicken, card collapsed.  button"
+      },
+      {
+        "index": 9,
+        "label": "Chicken",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          182,
+          461,
+          237,
+          479
+        ],
+        "voiceover_reads": "Chicken.  text"
+      },
+      {
+        "index": 10,
+        "label": "Tofu",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          504,
+          378,
+          542
+        ],
+        "voiceover_reads": "Tofu, card collapsed.  button"
+      },
+      {
+        "index": 11,
+        "label": "Tofu",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          195,
+          514,
+          225,
+          532
+        ],
+        "voiceover_reads": "Tofu.  text"
+      },
+      {
+        "index": 12,
+        "label": "How would you like your steak prepared?  (Required), Rare, radio button",
+        "value": "",
+        "role": "cell",
+        "bounds": [
+          24,
+          585,
+          378,
+          629
+        ],
+        "voiceover_reads": "How would you like your steak prepared?  (Required), Rare, radio button.  cell"
+      },
+      {
+        "index": 13,
+        "label": "Rare",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          51,
+          585,
+          377,
+          629
+        ],
+        "voiceover_reads": "Rare.  text"
+      },
+      {
+        "index": 14,
+        "label": "circle",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          24,
+          597,
+          43,
+          616
+        ],
+        "voiceover_reads": "circle.  image"
+      },
+      {
+        "index": 15,
+        "label": "How would you like your steak prepared?  (Required), Medium-Rare, radio button",
+        "value": "",
+        "role": "cell",
+        "bounds": [
+          24,
+          629,
+          378,
+          673
+        ],
+        "voiceover_reads": "How would you like your steak prepared?  (Required), Medium-Rare, radio button.  cell"
+      },
+      {
+        "index": 16,
+        "label": "Medium-Rare",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          51,
+          629,
+          377,
+          673
+        ],
+        "voiceover_reads": "Medium-Rare.  text"
+      },
+      {
+        "index": 17,
+        "label": "circle",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          24,
+          641,
+          43,
+          660
+        ],
+        "voiceover_reads": "circle.  image"
+      },
+      {
+        "index": 18,
+        "label": "How would you like your steak prepared?  (Required), Well-done, radio button",
+        "value": "",
+        "role": "cell",
+        "bounds": [
+          24,
+          673,
+          378,
+          717
+        ],
+        "voiceover_reads": "How would you like your steak prepared?  (Required), Well-done, radio button.  cell"
+      },
+      {
+        "index": 19,
+        "label": "Well-done",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          51,
+          673,
+          377,
+          717
+        ],
+        "voiceover_reads": "Well-done.  text"
+      },
+      {
+        "index": 20,
+        "label": "circle",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          24,
+          685,
+          43,
+          704
+        ],
+        "voiceover_reads": "circle.  image"
+      },
+      {
+        "index": 21,
+        "label": "Any other preparation requests?",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          754,
+          378,
+          842
+        ],
+        "voiceover_reads": "Any other preparation requests?.  textView"
+      },
+      {
+        "index": 22,
+        "label": "OK",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          852,
+          378,
+          890
+        ],
+        "voiceover_reads": "OK.  button"
+      },
+      {
+        "index": 23,
+        "label": "OK",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          190,
+          862,
+          211,
+          880
+        ],
+        "voiceover_reads": "OK.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5428636_interactive_kbd",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Root Overflow Actions (...)",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          16,
+          242,
+          266,
+          282
+        ],
+        "voiceover_reads": "Root Overflow Actions (...).  button"
+      },
+      {
+        "index": 2,
+        "label": "Root Overflow Actions (...)",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          50,
+          253,
+          231,
+          271
+        ],
+        "voiceover_reads": "Root Overflow Actions (...).  text"
+      },
+      {
+        "index": 3,
+        "label": "Overflow Action Test Card!",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          300,
+          378,
+          325
+        ],
+        "voiceover_reads": "Overflow Action Test Card!.  textView"
+      },
+      {
+        "index": 4,
+        "label": "ActionSet all secondary actions",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          336,
+          378,
+          353
+        ],
+        "voiceover_reads": "ActionSet all secondary actions.  textView"
+      },
+      {
+        "index": 5,
+        "label": "More options",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          363,
+          378,
+          401
+        ],
+        "voiceover_reads": "More options.  button"
+      },
+      {
+        "index": 6,
+        "label": "...",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          194,
+          373,
+          206,
+          391
+        ],
+        "voiceover_reads": "....  text"
+      },
+      {
+        "index": 7,
+        "label": "ActionSet primary + secondary actions",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          411,
+          378,
+          428
+        ],
+        "voiceover_reads": "ActionSet primary + secondary actions.  textView"
+      },
+      {
+        "index": 8,
+        "label": "Submit",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          438,
+          378,
+          476
+        ],
+        "voiceover_reads": "Submit.  button"
+      },
+      {
+        "index": 9,
+        "label": "Submit",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          177,
+          448,
+          225,
+          466
+        ],
+        "voiceover_reads": "Submit.  text"
+      },
+      {
+        "index": 10,
+        "label": "More options",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          491,
+          378,
+          529
+        ],
+        "voiceover_reads": "More options.  button"
+      },
+      {
+        "index": 11,
+        "label": "...",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          194,
+          501,
+          206,
+          518
+        ],
+        "voiceover_reads": "....  text"
+      },
+      {
+        "index": 12,
+        "label": "Check actions.length > maxActions",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          539,
+          378,
+          556
+        ],
+        "voiceover_reads": "Check actions.length > maxActions.  textView"
+      },
+      {
+        "index": 13,
+        "label": "Action 1",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          566,
+          378,
+          604
+        ],
+        "voiceover_reads": "Action 1.  button"
+      },
+      {
+        "index": 14,
+        "label": "Action 1",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          174,
+          576,
+          228,
+          594
+        ],
+        "voiceover_reads": "Action 1.  text"
+      },
+      {
+        "index": 15,
+        "label": "Action 2",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          619,
+          378,
+          657
+        ],
+        "voiceover_reads": "Action 2.  button"
+      },
+      {
+        "index": 16,
+        "label": "Action 2",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          629,
+          228,
+          647
+        ],
+        "voiceover_reads": "Action 2.  text"
+      },
+      {
+        "index": 17,
+        "label": "Action 3",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          672,
+          378,
+          710
+        ],
+        "voiceover_reads": "Action 3.  button"
+      },
+      {
+        "index": 18,
+        "label": "Action 3",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          682,
+          229,
+          700
+        ],
+        "voiceover_reads": "Action 3.  text"
+      },
+      {
+        "index": 19,
+        "label": "Action 4",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          725,
+          378,
+          763
+        ],
+        "voiceover_reads": "Action 4.  button"
+      },
+      {
+        "index": 20,
+        "label": "Action 4",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          735,
+          229,
+          753
+        ],
+        "voiceover_reads": "Action 4.  text"
+      },
+      {
+        "index": 21,
+        "label": "Action 5",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          778,
+          378,
+          816
+        ],
+        "voiceover_reads": "Action 5.  button"
+      },
+      {
+        "index": 22,
+        "label": "Action 5",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          788,
+          228,
+          806
+        ],
+        "voiceover_reads": "Action 5.  text"
+      },
+      {
+        "index": 23,
+        "label": "Action 6",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          831,
+          378,
+          869
+        ],
+        "voiceover_reads": "Action 6.  button"
+      },
+      {
+        "index": 24,
+        "label": "Action 6",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          841,
+          229,
+          859
+        ],
+        "voiceover_reads": "Action 6.  text"
+      },
+      {
+        "index": 25,
+        "label": "Action 7",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          884,
+          378,
+          922
+        ],
+        "voiceover_reads": "Action 7.  button"
+      },
+      {
+        "index": 26,
+        "label": "Action 7",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          173,
+          894,
+          229,
+          912
+        ],
+        "voiceover_reads": "Action 7.  text"
+      },
+      {
+        "index": 27,
+        "label": "Action 8",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          937,
+          378,
+          975
+        ],
+        "voiceover_reads": "Action 8.  button"
+      },
+      {
+        "index": 28,
+        "label": "Action 8",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          947,
+          229,
+          965
+        ],
+        "voiceover_reads": "Action 8.  text"
+      },
+      {
+        "index": 29,
+        "label": "Action 9",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          990,
+          378,
+          1028
+        ],
+        "voiceover_reads": "Action 9.  button"
+      },
+      {
+        "index": 30,
+        "label": "Action 9",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          1000,
+          229,
+          1018
+        ],
+        "voiceover_reads": "Action 9.  text"
+      },
+      {
+        "index": 31,
+        "label": "Show Card Tests",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          1038,
+          378,
+          1055
+        ],
+        "voiceover_reads": "Show Card Tests.  textView"
+      },
+      {
+        "index": 32,
+        "label": "Primary 1",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          1065,
+          378,
+          1103
+        ],
+        "voiceover_reads": "Primary 1, card collapsed.  button"
+      },
+      {
+        "index": 33,
+        "label": "Primary 1",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          178,
+          1075,
+          241,
+          1093
+        ],
+        "voiceover_reads": "Primary 1.  text"
+      },
+      {
+        "index": 34,
+        "label": "Primary 2",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          1118,
+          378,
+          1156
+        ],
+        "voiceover_reads": "Primary 2, card collapsed.  button"
+      },
+      {
+        "index": 35,
+        "label": "Primary 2",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          177,
+          1128,
+          242,
+          1146
+        ],
+        "voiceover_reads": "Primary 2.  text"
+      },
+      {
+        "index": 36,
+        "label": "More options",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          1171,
+          378,
+          1209
+        ],
+        "voiceover_reads": "More options.  button"
+      },
+      {
+        "index": 37,
+        "label": "...",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          194,
+          1181,
+          206,
+          1199
+        ],
+        "voiceover_reads": "....  text"
+      },
+      {
+        "index": 38,
+        "label": "========= I am bottom line of body =========",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          1219,
+          378,
+          1236
+        ],
+        "voiceover_reads": "========= I am bottom line of body =========.  textView"
+      },
+      {
+        "index": 39,
+        "label": "Primary OpenUrl",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          24,
+          1246,
+          378,
+          1284
+        ],
+        "voiceover_reads": "Primary OpenUrl.  link"
+      },
+      {
+        "index": 40,
+        "label": "Primary OpenUrl",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          144,
+          1256,
+          257,
+          1274
+        ],
+        "voiceover_reads": "Primary OpenUrl.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5526561_activity_dismiss_after",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Publish Adaptive Card schema",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          250,
+          378,
+          270
+        ],
+        "voiceover_reads": "Publish Adaptive Card schema.  textView"
+      },
+      {
+        "index": 2,
+        "label": "Matt Hidinger",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          24,
+          281,
+          64,
+          321
+        ],
+        "voiceover_reads": "Matt Hidinger.  image"
+      },
+      {
+        "index": 3,
+        "label": "Matt Hidinger",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          74,
+          281,
+          378,
+          298
+        ],
+        "voiceover_reads": "Matt Hidinger.  textView"
+      },
+      {
+        "index": 4,
+        "label": "Created Feb 14, 2017",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          74,
+          298,
+          378,
+          315
+        ],
+        "voiceover_reads": "Created Feb 14, 2017.  textView"
+      },
+      {
+        "index": 5,
+        "label": "Now that we have defined the main rules and features of the format, we need to produce a schema and publish it to GitHub. The schema will be the starting point of our reference documentation.",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          331,
+          378,
+          398
+        ],
+        "voiceover_reads": "Now that we have defined the main rules and features of the format, we need to produce a schema and publish it to GitHub. The schema will be the starting point of our reference documentation..  textView"
+      },
+      {
+        "index": 6,
+        "label": "Set due date",
+        "value": "card expanded",
+        "role": "button",
+        "bounds": [
+          24,
+          408,
+          378,
+          446
+        ],
+        "voiceover_reads": "Set due date, card expanded.  button"
+      },
+      {
+        "index": 7,
+        "label": "Set due date",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          166,
+          418,
+          253,
+          436
+        ],
+        "voiceover_reads": "Set due date.  text"
+      },
+      {
+        "index": 8,
+        "label": "Comment",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          461,
+          378,
+          499
+        ],
+        "voiceover_reads": "Comment, card collapsed.  button"
+      },
+      {
+        "index": 9,
+        "label": "Comment",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          177,
+          471,
+          244,
+          489
+        ],
+        "voiceover_reads": "Comment.  text"
+      },
+      {
+        "index": 10,
+        "label": "Enter the due date",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          542,
+          378,
+          576
+        ],
+        "voiceover_reads": "Enter the due date.  button"
+      },
+      {
+        "index": 11,
+        "label": "Send",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          586,
+          378,
+          624
+        ],
+        "voiceover_reads": "Send.  button"
+      },
+      {
+        "index": 12,
+        "label": "Send",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          183,
+          596,
+          218,
+          614
+        ],
+        "voiceover_reads": "Send.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5526561_activity_dismiss_afterdismiss",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Publish Adaptive Card schema",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          250,
+          378,
+          270
+        ],
+        "voiceover_reads": "Publish Adaptive Card schema.  textView"
+      },
+      {
+        "index": 2,
+        "label": "Matt Hidinger",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          24,
+          281,
+          64,
+          321
+        ],
+        "voiceover_reads": "Matt Hidinger.  image"
+      },
+      {
+        "index": 3,
+        "label": "Matt Hidinger",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          74,
+          281,
+          378,
+          298
+        ],
+        "voiceover_reads": "Matt Hidinger.  textView"
+      },
+      {
+        "index": 4,
+        "label": "Created Feb 14, 2017",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          74,
+          298,
+          378,
+          315
+        ],
+        "voiceover_reads": "Created Feb 14, 2017.  textView"
+      },
+      {
+        "index": 5,
+        "label": "Now that we have defined the main rules and features of the format, we need to produce a schema and publish it to GitHub. The schema will be the starting point of our reference documentation.",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          331,
+          378,
+          398
+        ],
+        "voiceover_reads": "Now that we have defined the main rules and features of the format, we need to produce a schema and publish it to GitHub. The schema will be the starting point of our reference documentation..  textView"
+      },
+      {
+        "index": 6,
+        "label": "Set due date",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          408,
+          378,
+          446
+        ],
+        "voiceover_reads": "Set due date, card collapsed.  button"
+      },
+      {
+        "index": 7,
+        "label": "Set due date",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          166,
+          418,
+          253,
+          436
+        ],
+        "voiceover_reads": "Set due date.  text"
+      },
+      {
+        "index": 8,
+        "label": "Comment",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          461,
+          378,
+          499
+        ],
+        "voiceover_reads": "Comment, card collapsed.  button"
+      },
+      {
+        "index": 9,
+        "label": "Comment",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          177,
+          471,
+          244,
+          489
+        ],
+        "voiceover_reads": "Comment.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5526561_activity_dismiss_before",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Publish Adaptive Card schema",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          250,
+          378,
+          270
+        ],
+        "voiceover_reads": "Publish Adaptive Card schema.  textView"
+      },
+      {
+        "index": 2,
+        "label": "Matt Hidinger",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          24,
+          281,
+          64,
+          321
+        ],
+        "voiceover_reads": "Matt Hidinger.  image"
+      },
+      {
+        "index": 3,
+        "label": "Matt Hidinger",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          74,
+          281,
+          378,
+          298
+        ],
+        "voiceover_reads": "Matt Hidinger.  textView"
+      },
+      {
+        "index": 4,
+        "label": "Created Feb 14, 2017",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          74,
+          298,
+          378,
+          315
+        ],
+        "voiceover_reads": "Created Feb 14, 2017.  textView"
+      },
+      {
+        "index": 5,
+        "label": "Now that we have defined the main rules and features of the format, we need to produce a schema and publish it to GitHub. The schema will be the starting point of our reference documentation.",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          331,
+          378,
+          398
+        ],
+        "voiceover_reads": "Now that we have defined the main rules and features of the format, we need to produce a schema and publish it to GitHub. The schema will be the starting point of our reference documentation..  textView"
+      },
+      {
+        "index": 6,
+        "label": "Set due date",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          408,
+          378,
+          446
+        ],
+        "voiceover_reads": "Set due date, card collapsed.  button"
+      },
+      {
+        "index": 7,
+        "label": "Set due date",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          166,
+          418,
+          253,
+          436
+        ],
+        "voiceover_reads": "Set due date.  text"
+      },
+      {
+        "index": 8,
+        "label": "Comment",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          461,
+          378,
+          499
+        ],
+        "voiceover_reads": "Comment, card collapsed.  button"
+      },
+      {
+        "index": 9,
+        "label": "Comment",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          177,
+          471,
+          244,
+          489
+        ],
+        "voiceover_reads": "Comment.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5532275_compoundbutton",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Summarize",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          84,
+          272,
+          173,
+          292
+        ],
+        "voiceover_reads": "Summarize.  text"
+      },
+      {
+        "index": 2,
+        "label": "New",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          189,
+          275,
+          214,
+          289
+        ],
+        "voiceover_reads": "New.  text"
+      },
+      {
+        "index": 3,
+        "label": "Create a work item and assign it to your or a team member",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          40,
+          302,
+          344,
+          338
+        ],
+        "voiceover_reads": "Create a work item and assign it to your or a team member.  text"
+      },
+      {
+        "index": 4,
+        "label": "View active work items",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          40,
+          380,
+          222,
+          400
+        ],
+        "voiceover_reads": "View active work items.  text"
+      },
+      {
+        "index": 5,
+        "label": "New",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          237,
+          383,
+          262,
+          397
+        ],
+        "voiceover_reads": "New.  text"
+      },
+      {
+        "index": 6,
+        "label": "See active tasks assigned to you or team members",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          40,
+          405,
+          285,
+          441
+        ],
+        "voiceover_reads": "See active tasks assigned to you or team members.  text"
+      },
+      {
+        "index": 7,
+        "label": "Give feedback",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          80,
+          489,
+          193,
+          509
+        ],
+        "voiceover_reads": "Give feedback.  text"
+      },
+      {
+        "index": 8,
+        "label": "To give us feedback on Azure DevOps",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          40,
+          519,
+          300,
+          537
+        ],
+        "voiceover_reads": "To give us feedback on Azure DevOps.  text"
+      },
+      {
+        "index": 9,
+        "label": "Summarize",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          40,
+          579,
+          129,
+          599
+        ],
+        "voiceover_reads": "Summarize.  text"
+      },
+      {
+        "index": 10,
+        "label": "Create a work item and assign it to your or a team member",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          40,
+          603,
+          344,
+          639
+        ],
+        "voiceover_reads": "Create a work item and assign it to your or a team member.  text"
+      },
+      {
+        "index": 11,
+        "label": "Pending Tasks",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          92,
+          687,
+          206,
+          707
+        ],
+        "voiceover_reads": "Pending Tasks.  text"
+      },
+      {
+        "index": 12,
+        "label": "Priority",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          222,
+          690,
+          264,
+          704
+        ],
+        "voiceover_reads": "Priority.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5532354_compoundbutton_kbd",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Summarize",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          84,
+          272,
+          173,
+          292
+        ],
+        "voiceover_reads": "Summarize.  text"
+      },
+      {
+        "index": 2,
+        "label": "New",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          189,
+          275,
+          214,
+          289
+        ],
+        "voiceover_reads": "New.  text"
+      },
+      {
+        "index": 3,
+        "label": "Create a work item and assign it to your or a team member",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          40,
+          302,
+          344,
+          338
+        ],
+        "voiceover_reads": "Create a work item and assign it to your or a team member.  text"
+      },
+      {
+        "index": 4,
+        "label": "View active work items",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          40,
+          380,
+          222,
+          400
+        ],
+        "voiceover_reads": "View active work items.  text"
+      },
+      {
+        "index": 5,
+        "label": "New",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          237,
+          383,
+          262,
+          397
+        ],
+        "voiceover_reads": "New.  text"
+      },
+      {
+        "index": 6,
+        "label": "See active tasks assigned to you or team members",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          40,
+          405,
+          285,
+          441
+        ],
+        "voiceover_reads": "See active tasks assigned to you or team members.  text"
+      },
+      {
+        "index": 7,
+        "label": "Give feedback",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          80,
+          489,
+          193,
+          509
+        ],
+        "voiceover_reads": "Give feedback.  text"
+      },
+      {
+        "index": 8,
+        "label": "To give us feedback on Azure DevOps",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          40,
+          519,
+          300,
+          537
+        ],
+        "voiceover_reads": "To give us feedback on Azure DevOps.  text"
+      },
+      {
+        "index": 9,
+        "label": "Summarize",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          40,
+          579,
+          129,
+          599
+        ],
+        "voiceover_reads": "Summarize.  text"
+      },
+      {
+        "index": 10,
+        "label": "Create a work item and assign it to your or a team member",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          40,
+          603,
+          344,
+          639
+        ],
+        "voiceover_reads": "Create a work item and assign it to your or a team member.  text"
+      },
+      {
+        "index": 11,
+        "label": "Pending Tasks",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          92,
+          687,
+          206,
+          707
+        ],
+        "voiceover_reads": "Pending Tasks.  text"
+      },
+      {
+        "index": 12,
+        "label": "Priority",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          222,
+          690,
+          264,
+          704
+        ],
+        "voiceover_reads": "Priority.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5533268_fluenticon_rtl",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "RTL is supported (Toggle rtl property at root AdaptiveCard)",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          250,
+          378,
+          300
+        ],
+        "voiceover_reads": "RTL is supported (Toggle rtl property at root AdaptiveCard).  textView"
+      },
+      {
+        "index": 2,
+        "label": "Airplane",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          311,
+          378,
+          343
+        ],
+        "voiceover_reads": "Airplane.  button"
+      },
+      {
+        "index": 3,
+        "label": "RTL is supported for colored fonts",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          565,
+          378,
+          590
+        ],
+        "voiceover_reads": "RTL is supported for colored fonts.  textView"
+      },
+      {
+        "index": 4,
+        "label": "RTL is supported",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          732,
+          378,
+          757
+        ],
+        "voiceover_reads": "RTL is supported.  textView"
+      },
+      {
+        "index": 5,
+        "label": "Clickable icons",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          839,
+          378,
+          864
+        ],
+        "voiceover_reads": "Clickable icons.  textView"
+      },
+      {
+        "index": 6,
+        "label": "Click me!",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          875,
+          378,
+          907
+        ],
+        "voiceover_reads": "Click me!.  button"
+      },
+      {
+        "index": 7,
+        "label": "Icons on buttons",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          923,
+          378,
+          948
+        ],
+        "voiceover_reads": "Icons on buttons.  textView"
+      },
+      {
+        "index": 8,
+        "label": "RTL supported",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          24,
+          958,
+          378,
+          1022
+        ],
+        "voiceover_reads": "RTL supported.  link"
+      },
+      {
+        "index": 9,
+        "label": "RTL supported",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          155,
+          994,
+          257,
+          1012
+        ],
+        "voiceover_reads": "RTL supported.  text"
+      },
+      {
+        "index": 10,
+        "label": "RTL supported",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          24,
+          1037,
+          378,
+          1101
+        ],
+        "voiceover_reads": "RTL supported.  link"
+      },
+      {
+        "index": 11,
+        "label": "RTL supported",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          155,
+          1073,
+          257,
+          1091
+        ],
+        "voiceover_reads": "RTL supported.  text"
+      },
+      {
+        "index": 12,
+        "label": "No RTL",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          24,
+          1116,
+          378,
+          1180
+        ],
+        "voiceover_reads": "No RTL.  link"
+      },
+      {
+        "index": 13,
+        "label": "No RTL",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          180,
+          1152,
+          231,
+          1170
+        ],
+        "voiceover_reads": "No RTL.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5535831_rating_input",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Rating input",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          250,
+          378,
+          275
+        ],
+        "voiceover_reads": "Rating input.  textView"
+      },
+      {
+        "index": 2,
+        "label": "Rate 1 Star",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          24,
+          313,
+          68,
+          357
+        ],
+        "voiceover_reads": "Rate 1 Star.  image"
+      },
+      {
+        "index": 3,
+        "label": "Rate 2 Star",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          68,
+          313,
+          112,
+          357
+        ],
+        "voiceover_reads": "Rate 2 Star.  image"
+      },
+      {
+        "index": 4,
+        "label": "Rate 3 Star",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          112,
+          313,
+          156,
+          357
+        ],
+        "voiceover_reads": "Rate 3 Star.  image"
+      },
+      {
+        "index": 5,
+        "label": "Rate 4 Star",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          156,
+          313,
+          200,
+          357
+        ],
+        "voiceover_reads": "Rate 4 Star.  image"
+      },
+      {
+        "index": 6,
+        "label": "Rate 5 Star",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          200,
+          313,
+          244,
+          357
+        ],
+        "voiceover_reads": "Rate 5 Star.  image"
+      },
+      {
+        "index": 7,
+        "label": "Rate 1 Star",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          24,
+          394,
+          68,
+          438
+        ],
+        "voiceover_reads": "Rate 1 Star.  image"
+      },
+      {
+        "index": 8,
+        "label": "Rate 2 Star",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          68,
+          394,
+          112,
+          438
+        ],
+        "voiceover_reads": "Rate 2 Star.  image"
+      },
+      {
+        "index": 9,
+        "label": "Rate 3 Star",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          112,
+          394,
+          156,
+          438
+        ],
+        "voiceover_reads": "Rate 3 Star.  image"
+      },
+      {
+        "index": 10,
+        "label": "Rate 4 Star",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          156,
+          394,
+          200,
+          438
+        ],
+        "voiceover_reads": "Rate 4 Star.  image"
+      },
+      {
+        "index": 11,
+        "label": "Rate 5 Star",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          200,
+          394,
+          244,
+          438
+        ],
+        "voiceover_reads": "Rate 5 Star.  image"
+      },
+      {
+        "index": 12,
+        "label": "Read-only ratings",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          458,
+          378,
+          483
+        ],
+        "voiceover_reads": "Read-only ratings.  textView"
+      },
+      {
+        "index": 13,
+        "label": "Rating 3.2,",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          116,
+          492,
+          167,
+          510
+        ],
+        "voiceover_reads": "Rating 3.2,.  text"
+      },
+      {
+        "index": 14,
+        "label": "Rating 3.2,",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          136,
+          519,
+          201,
+          539
+        ],
+        "voiceover_reads": "Rating 3.2,.  text"
+      },
+      {
+        "index": 15,
+        "label": "Rating 3.2,",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          48,
+          549,
+          124,
+          569
+        ],
+        "voiceover_reads": "Rating 3.2,.  text"
+      },
+      {
+        "index": 16,
+        "label": "Submit",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          579,
+          378,
+          617
+        ],
+        "voiceover_reads": "Submit.  button"
+      },
+      {
+        "index": 17,
+        "label": "Submit",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          177,
+          589,
+          225,
+          607
+        ],
+        "voiceover_reads": "Submit.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5536765_actionmode_cancel_after",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Root Overflow Actions (...)",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          16,
+          242,
+          266,
+          282
+        ],
+        "voiceover_reads": "Root Overflow Actions (...).  button"
+      },
+      {
+        "index": 2,
+        "label": "Root Overflow Actions (...)",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          50,
+          253,
+          231,
+          271
+        ],
+        "voiceover_reads": "Root Overflow Actions (...).  text"
+      },
+      {
+        "index": 3,
+        "label": "Overflow Action Test Card!",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          300,
+          378,
+          325
+        ],
+        "voiceover_reads": "Overflow Action Test Card!.  textView"
+      },
+      {
+        "index": 4,
+        "label": "ActionSet all secondary actions",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          336,
+          378,
+          353
+        ],
+        "voiceover_reads": "ActionSet all secondary actions.  textView"
+      },
+      {
+        "index": 5,
+        "label": "More options",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          363,
+          378,
+          401
+        ],
+        "voiceover_reads": "More options.  button"
+      },
+      {
+        "index": 6,
+        "label": "...",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          194,
+          373,
+          206,
+          391
+        ],
+        "voiceover_reads": "....  text"
+      },
+      {
+        "index": 7,
+        "label": "ActionSet primary + secondary actions",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          411,
+          378,
+          428
+        ],
+        "voiceover_reads": "ActionSet primary + secondary actions.  textView"
+      },
+      {
+        "index": 8,
+        "label": "Submit",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          438,
+          378,
+          476
+        ],
+        "voiceover_reads": "Submit.  button"
+      },
+      {
+        "index": 9,
+        "label": "Submit",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          177,
+          448,
+          225,
+          466
+        ],
+        "voiceover_reads": "Submit.  text"
+      },
+      {
+        "index": 10,
+        "label": "More options",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          491,
+          378,
+          529
+        ],
+        "voiceover_reads": "More options.  button"
+      },
+      {
+        "index": 11,
+        "label": "...",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          194,
+          501,
+          206,
+          518
+        ],
+        "voiceover_reads": "....  text"
+      },
+      {
+        "index": 12,
+        "label": "Check actions.length > maxActions",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          539,
+          378,
+          556
+        ],
+        "voiceover_reads": "Check actions.length > maxActions.  textView"
+      },
+      {
+        "index": 13,
+        "label": "Action 1",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          566,
+          378,
+          604
+        ],
+        "voiceover_reads": "Action 1.  button"
+      },
+      {
+        "index": 14,
+        "label": "Action 1",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          174,
+          576,
+          228,
+          594
+        ],
+        "voiceover_reads": "Action 1.  text"
+      },
+      {
+        "index": 15,
+        "label": "Action 2",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          619,
+          378,
+          657
+        ],
+        "voiceover_reads": "Action 2.  button"
+      },
+      {
+        "index": 16,
+        "label": "Action 2",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          629,
+          228,
+          647
+        ],
+        "voiceover_reads": "Action 2.  text"
+      },
+      {
+        "index": 17,
+        "label": "Action 3",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          672,
+          378,
+          710
+        ],
+        "voiceover_reads": "Action 3.  button"
+      },
+      {
+        "index": 18,
+        "label": "Action 3",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          682,
+          229,
+          700
+        ],
+        "voiceover_reads": "Action 3.  text"
+      },
+      {
+        "index": 19,
+        "label": "Action 4",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          725,
+          378,
+          763
+        ],
+        "voiceover_reads": "Action 4.  button"
+      },
+      {
+        "index": 20,
+        "label": "Action 4",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          735,
+          229,
+          753
+        ],
+        "voiceover_reads": "Action 4.  text"
+      },
+      {
+        "index": 21,
+        "label": "Action 5",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          778,
+          378,
+          816
+        ],
+        "voiceover_reads": "Action 5.  button"
+      },
+      {
+        "index": 22,
+        "label": "Action 5",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          788,
+          228,
+          806
+        ],
+        "voiceover_reads": "Action 5.  text"
+      },
+      {
+        "index": 23,
+        "label": "Action 6",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          831,
+          378,
+          869
+        ],
+        "voiceover_reads": "Action 6.  button"
+      },
+      {
+        "index": 24,
+        "label": "Action 6",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          841,
+          229,
+          859
+        ],
+        "voiceover_reads": "Action 6.  text"
+      },
+      {
+        "index": 25,
+        "label": "Action 7",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          884,
+          378,
+          922
+        ],
+        "voiceover_reads": "Action 7.  button"
+      },
+      {
+        "index": 26,
+        "label": "Action 7",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          173,
+          894,
+          229,
+          912
+        ],
+        "voiceover_reads": "Action 7.  text"
+      },
+      {
+        "index": 27,
+        "label": "Action 8",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          937,
+          378,
+          975
+        ],
+        "voiceover_reads": "Action 8.  button"
+      },
+      {
+        "index": 28,
+        "label": "Action 8",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          947,
+          229,
+          965
+        ],
+        "voiceover_reads": "Action 8.  text"
+      },
+      {
+        "index": 29,
+        "label": "Action 9",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          990,
+          378,
+          1028
+        ],
+        "voiceover_reads": "Action 9.  button"
+      },
+      {
+        "index": 30,
+        "label": "Action 9",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          1000,
+          229,
+          1018
+        ],
+        "voiceover_reads": "Action 9.  text"
+      },
+      {
+        "index": 31,
+        "label": "Show Card Tests",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          1038,
+          378,
+          1055
+        ],
+        "voiceover_reads": "Show Card Tests.  textView"
+      },
+      {
+        "index": 32,
+        "label": "Primary 1",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          1065,
+          378,
+          1103
+        ],
+        "voiceover_reads": "Primary 1, card collapsed.  button"
+      },
+      {
+        "index": 33,
+        "label": "Primary 1",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          178,
+          1075,
+          241,
+          1093
+        ],
+        "voiceover_reads": "Primary 1.  text"
+      },
+      {
+        "index": 34,
+        "label": "Primary 2",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          1118,
+          378,
+          1156
+        ],
+        "voiceover_reads": "Primary 2, card collapsed.  button"
+      },
+      {
+        "index": 35,
+        "label": "Primary 2",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          177,
+          1128,
+          242,
+          1146
+        ],
+        "voiceover_reads": "Primary 2.  text"
+      },
+      {
+        "index": 36,
+        "label": "More options",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          1171,
+          378,
+          1209
+        ],
+        "voiceover_reads": "More options.  button"
+      },
+      {
+        "index": 37,
+        "label": "...",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          194,
+          1181,
+          206,
+          1199
+        ],
+        "voiceover_reads": "....  text"
+      },
+      {
+        "index": 38,
+        "label": "========= I am bottom line of body =========",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          1219,
+          378,
+          1236
+        ],
+        "voiceover_reads": "========= I am bottom line of body =========.  textView"
+      },
+      {
+        "index": 39,
+        "label": "Primary OpenUrl",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          24,
+          1246,
+          378,
+          1284
+        ],
+        "voiceover_reads": "Primary OpenUrl.  link"
+      },
+      {
+        "index": 40,
+        "label": "Primary OpenUrl",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          144,
+          1256,
+          257,
+          1274
+        ],
+        "voiceover_reads": "Primary OpenUrl.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5536765_actionmode_cancel_afterdismiss",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Root Overflow Actions (...)",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          16,
+          242,
+          266,
+          282
+        ],
+        "voiceover_reads": "Root Overflow Actions (...).  button"
+      },
+      {
+        "index": 2,
+        "label": "Root Overflow Actions (...)",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          50,
+          253,
+          231,
+          271
+        ],
+        "voiceover_reads": "Root Overflow Actions (...).  text"
+      },
+      {
+        "index": 3,
+        "label": "Overflow Action Test Card!",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          300,
+          378,
+          325
+        ],
+        "voiceover_reads": "Overflow Action Test Card!.  textView"
+      },
+      {
+        "index": 4,
+        "label": "ActionSet all secondary actions",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          336,
+          378,
+          353
+        ],
+        "voiceover_reads": "ActionSet all secondary actions.  textView"
+      },
+      {
+        "index": 5,
+        "label": "More options",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          363,
+          378,
+          401
+        ],
+        "voiceover_reads": "More options.  button"
+      },
+      {
+        "index": 6,
+        "label": "...",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          194,
+          373,
+          206,
+          391
+        ],
+        "voiceover_reads": "....  text"
+      },
+      {
+        "index": 7,
+        "label": "ActionSet primary + secondary actions",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          411,
+          378,
+          428
+        ],
+        "voiceover_reads": "ActionSet primary + secondary actions.  textView"
+      },
+      {
+        "index": 8,
+        "label": "Submit",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          438,
+          378,
+          476
+        ],
+        "voiceover_reads": "Submit.  button"
+      },
+      {
+        "index": 9,
+        "label": "Submit",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          177,
+          448,
+          225,
+          466
+        ],
+        "voiceover_reads": "Submit.  text"
+      },
+      {
+        "index": 10,
+        "label": "More options",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          491,
+          378,
+          529
+        ],
+        "voiceover_reads": "More options.  button"
+      },
+      {
+        "index": 11,
+        "label": "...",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          194,
+          501,
+          206,
+          518
+        ],
+        "voiceover_reads": "....  text"
+      },
+      {
+        "index": 12,
+        "label": "Check actions.length > maxActions",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          539,
+          378,
+          556
+        ],
+        "voiceover_reads": "Check actions.length > maxActions.  textView"
+      },
+      {
+        "index": 13,
+        "label": "Action 1",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          566,
+          378,
+          604
+        ],
+        "voiceover_reads": "Action 1.  button"
+      },
+      {
+        "index": 14,
+        "label": "Action 1",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          174,
+          576,
+          228,
+          594
+        ],
+        "voiceover_reads": "Action 1.  text"
+      },
+      {
+        "index": 15,
+        "label": "Action 2",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          619,
+          378,
+          657
+        ],
+        "voiceover_reads": "Action 2.  button"
+      },
+      {
+        "index": 16,
+        "label": "Action 2",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          629,
+          228,
+          647
+        ],
+        "voiceover_reads": "Action 2.  text"
+      },
+      {
+        "index": 17,
+        "label": "Action 3",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          672,
+          378,
+          710
+        ],
+        "voiceover_reads": "Action 3.  button"
+      },
+      {
+        "index": 18,
+        "label": "Action 3",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          682,
+          229,
+          700
+        ],
+        "voiceover_reads": "Action 3.  text"
+      },
+      {
+        "index": 19,
+        "label": "Action 4",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          725,
+          378,
+          763
+        ],
+        "voiceover_reads": "Action 4.  button"
+      },
+      {
+        "index": 20,
+        "label": "Action 4",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          735,
+          229,
+          753
+        ],
+        "voiceover_reads": "Action 4.  text"
+      },
+      {
+        "index": 21,
+        "label": "Action 5",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          778,
+          378,
+          816
+        ],
+        "voiceover_reads": "Action 5.  button"
+      },
+      {
+        "index": 22,
+        "label": "Action 5",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          788,
+          228,
+          806
+        ],
+        "voiceover_reads": "Action 5.  text"
+      },
+      {
+        "index": 23,
+        "label": "Action 6",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          831,
+          378,
+          869
+        ],
+        "voiceover_reads": "Action 6.  button"
+      },
+      {
+        "index": 24,
+        "label": "Action 6",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          841,
+          229,
+          859
+        ],
+        "voiceover_reads": "Action 6.  text"
+      },
+      {
+        "index": 25,
+        "label": "Action 7",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          884,
+          378,
+          922
+        ],
+        "voiceover_reads": "Action 7.  button"
+      },
+      {
+        "index": 26,
+        "label": "Action 7",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          173,
+          894,
+          229,
+          912
+        ],
+        "voiceover_reads": "Action 7.  text"
+      },
+      {
+        "index": 27,
+        "label": "Action 8",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          937,
+          378,
+          975
+        ],
+        "voiceover_reads": "Action 8.  button"
+      },
+      {
+        "index": 28,
+        "label": "Action 8",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          947,
+          229,
+          965
+        ],
+        "voiceover_reads": "Action 8.  text"
+      },
+      {
+        "index": 29,
+        "label": "Action 9",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          990,
+          378,
+          1028
+        ],
+        "voiceover_reads": "Action 9.  button"
+      },
+      {
+        "index": 30,
+        "label": "Action 9",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          1000,
+          229,
+          1018
+        ],
+        "voiceover_reads": "Action 9.  text"
+      },
+      {
+        "index": 31,
+        "label": "Show Card Tests",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          1038,
+          378,
+          1055
+        ],
+        "voiceover_reads": "Show Card Tests.  textView"
+      },
+      {
+        "index": 32,
+        "label": "Primary 1",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          1065,
+          378,
+          1103
+        ],
+        "voiceover_reads": "Primary 1, card collapsed.  button"
+      },
+      {
+        "index": 33,
+        "label": "Primary 1",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          178,
+          1075,
+          241,
+          1093
+        ],
+        "voiceover_reads": "Primary 1.  text"
+      },
+      {
+        "index": 34,
+        "label": "Primary 2",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          1118,
+          378,
+          1156
+        ],
+        "voiceover_reads": "Primary 2, card collapsed.  button"
+      },
+      {
+        "index": 35,
+        "label": "Primary 2",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          177,
+          1128,
+          242,
+          1146
+        ],
+        "voiceover_reads": "Primary 2.  text"
+      },
+      {
+        "index": 36,
+        "label": "More options",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          1171,
+          378,
+          1209
+        ],
+        "voiceover_reads": "More options.  button"
+      },
+      {
+        "index": 37,
+        "label": "...",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          194,
+          1181,
+          206,
+          1199
+        ],
+        "voiceover_reads": "....  text"
+      },
+      {
+        "index": 38,
+        "label": "========= I am bottom line of body =========",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          1219,
+          378,
+          1236
+        ],
+        "voiceover_reads": "========= I am bottom line of body =========.  textView"
+      },
+      {
+        "index": 39,
+        "label": "Primary OpenUrl",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          24,
+          1246,
+          378,
+          1284
+        ],
+        "voiceover_reads": "Primary OpenUrl.  link"
+      },
+      {
+        "index": 40,
+        "label": "Primary OpenUrl",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          144,
+          1256,
+          257,
+          1274
+        ],
+        "voiceover_reads": "Primary OpenUrl.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5536765_actionmode_cancel_before",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Root Overflow Actions (...)",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          16,
+          242,
+          266,
+          282
+        ],
+        "voiceover_reads": "Root Overflow Actions (...).  button"
+      },
+      {
+        "index": 2,
+        "label": "Root Overflow Actions (...)",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          50,
+          253,
+          231,
+          271
+        ],
+        "voiceover_reads": "Root Overflow Actions (...).  text"
+      },
+      {
+        "index": 3,
+        "label": "Overflow Action Test Card!",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          300,
+          378,
+          325
+        ],
+        "voiceover_reads": "Overflow Action Test Card!.  textView"
+      },
+      {
+        "index": 4,
+        "label": "ActionSet all secondary actions",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          336,
+          378,
+          353
+        ],
+        "voiceover_reads": "ActionSet all secondary actions.  textView"
+      },
+      {
+        "index": 5,
+        "label": "More options",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          363,
+          378,
+          401
+        ],
+        "voiceover_reads": "More options.  button"
+      },
+      {
+        "index": 6,
+        "label": "...",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          194,
+          373,
+          206,
+          391
+        ],
+        "voiceover_reads": "....  text"
+      },
+      {
+        "index": 7,
+        "label": "ActionSet primary + secondary actions",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          411,
+          378,
+          428
+        ],
+        "voiceover_reads": "ActionSet primary + secondary actions.  textView"
+      },
+      {
+        "index": 8,
+        "label": "Submit",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          438,
+          378,
+          476
+        ],
+        "voiceover_reads": "Submit.  button"
+      },
+      {
+        "index": 9,
+        "label": "Submit",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          177,
+          448,
+          225,
+          466
+        ],
+        "voiceover_reads": "Submit.  text"
+      },
+      {
+        "index": 10,
+        "label": "More options",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          491,
+          378,
+          529
+        ],
+        "voiceover_reads": "More options.  button"
+      },
+      {
+        "index": 11,
+        "label": "...",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          194,
+          501,
+          206,
+          518
+        ],
+        "voiceover_reads": "....  text"
+      },
+      {
+        "index": 12,
+        "label": "Check actions.length > maxActions",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          539,
+          378,
+          556
+        ],
+        "voiceover_reads": "Check actions.length > maxActions.  textView"
+      },
+      {
+        "index": 13,
+        "label": "Action 1",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          566,
+          378,
+          604
+        ],
+        "voiceover_reads": "Action 1.  button"
+      },
+      {
+        "index": 14,
+        "label": "Action 1",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          174,
+          576,
+          228,
+          594
+        ],
+        "voiceover_reads": "Action 1.  text"
+      },
+      {
+        "index": 15,
+        "label": "Action 2",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          619,
+          378,
+          657
+        ],
+        "voiceover_reads": "Action 2.  button"
+      },
+      {
+        "index": 16,
+        "label": "Action 2",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          629,
+          228,
+          647
+        ],
+        "voiceover_reads": "Action 2.  text"
+      },
+      {
+        "index": 17,
+        "label": "Action 3",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          672,
+          378,
+          710
+        ],
+        "voiceover_reads": "Action 3.  button"
+      },
+      {
+        "index": 18,
+        "label": "Action 3",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          682,
+          229,
+          700
+        ],
+        "voiceover_reads": "Action 3.  text"
+      },
+      {
+        "index": 19,
+        "label": "Action 4",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          725,
+          378,
+          763
+        ],
+        "voiceover_reads": "Action 4.  button"
+      },
+      {
+        "index": 20,
+        "label": "Action 4",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          735,
+          229,
+          753
+        ],
+        "voiceover_reads": "Action 4.  text"
+      },
+      {
+        "index": 21,
+        "label": "Action 5",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          778,
+          378,
+          816
+        ],
+        "voiceover_reads": "Action 5.  button"
+      },
+      {
+        "index": 22,
+        "label": "Action 5",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          788,
+          228,
+          806
+        ],
+        "voiceover_reads": "Action 5.  text"
+      },
+      {
+        "index": 23,
+        "label": "Action 6",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          831,
+          378,
+          869
+        ],
+        "voiceover_reads": "Action 6.  button"
+      },
+      {
+        "index": 24,
+        "label": "Action 6",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          841,
+          229,
+          859
+        ],
+        "voiceover_reads": "Action 6.  text"
+      },
+      {
+        "index": 25,
+        "label": "Action 7",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          884,
+          378,
+          922
+        ],
+        "voiceover_reads": "Action 7.  button"
+      },
+      {
+        "index": 26,
+        "label": "Action 7",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          173,
+          894,
+          229,
+          912
+        ],
+        "voiceover_reads": "Action 7.  text"
+      },
+      {
+        "index": 27,
+        "label": "Action 8",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          937,
+          378,
+          975
+        ],
+        "voiceover_reads": "Action 8.  button"
+      },
+      {
+        "index": 28,
+        "label": "Action 8",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          947,
+          229,
+          965
+        ],
+        "voiceover_reads": "Action 8.  text"
+      },
+      {
+        "index": 29,
+        "label": "Action 9",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          990,
+          378,
+          1028
+        ],
+        "voiceover_reads": "Action 9.  button"
+      },
+      {
+        "index": 30,
+        "label": "Action 9",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          172,
+          1000,
+          229,
+          1018
+        ],
+        "voiceover_reads": "Action 9.  text"
+      },
+      {
+        "index": 31,
+        "label": "Show Card Tests",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          1038,
+          378,
+          1055
+        ],
+        "voiceover_reads": "Show Card Tests.  textView"
+      },
+      {
+        "index": 32,
+        "label": "Primary 1",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          1065,
+          378,
+          1103
+        ],
+        "voiceover_reads": "Primary 1, card collapsed.  button"
+      },
+      {
+        "index": 33,
+        "label": "Primary 1",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          178,
+          1075,
+          241,
+          1093
+        ],
+        "voiceover_reads": "Primary 1.  text"
+      },
+      {
+        "index": 34,
+        "label": "Primary 2",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          1118,
+          378,
+          1156
+        ],
+        "voiceover_reads": "Primary 2, card collapsed.  button"
+      },
+      {
+        "index": 35,
+        "label": "Primary 2",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          177,
+          1128,
+          242,
+          1146
+        ],
+        "voiceover_reads": "Primary 2.  text"
+      },
+      {
+        "index": 36,
+        "label": "More options",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          1171,
+          378,
+          1209
+        ],
+        "voiceover_reads": "More options.  button"
+      },
+      {
+        "index": 37,
+        "label": "...",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          194,
+          1181,
+          206,
+          1199
+        ],
+        "voiceover_reads": "....  text"
+      },
+      {
+        "index": 38,
+        "label": "========= I am bottom line of body =========",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          1219,
+          378,
+          1236
+        ],
+        "voiceover_reads": "========= I am bottom line of body =========.  textView"
+      },
+      {
+        "index": 39,
+        "label": "Primary OpenUrl",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          24,
+          1246,
+          378,
+          1284
+        ],
+        "voiceover_reads": "Primary OpenUrl.  link"
+      },
+      {
+        "index": 40,
+        "label": "Primary OpenUrl",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          144,
+          1256,
+          257,
+          1274
+        ],
+        "voiceover_reads": "Primary OpenUrl.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5536877_rtlfalse",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Card (rtl: unset)",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          250,
+          378,
+          267
+        ],
+        "voiceover_reads": "Card (rtl: unset).  textView"
+      },
+      {
+        "index": 2,
+        "label": "Column 1",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          277,
+          135,
+          294
+        ],
+        "voiceover_reads": "Column 1.  textView"
+      },
+      {
+        "index": 3,
+        "label": "Column 2",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          145,
+          277,
+          256,
+          294
+        ],
+        "voiceover_reads": "Column 2.  textView"
+      },
+      {
+        "index": 4,
+        "label": "Column 3",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          266,
+          277,
+          377,
+          294
+        ],
+        "voiceover_reads": "Column 3.  textView"
+      },
+      {
+        "index": 5,
+        "label": "Input w/ Inline Action",
+        "value": "",
+        "role": "textField",
+        "bounds": [
+          24,
+          331,
+          340,
+          365
+        ],
+        "voiceover_reads": "Input w/ Inline Action.  textField"
+      },
+      {
+        "index": 6,
+        "label": "Lorem ipsum dolor sit amet.",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          375,
+          378,
+          392
+        ],
+        "voiceover_reads": "Lorem ipsum dolor sit amet..  textView"
+      },
+      {
+        "index": 7,
+        "label": "\u0644\u0643\u0646 \u0644\u0627 \u0628\u062f \u0623\u0646 \u0623\u0648\u0636\u062d \u0644\u0643 \u0623\u0646 \u0643\u0644 \u0647\u0630\u0647 \u0627\u0644\u0623\u0641\u0643\u0627\u0631.",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          402,
+          378,
+          419
+        ],
+        "voiceover_reads": "\u0644\u0643\u0646 \u0644\u0627 \u0628\u062f \u0623\u0646 \u0623\u0648\u0636\u062d \u0644\u0643 \u0623\u0646 \u0643\u0644 \u0647\u0630\u0647 \u0627\u0644\u0623\u0641\u0643\u0627\u0631..  textView"
+      },
+      {
+        "index": 8,
+        "label": "Container (rtl: true)",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          437,
+          370,
+          454
+        ],
+        "voiceover_reads": "Container (rtl: true).  textView"
+      },
+      {
+        "index": 9,
+        "label": "Column 3",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          464,
+          138,
+          481
+        ],
+        "voiceover_reads": "Column 3.  textView"
+      },
+      {
+        "index": 10,
+        "label": "Column 2",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          148,
+          464,
+          254,
+          481
+        ],
+        "voiceover_reads": "Column 2.  textView"
+      },
+      {
+        "index": 11,
+        "label": "Column 1",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          264,
+          464,
+          370,
+          481
+        ],
+        "voiceover_reads": "Column 1.  textView"
+      },
+      {
+        "index": 12,
+        "label": "Input w/ Inline Action",
+        "value": "",
+        "role": "textField",
+        "bounds": [
+          70,
+          518,
+          370,
+          552
+        ],
+        "voiceover_reads": "Input w/ Inline Action.  textField"
+      },
+      {
+        "index": 13,
+        "label": "Lorem ipsum dolor sit amet.",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          562,
+          370,
+          579
+        ],
+        "voiceover_reads": "Lorem ipsum dolor sit amet..  textView"
+      },
+      {
+        "index": 14,
+        "label": "\u0644\u0643\u0646 \u0644\u0627 \u0628\u062f \u0623\u0646 \u0623\u0648\u0636\u062d \u0644\u0643 \u0623\u0646 \u0643\u0644 \u0647\u0630\u0647 \u0627\u0644\u0623\u0641\u0643\u0627\u0631.",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          589,
+          370,
+          606
+        ],
+        "voiceover_reads": "\u0644\u0643\u0646 \u0644\u0627 \u0628\u062f \u0623\u0646 \u0623\u0648\u0636\u062d \u0644\u0643 \u0623\u0646 \u0643\u0644 \u0647\u0630\u0647 \u0627\u0644\u0623\u0641\u0643\u0627\u0631..  textView"
+      },
+      {
+        "index": 15,
+        "label": "Container (rtl: false)",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          632,
+          370,
+          649
+        ],
+        "voiceover_reads": "Container (rtl: false).  textView"
+      },
+      {
+        "index": 16,
+        "label": "Column 1",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          659,
+          138,
+          676
+        ],
+        "voiceover_reads": "Column 1.  textView"
+      },
+      {
+        "index": 17,
+        "label": "Column 2",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          148,
+          659,
+          254,
+          676
+        ],
+        "voiceover_reads": "Column 2.  textView"
+      },
+      {
+        "index": 18,
+        "label": "Column 3",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          264,
+          659,
+          370,
+          676
+        ],
+        "voiceover_reads": "Column 3.  textView"
+      },
+      {
+        "index": 19,
+        "label": "Input w/ Inline Action",
+        "value": "",
+        "role": "textField",
+        "bounds": [
+          32,
+          713,
+          332,
+          747
+        ],
+        "voiceover_reads": "Input w/ Inline Action.  textField"
+      },
+      {
+        "index": 20,
+        "label": "Lorem ipsum dolor sit amet.",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          757,
+          370,
+          774
+        ],
+        "voiceover_reads": "Lorem ipsum dolor sit amet..  textView"
+      },
+      {
+        "index": 21,
+        "label": "\u0644\u0643\u0646 \u0644\u0627 \u0628\u062f \u0623\u0646 \u0623\u0648\u0636\u062d \u0644\u0643 \u0623\u0646 \u0643\u0644 \u0647\u0630\u0647 \u0627\u0644\u0623\u0641\u0643\u0627\u0631.",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          784,
+          370,
+          801
+        ],
+        "voiceover_reads": "\u0644\u0643\u0646 \u0644\u0627 \u0628\u062f \u0623\u0646 \u0623\u0648\u0636\u062d \u0644\u0643 \u0623\u0646 \u0643\u0644 \u0647\u0630\u0647 \u0627\u0644\u0623\u0641\u0643\u0627\u0631..  textView"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5536935_tooltip",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "title",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          16,
+          242,
+          386,
+          2424
+        ],
+        "voiceover_reads": "title.  button"
+      },
+      {
+        "index": 2,
+        "label": "Button with no title or tooltip",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          250,
+          378,
+          267
+        ],
+        "voiceover_reads": "Button with no title or tooltip.  textView"
+      },
+      {
+        "index": 3,
+        "label": "Button with a title",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          325,
+          378,
+          342
+        ],
+        "voiceover_reads": "Button with a title.  textView"
+      },
+      {
+        "index": 4,
+        "label": "Title",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          352,
+          378,
+          390
+        ],
+        "voiceover_reads": "Title.  button"
+      },
+      {
+        "index": 5,
+        "label": "Title",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          186,
+          362,
+          216,
+          380
+        ],
+        "voiceover_reads": "Title.  text"
+      },
+      {
+        "index": 6,
+        "label": "Button with a tooltip",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          400,
+          378,
+          417
+        ],
+        "voiceover_reads": "Button with a tooltip.  textView"
+      },
+      {
+        "index": 7,
+        "label": "Button with a title and a tooltip",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          475,
+          378,
+          492
+        ],
+        "voiceover_reads": "Button with a title and a tooltip.  textView"
+      },
+      {
+        "index": 8,
+        "label": "Title",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          502,
+          378,
+          540
+        ],
+        "voiceover_reads": "Title.  button"
+      },
+      {
+        "index": 9,
+        "label": "Title",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          186,
+          512,
+          216,
+          530
+        ],
+        "voiceover_reads": "Title.  text"
+      },
+      {
+        "index": 10,
+        "label": "Inline Action with a title (title should show on button, no tooltip)",
+        "value": "",
+        "role": "textField",
+        "bounds": [
+          24,
+          594,
+          340,
+          628
+        ],
+        "voiceover_reads": "Inline Action with a title (title should show on button, no tooltip).  textField"
+      },
+      {
+        "index": 11,
+        "label": "Title",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          348,
+          602,
+          378,
+          620
+        ],
+        "voiceover_reads": "Title.  text"
+      },
+      {
+        "index": 12,
+        "label": "Title",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          348,
+          594,
+          378,
+          628
+        ],
+        "voiceover_reads": "Title.  button"
+      },
+      {
+        "index": 13,
+        "label": "Inline Action with a title and a tooltip (title should show on button, tooltip in tooltip)",
+        "value": "",
+        "role": "textField",
+        "bounds": [
+          24,
+          682,
+          340,
+          716
+        ],
+        "voiceover_reads": "Inline Action with a title and a tooltip (title should show on button, tooltip in tooltip).  textField"
+      },
+      {
+        "index": 14,
+        "label": "Title",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          348,
+          690,
+          378,
+          708
+        ],
+        "voiceover_reads": "Title.  text"
+      },
+      {
+        "index": 15,
+        "label": "Title",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          348,
+          682,
+          378,
+          716
+        ],
+        "voiceover_reads": "Title.  button"
+      },
+      {
+        "index": 16,
+        "label": "Inline Action with an icon and a tooltip (icon should show on button, tooltip in tooltip)",
+        "value": "",
+        "role": "textField",
+        "bounds": [
+          24,
+          769,
+          370,
+          803
+        ],
+        "voiceover_reads": "Inline Action with an icon and a tooltip (icon should show on button, tooltip in tooltip).  textField"
+      },
+      {
+        "index": 17,
+        "label": "Inline Action with an icon and a title (icon should show on button, title in tooltip)",
+        "value": "",
+        "role": "textField",
+        "bounds": [
+          24,
+          857,
+          370,
+          891
+        ],
+        "voiceover_reads": "Inline Action with an icon and a title (icon should show on button, title in tooltip).  textField"
+      },
+      {
+        "index": 18,
+        "label": "Inline Action with an icon and a title and a tooltip (icon should show on button, tooltip in tooltip)",
+        "value": "",
+        "role": "textField",
+        "bounds": [
+          24,
+          945,
+          370,
+          979
+        ],
+        "voiceover_reads": "Inline Action with an icon and a title and a tooltip (icon should show on button, tooltip in tooltip).  textField"
+      },
+      {
+        "index": 19,
+        "label": "A container with a text block and an image. No title or tooltip. (no tooltip)",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          989,
+          378,
+          1022
+        ],
+        "voiceover_reads": "A container with a text block and an image. No title or tooltip. (no tooltip).  textView"
+      },
+      {
+        "index": 20,
+        "label": "Text block content.,Image Alt Text.",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          1032,
+          378,
+          1139
+        ],
+        "voiceover_reads": "Text block content.,Image Alt Text..  button"
+      },
+      {
+        "index": 21,
+        "label": "A container with a text block and an image. Action has title. (title should be used as tooltip)",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          1149,
+          378,
+          1182
+        ],
+        "voiceover_reads": "A container with a text block and an image. Action has title. (title should be used as tooltip).  textView"
+      },
+      {
+        "index": 22,
+        "label": "Title,Text block content.,Image Alt Text.",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          1193,
+          378,
+          1300
+        ],
+        "voiceover_reads": "Title,Text block content.,Image Alt Text..  button"
+      },
+      {
+        "index": 23,
+        "label": "A container with a text block and an image. Action has tooltip. (tooltip should be used as tooltip)",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          1310,
+          378,
+          1343
+        ],
+        "voiceover_reads": "A container with a text block and an image. Action has tooltip. (tooltip should be used as tooltip).  textView"
+      },
+      {
+        "index": 24,
+        "label": "Text block content.,Image Alt Text.",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          1354,
+          378,
+          1461
+        ],
+        "voiceover_reads": "Text block content.,Image Alt Text..  button"
+      },
+      {
+        "index": 25,
+        "label": "A container with a text block and an image. Action has title and tooltip. (tooltip should be used as tooltip)",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          1471,
+          378,
+          1521
+        ],
+        "voiceover_reads": "A container with a text block and an image. Action has title and tooltip. (tooltip should be used as tooltip).  textView"
+      },
+      {
+        "index": 26,
+        "label": "Title,Text block content.,Image Alt Text.",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          1531,
+          378,
+          1638
+        ],
+        "voiceover_reads": "Title,Text block content.,Image Alt Text..  button"
+      },
+      {
+        "index": 27,
+        "label": "RichTextBlock with SelectAction, Action has title and tooltip (tooltip should be used as tooltip).",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          24,
+          1647,
+          378,
+          1664
+        ],
+        "voiceover_reads": "RichTextBlock with SelectAction, Action has title and tooltip (tooltip should be used as tooltip)..  link"
+      },
+      {
+        "index": 28,
+        "label": "RichTextBlock with SelectAction, Action has title and no tooltip (title should be used as tooltip).",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          163,
+          1680,
+          377,
+          1697
+        ],
+        "voiceover_reads": "RichTextBlock with SelectAction, Action has title and no tooltip (title should be used as tooltip)..  link"
+      },
+      {
+        "index": 29,
+        "label": "Image has SelectAction. No title or tooltip (no tooltip)",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          1742,
+          378,
+          1775
+        ],
+        "voiceover_reads": "Image has SelectAction. No title or tooltip (no tooltip).  textView"
+      },
+      {
+        "index": 30,
+        "label": "Image Alt Text.",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          1785,
+          378,
+          1945
+        ],
+        "voiceover_reads": "Image Alt Text..  button"
+      },
+      {
+        "index": 31,
+        "label": "Image has SelectAction. Action has title and tooltip. (tooltip should be used as tooltip)",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          1955,
+          378,
+          1988
+        ],
+        "voiceover_reads": "Image has SelectAction. Action has title and tooltip. (tooltip should be used as tooltip).  textView"
+      },
+      {
+        "index": 32,
+        "label": "Image Alt Text.title, tooltip",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          1999,
+          378,
+          2159
+        ],
+        "voiceover_reads": "Image Alt Text.title, tooltip.  button"
+      },
+      {
+        "index": 33,
+        "label": "Image has SelectAction. Action has title. (title should be used as tooltip)",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          2169,
+          378,
+          2202
+        ],
+        "voiceover_reads": "Image has SelectAction. Action has title. (title should be used as tooltip).  textView"
+      },
+      {
+        "index": 34,
+        "label": "Image Alt Text.title",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          2213,
+          378,
+          2373
+        ],
+        "voiceover_reads": "Image Alt Text.title.  button"
+      },
+      {
+        "index": 35,
+        "label": "Adaptive Card has SelectAction Action has tooltip. (tooltip should appear)",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          2383,
+          378,
+          2416
+        ],
+        "voiceover_reads": "Adaptive Card has SelectAction Action has tooltip. (tooltip should appear).  textView"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5539188_inputlabel_link",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "id:textInputId00, required, label: ID 00",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          258,
+          370,
+          275
+        ],
+        "voiceover_reads": "id:textInputId00, required, label: ID 00.  textView"
+      },
+      {
+        "index": 2,
+        "label": "RichTextBlock 4 This is the first text run.  Click here for action. This is the second text run.  \nRequired",
+        "value": "Placeholder 00",
+        "role": "textField",
+        "bounds": [
+          32,
+          312,
+          370,
+          346
+        ],
+        "voiceover_reads": "RichTextBlock 4 This is the first text run.  Click here for action. This is the second text run.  \nRequired, Placeholder 00.  textField"
+      },
+      {
+        "index": 3,
+        "label": "id:textInputId01, not required, label: ID 01",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          356,
+          370,
+          373
+        ],
+        "voiceover_reads": "id:textInputId01, not required, label: ID 01.  textView"
+      },
+      {
+        "index": 4,
+        "label": "RichTextBlock 2 This is the first text run.  Click here for action. This is the second text run.  ",
+        "value": "Placeholder 01",
+        "role": "textField",
+        "bounds": [
+          32,
+          410,
+          370,
+          444
+        ],
+        "voiceover_reads": "RichTextBlock 2 This is the first text run.  Click here for action. This is the second text run.  , Placeholder 01.  textField"
+      },
+      {
+        "index": 5,
+        "label": "id:textInputId02, required, label: ID 02",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          454,
+          370,
+          471
+        ],
+        "voiceover_reads": "id:textInputId02, required, label: ID 02.  textView"
+      },
+      {
+        "index": 6,
+        "label": "ID 02 *\nRequired",
+        "value": "Placeholder 02",
+        "role": "textField",
+        "bounds": [
+          32,
+          508,
+          370,
+          542
+        ],
+        "voiceover_reads": "ID 02 *\nRequired, Placeholder 02.  textField"
+      },
+      {
+        "index": 7,
+        "label": "id:textInputId03, not required, label: ID 03 [No Match]",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          552,
+          370,
+          569
+        ],
+        "voiceover_reads": "id:textInputId03, not required, label: ID 03 [No Match].  textView"
+      },
+      {
+        "index": 8,
+        "label": "ID 03",
+        "value": "Placeholder 03",
+        "role": "textField",
+        "bounds": [
+          32,
+          606,
+          370,
+          640
+        ],
+        "voiceover_reads": "ID 03, Placeholder 03.  textField"
+      },
+      {
+        "index": 9,
+        "label": "id:textInputId04, required, no label [No Match]",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          650,
+          370,
+          667
+        ],
+        "voiceover_reads": "id:textInputId04, required, no label [No Match].  textView"
+      },
+      {
+        "index": 10,
+        "label": "RichTextBlock 1 labelFor:textInputId00",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          755,
+          370,
+          772
+        ],
+        "voiceover_reads": "RichTextBlock 1 labelFor:textInputId00.  textView"
+      },
+      {
+        "index": 11,
+        "label": "Click here for action.",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          288,
+          781,
+          369,
+          798
+        ],
+        "voiceover_reads": "Click here for action..  link"
+      },
+      {
+        "index": 12,
+        "label": "RichTextBlock 2 labelFor:textInputId01",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          826,
+          370,
+          843
+        ],
+        "voiceover_reads": "RichTextBlock 2 labelFor:textInputId01.  textView"
+      },
+      {
+        "index": 13,
+        "label": "Click here for action.",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          290,
+          852,
+          369,
+          869
+        ],
+        "voiceover_reads": "Click here for action..  link"
+      },
+      {
+        "index": 14,
+        "label": "RichTextBlock 3 labelFor:textInputId000 [No Match]",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          897,
+          370,
+          914
+        ],
+        "voiceover_reads": "RichTextBlock 3 labelFor:textInputId000 [No Match].  textView"
+      },
+      {
+        "index": 15,
+        "label": "Click here for action.",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          290,
+          923,
+          369,
+          940
+        ],
+        "voiceover_reads": "Click here for action..  link"
+      },
+      {
+        "index": 16,
+        "label": "RichTextBlock 4 labelFor:textInputId00 [Duplicate with RichTextBlock 1]",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          967,
+          370,
+          984
+        ],
+        "voiceover_reads": "RichTextBlock 4 labelFor:textInputId00 [Duplicate with RichTextBlock 1].  textView"
+      },
+      {
+        "index": 17,
+        "label": "Click here for action.",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          290,
+          993,
+          369,
+          1010
+        ],
+        "voiceover_reads": "Click here for action..  link"
+      },
+      {
+        "index": 18,
+        "label": "id:textInputId10, required, label: ID 10",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          1054,
+          370,
+          1071
+        ],
+        "voiceover_reads": "id:textInputId10, required, label: ID 10.  textView"
+      },
+      {
+        "index": 19,
+        "label": "Fourth Block\nRequired",
+        "value": "Placeholder 10",
+        "role": "textField",
+        "bounds": [
+          32,
+          1108,
+          370,
+          1142
+        ],
+        "voiceover_reads": "Fourth Block\nRequired, Placeholder 10.  textField"
+      },
+      {
+        "index": 20,
+        "label": "id:textInputId11, not required, label: ID 11",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          1152,
+          370,
+          1169
+        ],
+        "voiceover_reads": "id:textInputId11, not required, label: ID 11.  textView"
+      },
+      {
+        "index": 21,
+        "label": "Second Block",
+        "value": "Placeholder 11",
+        "role": "textField",
+        "bounds": [
+          32,
+          1206,
+          370,
+          1240
+        ],
+        "voiceover_reads": "Second Block, Placeholder 11.  textField"
+      },
+      {
+        "index": 22,
+        "label": "id:textInputId12, required, label: ID 12",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          1250,
+          370,
+          1267
+        ],
+        "voiceover_reads": "id:textInputId12, required, label: ID 12.  textView"
+      },
+      {
+        "index": 23,
+        "label": "ID 12 *\nRequired",
+        "value": "Placeholder 12",
+        "role": "textField",
+        "bounds": [
+          32,
+          1304,
+          370,
+          1338
+        ],
+        "voiceover_reads": "ID 12 *\nRequired, Placeholder 12.  textField"
+      },
+      {
+        "index": 24,
+        "label": "id:textInputId13, not required, label: ID 13 [No Match]",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          1348,
+          370,
+          1365
+        ],
+        "voiceover_reads": "id:textInputId13, not required, label: ID 13 [No Match].  textView"
+      },
+      {
+        "index": 25,
+        "label": "ID 13",
+        "value": "Placeholder 13",
+        "role": "textField",
+        "bounds": [
+          32,
+          1402,
+          370,
+          1436
+        ],
+        "voiceover_reads": "ID 13, Placeholder 13.  textField"
+      },
+      {
+        "index": 26,
+        "label": "id:textInputId14, required, no label [No Match]",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          1446,
+          370,
+          1463
+        ],
+        "voiceover_reads": "id:textInputId14, required, no label [No Match].  textView"
+      },
+      {
+        "index": 27,
+        "label": "TextBlock 1 labelFor:textInputId10",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          1551,
+          370,
+          1568
+        ],
+        "voiceover_reads": "TextBlock 1 labelFor:textInputId10.  textView"
+      },
+      {
+        "index": 28,
+        "label": "First Block *",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          1578,
+          370,
+          1595
+        ],
+        "voiceover_reads": "First Block *.  textView"
+      },
+      {
+        "index": 29,
+        "label": "TextBlock 2 labelFor:textInputId11",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          1605,
+          370,
+          1622
+        ],
+        "voiceover_reads": "TextBlock 2 labelFor:textInputId11.  textView"
+      },
+      {
+        "index": 30,
+        "label": "Second Block",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          1632,
+          370,
+          1649
+        ],
+        "voiceover_reads": "Second Block.  textView"
+      },
+      {
+        "index": 31,
+        "label": "TextBlock 3 labelFor:textInputId100 [No Match]",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          1659,
+          370,
+          1676
+        ],
+        "voiceover_reads": "TextBlock 3 labelFor:textInputId100 [No Match].  textView"
+      },
+      {
+        "index": 32,
+        "label": "Third Block",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          1686,
+          370,
+          1703
+        ],
+        "voiceover_reads": "Third Block.  textView"
+      },
+      {
+        "index": 33,
+        "label": "TextBlock 4 labelFor:textInputId10 [Duplicate with TextBlock 1]",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          1713,
+          370,
+          1730
+        ],
+        "voiceover_reads": "TextBlock 4 labelFor:textInputId10 [Duplicate with TextBlock 1].  textView"
+      },
+      {
+        "index": 34,
+        "label": "Fourth Block *",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          32,
+          1740,
+          370,
+          1757
+        ],
+        "voiceover_reads": "Fourth Block *.  textView"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5539230_inlineaction",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Text input with an inline action",
+        "value": "",
+        "role": "textField",
+        "bounds": [
+          24,
+          277,
+          370,
+          311
+        ],
+        "voiceover_reads": "Text input with an inline action.  textField"
+      },
+      {
+        "index": 2,
+        "label": "Text input with an inline action with no icon",
+        "value": "",
+        "role": "textField",
+        "bounds": [
+          24,
+          348,
+          331,
+          382
+        ],
+        "voiceover_reads": "Text input with an inline action with no icon.  textField"
+      },
+      {
+        "index": 3,
+        "label": "Reply",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          339,
+          348,
+          378,
+          382
+        ],
+        "voiceover_reads": "Reply.  link"
+      },
+      {
+        "index": 4,
+        "label": "Reply",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          339,
+          356,
+          378,
+          374
+        ],
+        "voiceover_reads": "Reply.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5539328_columnset_choiceset",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          250,
+          131,
+          768
+        ],
+        "voiceover_reads": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum..  textView"
+      },
+      {
+        "index": 2,
+        "label": "This is a textblock that doesn't stretch, but the input text does",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          147,
+          250,
+          254,
+          333
+        ],
+        "voiceover_reads": "This is a textblock that doesn't stretch, but the input text does.  textView"
+      },
+      {
+        "index": 3,
+        "label": "This is a textblock that doesn't stretch, but the input text does",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          270,
+          250,
+          377,
+          333
+        ],
+        "voiceover_reads": "This is a textblock that doesn't stretch, but the input text does.  textView"
+      },
+      {
+        "index": 4,
+        "label": ", Red, check box",
+        "value": "",
+        "role": "cell",
+        "bounds": [
+          270,
+          344,
+          377,
+          388
+        ],
+        "voiceover_reads": ", Red, check box.  cell"
+      },
+      {
+        "index": 5,
+        "label": "Red",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          298,
+          344,
+          378,
+          388
+        ],
+        "voiceover_reads": "Red.  text"
+      },
+      {
+        "index": 6,
+        "label": "selected",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          270,
+          357,
+          289,
+          374
+        ],
+        "voiceover_reads": "selected.  image"
+      },
+      {
+        "index": 7,
+        "label": ", Green, check box",
+        "value": "",
+        "role": "cell",
+        "bounds": [
+          270,
+          388,
+          377,
+          432
+        ],
+        "voiceover_reads": ", Green, check box.  cell"
+      },
+      {
+        "index": 8,
+        "label": "Green",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          298,
+          388,
+          378,
+          432
+        ],
+        "voiceover_reads": "Green.  text"
+      },
+      {
+        "index": 9,
+        "label": "square",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          270,
+          401,
+          289,
+          418
+        ],
+        "voiceover_reads": "square.  image"
+      },
+      {
+        "index": 10,
+        "label": ", Blue, check box",
+        "value": "",
+        "role": "cell",
+        "bounds": [
+          270,
+          432,
+          377,
+          476
+        ],
+        "voiceover_reads": ", Blue, check box.  cell"
+      },
+      {
+        "index": 11,
+        "label": "Blue",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          298,
+          432,
+          378,
+          476
+        ],
+        "voiceover_reads": "Blue.  text"
+      },
+      {
+        "index": 12,
+        "label": "selected",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          270,
+          445,
+          289,
+          462
+        ],
+        "voiceover_reads": "selected.  image"
+      },
+      {
+        "index": 13,
+        "label": ", Red, radio button",
+        "value": "",
+        "role": "cell",
+        "bounds": [
+          147,
+          531,
+          254,
+          575
+        ],
+        "voiceover_reads": ", Red, radio button.  cell"
+      },
+      {
+        "index": 14,
+        "label": "Red",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          175,
+          531,
+          254,
+          575
+        ],
+        "voiceover_reads": "Red.  text"
+      },
+      {
+        "index": 15,
+        "label": ", Red, check box",
+        "value": "",
+        "role": "cell",
+        "bounds": [
+          270,
+          531,
+          377,
+          575
+        ],
+        "voiceover_reads": ", Red, check box.  cell"
+      },
+      {
+        "index": 16,
+        "label": "Red",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          298,
+          531,
+          378,
+          575
+        ],
+        "voiceover_reads": "Red.  text"
+      },
+      {
+        "index": 17,
+        "label": "Screen Recording",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          147,
+          544,
+          166,
+          563
+        ],
+        "voiceover_reads": "Screen Recording.  image"
+      },
+      {
+        "index": 18,
+        "label": "selected",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          270,
+          545,
+          289,
+          562
+        ],
+        "voiceover_reads": "selected.  image"
+      },
+      {
+        "index": 19,
+        "label": ", Green, radio button",
+        "value": "",
+        "role": "cell",
+        "bounds": [
+          147,
+          575,
+          254,
+          619
+        ],
+        "voiceover_reads": ", Green, radio button.  cell"
+      },
+      {
+        "index": 20,
+        "label": "Green",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          175,
+          575,
+          254,
+          619
+        ],
+        "voiceover_reads": "Green.  text"
+      },
+      {
+        "index": 21,
+        "label": ", Green, check box",
+        "value": "",
+        "role": "cell",
+        "bounds": [
+          270,
+          575,
+          377,
+          619
+        ],
+        "voiceover_reads": ", Green, check box.  cell"
+      },
+      {
+        "index": 22,
+        "label": "Green",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          298,
+          575,
+          378,
+          619
+        ],
+        "voiceover_reads": "Green.  text"
+      },
+      {
+        "index": 23,
+        "label": "circle",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          147,
+          588,
+          166,
+          607
+        ],
+        "voiceover_reads": "circle.  image"
+      },
+      {
+        "index": 24,
+        "label": "square",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          270,
+          589,
+          289,
+          606
+        ],
+        "voiceover_reads": "square.  image"
+      },
+      {
+        "index": 25,
+        "label": ", Blue, radio button",
+        "value": "",
+        "role": "cell",
+        "bounds": [
+          147,
+          619,
+          254,
+          663
+        ],
+        "voiceover_reads": ", Blue, radio button.  cell"
+      },
+      {
+        "index": 26,
+        "label": "Blue",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          175,
+          619,
+          254,
+          663
+        ],
+        "voiceover_reads": "Blue.  text"
+      },
+      {
+        "index": 27,
+        "label": ", Blue, check box",
+        "value": "",
+        "role": "cell",
+        "bounds": [
+          270,
+          619,
+          377,
+          663
+        ],
+        "voiceover_reads": ", Blue, check box.  cell"
+      },
+      {
+        "index": 28,
+        "label": "Blue",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          298,
+          619,
+          378,
+          663
+        ],
+        "voiceover_reads": "Blue.  text"
+      },
+      {
+        "index": 29,
+        "label": "circle",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          147,
+          632,
+          166,
+          651
+        ],
+        "voiceover_reads": "circle.  image"
+      },
+      {
+        "index": 30,
+        "label": "square",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          270,
+          633,
+          289,
+          650
+        ],
+        "voiceover_reads": "square.  image"
+      },
+      {
+        "index": 31,
+        "label": "One last text block at the bottom",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          147,
+          718,
+          254,
+          768
+        ],
+        "voiceover_reads": "One last text block at the bottom.  textView"
+      },
+      {
+        "index": 32,
+        "label": "One last text block at the bottom",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          270,
+          718,
+          377,
+          768
+        ],
+        "voiceover_reads": "One last text block at the bottom.  textView"
+      }
+    ]
+  },
+  {
+    "scenario": "a11ymas_5539505_inputstyle",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Product Name",
+        "value": "Cosmetics",
+        "role": "textField",
+        "bounds": [
+          24,
+          277,
+          378,
+          311
+        ],
+        "voiceover_reads": "Product Name, Cosmetics.  textField"
+      },
+      {
+        "index": 2,
+        "label": "Clear text",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          355,
+          286,
+          372,
+          303
+        ],
+        "voiceover_reads": "Clear text.  button"
+      },
+      {
+        "index": 3,
+        "label": "Est. Delivery",
+        "value": "Oct 12, 2017",
+        "role": "button",
+        "bounds": [
+          24,
+          348,
+          378,
+          382
+        ],
+        "voiceover_reads": "Est. Delivery, Oct 12, 2017.  button"
+      },
+      {
+        "index": 4,
+        "label": "Est. Time",
+        "value": "3:30\u202fPM",
+        "role": "button",
+        "bounds": [
+          24,
+          463,
+          378,
+          497
+        ],
+        "voiceover_reads": "Est. Time, 3:30\u202fPM.  button"
+      },
+      {
+        "index": 5,
+        "label": "Please check the box:, I accept the terms and agreements,",
+        "value": "0",
+        "role": "switch",
+        "bounds": [
+          329,
+          534,
+          380,
+          565
+        ],
+        "voiceover_reads": "Please check the box:, I accept the terms and agreements,, 0.  switch"
+      },
+      {
+        "index": 6,
+        "label": "Select color",
+        "value": "Red",
+        "role": "button",
+        "bounds": [
+          24,
+          602,
+          378,
+          636
+        ],
+        "voiceover_reads": "Select color, Red.  button"
+      },
+      {
+        "index": 7,
+        "label": "Save",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          647,
+          378,
+          685
+        ],
+        "voiceover_reads": "Save.  button"
+      },
+      {
+        "index": 8,
+        "label": "Save",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          184,
+          657,
+          217,
+          675
+        ],
+        "voiceover_reads": "Save.  text"
+      },
+      {
+        "index": 9,
+        "label": "Learn More",
+        "value": "",
+        "role": "link",
+        "bounds": [
+          24,
+          700,
+          378,
+          738
+        ],
+        "voiceover_reads": "Learn More.  link"
+      },
+      {
+        "index": 10,
+        "label": "Learn More",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          162,
+          710,
+          239,
+          728
+        ],
+        "voiceover_reads": "Learn More.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "auto_activity_initial",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Publish Adaptive Card schema",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          294,
+          378,
+          314
+        ],
+        "voiceover_reads": "Publish Adaptive Card schema.  textView"
+      },
+      {
+        "index": 2,
+        "label": "Matt Hidinger",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          24,
+          325,
+          64,
+          365
+        ],
+        "voiceover_reads": "Matt Hidinger.  image"
+      },
+      {
+        "index": 3,
+        "label": "Matt Hidinger",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          74,
+          325,
+          378,
+          342
+        ],
+        "voiceover_reads": "Matt Hidinger.  textView"
+      },
+      {
+        "index": 4,
+        "label": "Created Feb 14, 2017",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          74,
+          342,
+          378,
+          359
+        ],
+        "voiceover_reads": "Created Feb 14, 2017.  textView"
+      },
+      {
+        "index": 5,
+        "label": "Now that we have defined the main rules and features of the format, we need to produce a schema and publish it to GitHub. The schema will be the starting point of our reference documentation.",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          375,
+          378,
+          442
+        ],
+        "voiceover_reads": "Now that we have defined the main rules and features of the format, we need to produce a schema and publish it to GitHub. The schema will be the starting point of our reference documentation..  textView"
+      },
+      {
+        "index": 6,
+        "label": "Set due date",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          452,
+          378,
+          490
+        ],
+        "voiceover_reads": "Set due date, card collapsed.  button"
+      },
+      {
+        "index": 7,
+        "label": "Set due date",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          166,
+          462,
+          253,
+          480
+        ],
+        "voiceover_reads": "Set due date.  text"
+      },
+      {
+        "index": 8,
+        "label": "Comment",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          505,
+          378,
+          542
+        ],
+        "voiceover_reads": "Comment, card collapsed.  button"
+      },
+      {
+        "index": 9,
+        "label": "Comment",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          177,
+          515,
+          244,
+          533
+        ],
+        "voiceover_reads": "Comment.  text"
+      }
+    ]
+  },
+  {
+    "scenario": "auto_activity_showcard_expanded",
+    "platform": "ios",
+    "source": "XCUIElement (UIAccessibility API)",
+    "nodes": [
+      {
+        "index": 1,
+        "label": "Publish Adaptive Card schema",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          294,
+          378,
+          314
+        ],
+        "voiceover_reads": "Publish Adaptive Card schema.  textView"
+      },
+      {
+        "index": 2,
+        "label": "Matt Hidinger",
+        "value": "",
+        "role": "image",
+        "bounds": [
+          24,
+          325,
+          64,
+          365
+        ],
+        "voiceover_reads": "Matt Hidinger.  image"
+      },
+      {
+        "index": 3,
+        "label": "Matt Hidinger",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          74,
+          325,
+          378,
+          342
+        ],
+        "voiceover_reads": "Matt Hidinger.  textView"
+      },
+      {
+        "index": 4,
+        "label": "Created Feb 14, 2017",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          74,
+          342,
+          378,
+          359
+        ],
+        "voiceover_reads": "Created Feb 14, 2017.  textView"
+      },
+      {
+        "index": 5,
+        "label": "Now that we have defined the main rules and features of the format, we need to produce a schema and publish it to GitHub. The schema will be the starting point of our reference documentation.",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          375,
+          378,
+          442
+        ],
+        "voiceover_reads": "Now that we have defined the main rules and features of the format, we need to produce a schema and publish it to GitHub. The schema will be the starting point of our reference documentation..  textView"
+      },
+      {
+        "index": 6,
+        "label": "Set due date",
+        "value": "card collapsed",
+        "role": "button",
+        "bounds": [
+          24,
+          452,
+          378,
+          490
+        ],
+        "voiceover_reads": "Set due date, card collapsed.  button"
+      },
+      {
+        "index": 7,
+        "label": "Set due date",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          166,
+          462,
+          253,
+          480
+        ],
+        "voiceover_reads": "Set due date.  text"
+      },
+      {
+        "index": 8,
+        "label": "Comment",
+        "value": "card expanded",
+        "role": "button",
+        "bounds": [
+          24,
+          505,
+          378,
+          543
+        ],
+        "voiceover_reads": "Comment, card expanded.  button"
+      },
+      {
+        "index": 9,
+        "label": "Comment",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          177,
+          515,
+          244,
+          533
+        ],
+        "voiceover_reads": "Comment.  text"
+      },
+      {
+        "index": 10,
+        "label": "Add a comment",
+        "value": "",
+        "role": "textView",
+        "bounds": [
+          24,
+          586,
+          378,
+          674
+        ],
+        "voiceover_reads": "Add a comment.  textView"
+      },
+      {
+        "index": 11,
+        "label": "OK",
+        "value": "",
+        "role": "button",
+        "bounds": [
+          24,
+          684,
+          378,
+          722
+        ],
+        "voiceover_reads": "OK.  button"
+      },
+      {
+        "index": 12,
+        "label": "OK",
+        "value": "",
+        "role": "text",
+        "bounds": [
+          190,
+          694,
+          211,
+          712
+        ],
+        "voiceover_reads": "OK.  text"
+      }
+    ]
+  }
+]

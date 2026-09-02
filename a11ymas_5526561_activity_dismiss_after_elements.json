@@ -1,0 +1,182 @@
+[
+  {
+    "frame" : {
+      "y" : 250.66666666666666,
+      "x" : 24,
+      "width" : 354,
+      "height" : 20.333333333333343
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Publish Adaptive Card schema",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 281,
+      "x" : 24,
+      "width" : 40,
+      "height" : 40
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Matt Hidinger",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 281,
+      "x" : 74,
+      "width" : 304,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Matt Hidinger",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 298,
+      "x" : 74,
+      "width" : 304,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Created Feb 14, 2017",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 331,
+      "x" : 24,
+      "width" : 354,
+      "height" : 67
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Now that we have defined the main rules and features of the format, we need to produce a schema and publish it to GitHub. The schema will be the starting point of our reference documentation.",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 408.33333333333331,
+      "x" : 24,
+      "width" : 354,
+      "height" : 38
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Set due date",
+    "value" : "card expanded",
+    "isSelected" : true,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 418.33333333333331,
+      "x" : 166.66666666666666,
+      "width" : 87.333333333333343,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Set due date",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 461.33333333333331,
+      "x" : 24,
+      "width" : 354,
+      "height" : 38
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Comment",
+    "value" : "card collapsed",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 471.33333333333331,
+      "x" : 177,
+      "width" : 67,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Comment",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 542.33333333333337,
+      "x" : 24,
+      "width" : 354,
+      "height" : 34
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "dueDate",
+    "label" : "Enter the due date",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 586.33333333333337,
+      "x" : 24,
+      "width" : 354,
+      "height" : 38
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Send",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 596.33333333333337,
+      "x" : 183.33333333333334,
+      "width" : 35.333333333333314,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Send",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]

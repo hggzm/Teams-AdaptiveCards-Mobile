@@ -1,0 +1,527 @@
+[
+  {
+    "frame" : {
+      "y" : 242.66666666666666,
+      "x" : 16,
+      "width" : 370,
+      "height" : 2182.3333333333335
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "title",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 250.66666666666666,
+      "x" : 24,
+      "width" : 354,
+      "height" : 17.000000000000028
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Button with no title or tooltip",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 325.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Button with a title",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 352.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 38
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Title",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 362.66666666666669,
+      "x" : 186,
+      "width" : 30,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Title",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 400.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Button with a tooltip",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 475.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Button with a title and a tooltip",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 502.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 38.000000000000057
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Title",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 512.66666666666674,
+      "x" : 186,
+      "width" : 30,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Title",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 594.33333333333337,
+      "x" : 24,
+      "width" : 316,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Inline Action with a title (title should show on button, no tooltip)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 602.33333333333337,
+      "x" : 348,
+      "width" : 30,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Title",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 594.33333333333337,
+      "x" : 348,
+      "width" : 30,
+      "height" : 34
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Title",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 682,
+      "x" : 24,
+      "width" : 316,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Inline Action with a title and a tooltip (title should show on button, tooltip in tooltip)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 690,
+      "x" : 348,
+      "width" : 30,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Title",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 682,
+      "x" : 348,
+      "width" : 30,
+      "height" : 34
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Title",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 769.66666666666663,
+      "x" : 24,
+      "width" : 346,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Inline Action with an icon and a tooltip (icon should show on button, tooltip in tooltip)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 857.33333333333337,
+      "x" : 24,
+      "width" : 346,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Inline Action with an icon and a title (icon should show on button, title in tooltip)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 945,
+      "x" : 24,
+      "width" : 346,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Inline Action with an icon and a title and a tooltip (icon should show on button, tooltip in tooltip)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 989,
+      "x" : 24,
+      "width" : 354,
+      "height" : 33.666666666666629
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "A container with a text block and an image. No title or tooltip. (no tooltip)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1032.6666666666667,
+      "x" : 24,
+      "width" : 354,
+      "height" : 107
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Text block content.,Image Alt Text.",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1149.6666666666667,
+      "x" : 24,
+      "width" : 354,
+      "height" : 33.666666666666742
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "A container with a text block and an image. Action has title. (title should be used as tooltip)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1193.3333333333333,
+      "x" : 24,
+      "width" : 354,
+      "height" : 107
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Title,Text block content.,Image Alt Text.",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1310.3333333333335,
+      "x" : 24,
+      "width" : 354,
+      "height" : 33.666666666666742
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "A container with a text block and an image. Action has tooltip. (tooltip should be used as tooltip)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1354,
+      "x" : 24,
+      "width" : 354,
+      "height" : 107
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Text block content.,Image Alt Text.",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1471,
+      "x" : 24,
+      "width" : 354,
+      "height" : 50.333333333333258
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "A container with a text block and an image. Action has title and tooltip. (tooltip should be used as tooltip)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1531.3333333333333,
+      "x" : 24,
+      "width" : 354,
+      "height" : 107
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Title,Text block content.,Image Alt Text.",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1647.3333333333333,
+      "x" : 24,
+      "width" : 354,
+      "height" : 17.66666666666697
+    },
+    "role" : "link",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "RichTextBlock with SelectAction, Action has title and tooltip (tooltip should be used as tooltip).",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1680.6666666666667,
+      "x" : 163.66666666666666,
+      "width" : 214.33333333333334,
+      "height" : 17.666666666666515
+    },
+    "role" : "link",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "RichTextBlock with SelectAction, Action has title and no tooltip (title should be used as tooltip).",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1742,
+      "x" : 24,
+      "width" : 354,
+      "height" : 33.666666666666742
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Image has SelectAction. No title or tooltip (no tooltip)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1785.6666666666667,
+      "x" : 24,
+      "width" : 354,
+      "height" : 160
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Image Alt Text.",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1955.6666666666667,
+      "x" : 24,
+      "width" : 354,
+      "height" : 33.666666666666515
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Image has SelectAction. Action has title and tooltip. (tooltip should be used as tooltip)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1999.3333333333333,
+      "x" : 24,
+      "width" : 354,
+      "height" : 160.00000000000023
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Image Alt Text.title, tooltip",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 2169.3333333333335,
+      "x" : 24,
+      "width" : 354,
+      "height" : 33.666666666666515
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Image has SelectAction. Action has title. (title should be used as tooltip)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 2213,
+      "x" : 24,
+      "width" : 354,
+      "height" : 160
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Image Alt Text.title",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 2383,
+      "x" : 24,
+      "width" : 354,
+      "height" : 33.666666666666515
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Adaptive Card has SelectAction Action has tooltip. (tooltip should appear)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]

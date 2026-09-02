@@ -1,0 +1,482 @@
+[
+  {
+    "frame" : {
+      "y" : 250.66666666666666,
+      "x" : 24,
+      "width" : 107.33333333333331,
+      "height" : 518
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 250.66666666666666,
+      "x" : 147.33333333333334,
+      "width" : 107.33333333333331,
+      "height" : 83.666666666666714
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "This is a textblock that doesn't stretch, but the input text does",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 250.66666666666666,
+      "x" : 270.66666666666663,
+      "width" : 107.33333333333331,
+      "height" : 83.666666666666714
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "This is a textblock that doesn't stretch, but the input text does",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 344.33333333333331,
+      "x" : 270.66666666666663,
+      "width" : 107.33333333333331,
+      "height" : 44
+    },
+    "role" : "cell",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : ", Red, check box",
+    "value" : "",
+    "isSelected" : true,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 344.33333333333331,
+      "x" : 298,
+      "width" : 80,
+      "height" : 44
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "myColor3, Red",
+    "label" : "Red",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 357.66666666666669,
+      "x" : 270.66666666666663,
+      "width" : 19.333333333333314,
+      "height" : 17.333333333333314
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "checkmark.square",
+    "label" : "selected",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 388.33333333333331,
+      "x" : 270.66666666666663,
+      "width" : 107.33333333333331,
+      "height" : 44
+    },
+    "role" : "cell",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : ", Green, check box",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 388.33333333333331,
+      "x" : 298,
+      "width" : 80,
+      "height" : 44
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "myColor3, Green",
+    "label" : "Green",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 401.66666666666669,
+      "x" : 270.66666666666663,
+      "width" : 19.333333333333314,
+      "height" : 17.333333333333314
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "square",
+    "label" : "square",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 432.33333333333331,
+      "x" : 270.66666666666663,
+      "width" : 107.33333333333331,
+      "height" : 44
+    },
+    "role" : "cell",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : ", Blue, check box",
+    "value" : "",
+    "isSelected" : true,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 432.33333333333331,
+      "x" : 298,
+      "width" : 80,
+      "height" : 44
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "myColor3, Blue",
+    "label" : "Blue",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 445.66666666666669,
+      "x" : 270.66666666666663,
+      "width" : 19.333333333333314,
+      "height" : 17.333333333333314
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "checkmark.square",
+    "label" : "selected",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 531.66666666666674,
+      "x" : 147.33333333333334,
+      "width" : 107.33333333333331,
+      "height" : 44
+    },
+    "role" : "cell",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : ", Red, radio button",
+    "value" : "",
+    "isSelected" : true,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 531.66666666666674,
+      "x" : 175,
+      "width" : 79.666666666666657,
+      "height" : 44
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "myColor2, Red",
+    "label" : "Red",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 531.66666666666674,
+      "x" : 270.66666666666663,
+      "width" : 107.33333333333331,
+      "height" : 44
+    },
+    "role" : "cell",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : ", Red, check box",
+    "value" : "",
+    "isSelected" : true,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 531.66666666666674,
+      "x" : 298,
+      "width" : 80,
+      "height" : 44
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "myColor4, Red",
+    "label" : "Red",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 544.16666666666674,
+      "x" : 147.33333333333334,
+      "width" : 19.666666666666657,
+      "height" : 19
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "record.circle",
+    "label" : "Screen Recording",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 545,
+      "x" : 270.66666666666663,
+      "width" : 19.333333333333314,
+      "height" : 17.333333333333371
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "checkmark.square",
+    "label" : "selected",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 575.66666666666674,
+      "x" : 147.33333333333334,
+      "width" : 107.33333333333331,
+      "height" : 44
+    },
+    "role" : "cell",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : ", Green, radio button",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 575.66666666666674,
+      "x" : 175,
+      "width" : 79.666666666666657,
+      "height" : 44
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "myColor2, Green",
+    "label" : "Green",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 575.66666666666674,
+      "x" : 270.66666666666663,
+      "width" : 107.33333333333331,
+      "height" : 44
+    },
+    "role" : "cell",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : ", Green, check box",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 575.66666666666674,
+      "x" : 298,
+      "width" : 80,
+      "height" : 44
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "myColor4, Green",
+    "label" : "Green",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 588.16666666666674,
+      "x" : 147.33333333333334,
+      "width" : 19.666666666666657,
+      "height" : 19
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "circle",
+    "label" : "circle",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 589,
+      "x" : 270.66666666666663,
+      "width" : 19.333333333333314,
+      "height" : 17.333333333333371
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "square",
+    "label" : "square",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 619.66666666666674,
+      "x" : 147.33333333333334,
+      "width" : 107.33333333333331,
+      "height" : 44
+    },
+    "role" : "cell",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : ", Blue, radio button",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 619.66666666666674,
+      "x" : 175,
+      "width" : 79.666666666666657,
+      "height" : 44
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "myColor2, Blue",
+    "label" : "Blue",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 619.66666666666674,
+      "x" : 270.66666666666663,
+      "width" : 107.33333333333331,
+      "height" : 44
+    },
+    "role" : "cell",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : ", Blue, check box",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 619.66666666666674,
+      "x" : 298,
+      "width" : 80,
+      "height" : 44
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "myColor4, Blue",
+    "label" : "Blue",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 632.16666666666674,
+      "x" : 147.33333333333334,
+      "width" : 19.666666666666657,
+      "height" : 19
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "circle",
+    "label" : "circle",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 633,
+      "x" : 270.66666666666663,
+      "width" : 19.333333333333314,
+      "height" : 17.333333333333371
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "square",
+    "label" : "square",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 718.66666666666663,
+      "x" : 147.33333333333334,
+      "width" : 107.33333333333331,
+      "height" : 50.333333333333485
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "One last text block at the bottom",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 718.66666666666663,
+      "x" : 270.66666666666663,
+      "width" : 107.33333333333331,
+      "height" : 50.333333333333485
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "One last text block at the bottom",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]

@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>iOS A11y Screenshot Gallery</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, sans-serif; background: #0d1117; color: #c9d1d9; padding: 2rem; }
+    h1 { color: #58a6ff; margin-bottom: 1rem; }
+    h2 { color: #f0f6fc; margin: 2rem 0 1rem; border-bottom: 1px solid #30363d; padding-bottom: 0.5rem; }
+    h3 { color: #8b949e; margin-bottom: 0.5rem; font-size: 0.9rem; }
+    .meta { color: #8b949e; margin-bottom: 2rem; }
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem; }
+    .card img { width: 100%; display: block; border-radius: 4px; }
+    video { width: 100%; max-width: 500px; border-radius: 8px; border: 1px solid #30363d; margin: 1rem 0; }
+    details { margin: 1rem 0; }
+    summary { cursor: pointer; color: #58a6ff; font-weight: 600; }
+    table.transcript { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.85rem; }
+    table.transcript th { background: #161b22; color: #8b949e; padding: 6px 8px; text-align: left; border-bottom: 2px solid #30363d; }
+    table.transcript td { padding: 6px 8px; border-bottom: 1px solid #21262d; }
+    .vo { color: #58a6ff; font-style: italic; }
+    .bounds { font-family: monospace; font-size: 0.8rem; color: #8b949e; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+    .badge-pass { background: #238636; color: white; }
+    .badge-info { background: #1f6feb; color: white; }
+    .links { margin: 1rem 0; }
+    .links a { color: #58a6ff; margin-right: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>iOS Accessibility Screenshot Gallery</h1>
+  <div class="meta">
+    <span class="badge badge-pass">XCUIElement API</span>
+    <span class="badge badge-info">424 ELEMENTS</span>
+    <span class="badge badge-info">20 SCENARIOS</span>
+  </div>
+  <div class="links">
+    <a href="a11y_transcript.json">Transcript JSON</a>
+    <a href="voiceover_demo.mp4">Video Recording</a>
+    <a href="timeline.json">Pipeline Metadata</a>
+  </div>
+
+  <h2>Video Recording</h2>
+  <video controls preload="metadata">
+    <source src="voiceover_demo.mp4" type="video/mp4">
+  </video>
+  <p style="color:#8b949e;">XCUITest interactions recorded via AXe record-video.</p>
+
+  <h2>A11Ymas 5428632 Foodorder Showcard</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5428632_foodorder_showcard.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5428632_foodorder_showcard.png" alt="annotated"></div>
+</div>
+<details><summary>23 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>textView</td><td>Your registration is almost complete</td><td></td><td class="vo">Your registration is almost complete.  textView</td><td class="bounds">24,250,378,270</td></tr>
+<tr><td>2</td><td>textView</td><td>What type of food do you prefer?</td><td></td><td class="vo">What type of food do you prefer?.  textView</td><td class="bounds">24,281,378,298</td></tr>
+<tr><td>3</td><td>image</td><td>Steak cut with fries</td><td></td><td class="vo">Steak cut with fries.  image</td><td class="bounds">24,308,104,388</td></tr>
+<tr><td>4</td><td>image</td><td>Fried chicken with lettuce</td><td></td><td class="vo">Fried chicken with lettuce.  image</td><td class="bounds">115,308,195,388</td></tr>
+<tr><td>5</td><td>image</td><td>Tofu topped with red sauce</td><td></td><td class="vo">Tofu topped with red sauce.  image</td><td class="bounds">206,308,285,388</td></tr>
+<tr><td>6</td><td>button</td><td>Steak</td><td>card expanded</td><td class="vo">Steak, card expanded.  button</td><td class="bounds">24,398,378,436</td></tr>
+<tr><td>7</td><td>text</td><td>Steak</td><td></td><td class="vo">Steak.  text</td><td class="bounds">191,408,230,426</td></tr>
+<tr><td>8</td><td>button</td><td>Chicken</td><td>card collapsed</td><td class="vo">Chicken, card collapsed.  button</td><td class="bounds">24,451,378,489</td></tr>
+<tr><td>9</td><td>text</td><td>Chicken</td><td></td><td class="vo">Chicken.  text</td><td class="bounds">182,461,237,479</td></tr>
+<tr><td>10</td><td>button</td><td>Tofu</td><td>card collapsed</td><td class="vo">Tofu, card collapsed.  button</td><td class="bounds">24,504,378,542</td></tr>
+<tr><td>11</td><td>text</td><td>Tofu</td><td></td><td class="vo">Tofu.  text</td><td class="bounds">195,514,225,532</td></tr>
+<tr><td>12</td><td>cell</td><td>How would you like your steak prepared? </td><td></td><td class="vo">How would you like your steak prepared?  (Required), Rare, r</td><td class="bounds">24,585,378,629</td></tr>
+<tr><td>13</td><td>text</td><td>Rare</td><td></td><td class="vo">Rare.  text</td><td class="bounds">51,585,377,629</td></tr>
+<tr><td>14</td><td>image</td><td>circle</td><td></td><td class="vo">circle.  image</td><td class="bounds">24,597,43,616</td></tr>
+<tr><td>15</td><td>cell</td><td>How would you like your steak prepared? </td><td></td><td class="vo">How would you like your steak prepared?  (Required), Medium-</td><td class="bounds">24,629,378,673</td></tr>
+<tr><td>16</td><td>text</td><td>Medium-Rare</td><td></td><td class="vo">Medium-Rare.  text</td><td class="bounds">51,629,377,673</td></tr>
+<tr><td>17</td><td>image</td><td>circle</td><td></td><td class="vo">circle.  image</td><td class="bounds">24,641,43,660</td></tr>
+<tr><td>18</td><td>cell</td><td>How would you like your steak prepared? </td><td></td><td class="vo">How would you like your steak prepared?  (Required), Well-do</td><td class="bounds">24,673,378,717</td></tr>
+<tr><td>19</td><td>text</td><td>Well-done</td><td></td><td class="vo">Well-done.  text</td><td class="bounds">51,673,377,717</td></tr>
+<tr><td>20</td><td>image</td><td>circle</td><td></td><td class="vo">circle.  image</td><td class="bounds">24,685,43,704</td></tr>
+<tr><td>21</td><td>textView</td><td>Any other preparation requests?</td><td></td><td class="vo">Any other preparation requests?.  textView</td><td class="bounds">24,754,378,842</td></tr>
+<tr><td>22</td><td>button</td><td>OK</td><td></td><td class="vo">OK.  button</td><td class="bounds">24,852,378,890</td></tr>
+<tr><td>23</td><td>text</td><td>OK</td><td></td><td class="vo">OK.  text</td><td class="bounds">190,862,211,880</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5428636 Interactive Kbd</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5428636_interactive_kbd.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5428636_interactive_kbd.png" alt="annotated"></div>
+</div>
+<details><summary>40 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>button</td><td>Root Overflow Actions (...)</td><td></td><td class="vo">Root Overflow Actions (...).  button</td><td class="bounds">16,242,266,282</td></tr>
+<tr><td>2</td><td>text</td><td>Root Overflow Actions (...)</td><td></td><td class="vo">Root Overflow Actions (...).  text</td><td class="bounds">50,253,231,271</td></tr>
+<tr><td>3</td><td>textView</td><td>Overflow Action Test Card!</td><td></td><td class="vo">Overflow Action Test Card!.  textView</td><td class="bounds">24,300,378,325</td></tr>
+<tr><td>4</td><td>textView</td><td>ActionSet all secondary actions</td><td></td><td class="vo">ActionSet all secondary actions.  textView</td><td class="bounds">24,336,378,353</td></tr>
+<tr><td>5</td><td>button</td><td>More options</td><td></td><td class="vo">More options.  button</td><td class="bounds">24,363,378,401</td></tr>
+<tr><td>6</td><td>text</td><td>...</td><td></td><td class="vo">....  text</td><td class="bounds">194,373,206,391</td></tr>
+<tr><td>7</td><td>textView</td><td>ActionSet primary + secondary actions</td><td></td><td class="vo">ActionSet primary + secondary actions.  textView</td><td class="bounds">24,411,378,428</td></tr>
+<tr><td>8</td><td>button</td><td>Submit</td><td></td><td class="vo">Submit.  button</td><td class="bounds">24,438,378,476</td></tr>
+<tr><td>9</td><td>text</td><td>Submit</td><td></td><td class="vo">Submit.  text</td><td class="bounds">177,448,225,466</td></tr>
+<tr><td>10</td><td>button</td><td>More options</td><td></td><td class="vo">More options.  button</td><td class="bounds">24,491,378,529</td></tr>
+<tr><td>11</td><td>text</td><td>...</td><td></td><td class="vo">....  text</td><td class="bounds">194,501,206,518</td></tr>
+<tr><td>12</td><td>textView</td><td>Check actions.length > maxActions</td><td></td><td class="vo">Check actions.length > maxActions.  textView</td><td class="bounds">24,539,378,556</td></tr>
+<tr><td>13</td><td>button</td><td>Action 1</td><td></td><td class="vo">Action 1.  button</td><td class="bounds">24,566,378,604</td></tr>
+<tr><td>14</td><td>text</td><td>Action 1</td><td></td><td class="vo">Action 1.  text</td><td class="bounds">174,576,228,594</td></tr>
+<tr><td>15</td><td>button</td><td>Action 2</td><td></td><td class="vo">Action 2.  button</td><td class="bounds">24,619,378,657</td></tr>
+<tr><td>16</td><td>text</td><td>Action 2</td><td></td><td class="vo">Action 2.  text</td><td class="bounds">172,629,228,647</td></tr>
+<tr><td>17</td><td>button</td><td>Action 3</td><td></td><td class="vo">Action 3.  button</td><td class="bounds">24,672,378,710</td></tr>
+<tr><td>18</td><td>text</td><td>Action 3</td><td></td><td class="vo">Action 3.  text</td><td class="bounds">172,682,229,700</td></tr>
+<tr><td>19</td><td>button</td><td>Action 4</td><td></td><td class="vo">Action 4.  button</td><td class="bounds">24,725,378,763</td></tr>
+<tr><td>20</td><td>text</td><td>Action 4</td><td></td><td class="vo">Action 4.  text</td><td class="bounds">172,735,229,753</td></tr>
+<tr><td>21</td><td>button</td><td>Action 5</td><td></td><td class="vo">Action 5.  button</td><td class="bounds">24,778,378,816</td></tr>
+<tr><td>22</td><td>text</td><td>Action 5</td><td></td><td class="vo">Action 5.  text</td><td class="bounds">172,788,228,806</td></tr>
+<tr><td>23</td><td>button</td><td>Action 6</td><td></td><td class="vo">Action 6.  button</td><td class="bounds">24,831,378,869</td></tr>
+<tr><td>24</td><td>text</td><td>Action 6</td><td></td><td class="vo">Action 6.  text</td><td class="bounds">172,841,229,859</td></tr>
+<tr><td>25</td><td>button</td><td>Action 7</td><td></td><td class="vo">Action 7.  button</td><td class="bounds">24,884,378,922</td></tr>
+<tr><td>26</td><td>text</td><td>Action 7</td><td></td><td class="vo">Action 7.  text</td><td class="bounds">173,894,229,912</td></tr>
+<tr><td>27</td><td>button</td><td>Action 8</td><td></td><td class="vo">Action 8.  button</td><td class="bounds">24,937,378,975</td></tr>
+<tr><td>28</td><td>text</td><td>Action 8</td><td></td><td class="vo">Action 8.  text</td><td class="bounds">172,947,229,965</td></tr>
+<tr><td>29</td><td>button</td><td>Action 9</td><td></td><td class="vo">Action 9.  button</td><td class="bounds">24,990,378,1028</td></tr>
+<tr><td>30</td><td>text</td><td>Action 9</td><td></td><td class="vo">Action 9.  text</td><td class="bounds">172,1000,229,1018</td></tr>
+<tr><td>31</td><td>textView</td><td>Show Card Tests</td><td></td><td class="vo">Show Card Tests.  textView</td><td class="bounds">24,1038,378,1055</td></tr>
+<tr><td>32</td><td>button</td><td>Primary 1</td><td>card collapsed</td><td class="vo">Primary 1, card collapsed.  button</td><td class="bounds">24,1065,378,1103</td></tr>
+<tr><td>33</td><td>text</td><td>Primary 1</td><td></td><td class="vo">Primary 1.  text</td><td class="bounds">178,1075,241,1093</td></tr>
+<tr><td>34</td><td>button</td><td>Primary 2</td><td>card collapsed</td><td class="vo">Primary 2, card collapsed.  button</td><td class="bounds">24,1118,378,1156</td></tr>
+<tr><td>35</td><td>text</td><td>Primary 2</td><td></td><td class="vo">Primary 2.  text</td><td class="bounds">177,1128,242,1146</td></tr>
+<tr><td>36</td><td>button</td><td>More options</td><td></td><td class="vo">More options.  button</td><td class="bounds">24,1171,378,1209</td></tr>
+<tr><td>37</td><td>text</td><td>...</td><td></td><td class="vo">....  text</td><td class="bounds">194,1181,206,1199</td></tr>
+<tr><td>38</td><td>textView</td><td>========= I am bottom line of body =====</td><td></td><td class="vo">========= I am bottom line of body =========.  textView</td><td class="bounds">24,1219,378,1236</td></tr>
+<tr><td>39</td><td>link</td><td>Primary OpenUrl</td><td></td><td class="vo">Primary OpenUrl.  link</td><td class="bounds">24,1246,378,1284</td></tr>
+<tr><td>40</td><td>text</td><td>Primary OpenUrl</td><td></td><td class="vo">Primary OpenUrl.  text</td><td class="bounds">144,1256,257,1274</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5526561 Activity Dismiss After</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5526561_activity_dismiss_after.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5526561_activity_dismiss_after.png" alt="annotated"></div>
+</div>
+<details><summary>12 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>textView</td><td>Publish Adaptive Card schema</td><td></td><td class="vo">Publish Adaptive Card schema.  textView</td><td class="bounds">24,250,378,270</td></tr>
+<tr><td>2</td><td>image</td><td>Matt Hidinger</td><td></td><td class="vo">Matt Hidinger.  image</td><td class="bounds">24,281,64,321</td></tr>
+<tr><td>3</td><td>textView</td><td>Matt Hidinger</td><td></td><td class="vo">Matt Hidinger.  textView</td><td class="bounds">74,281,378,298</td></tr>
+<tr><td>4</td><td>textView</td><td>Created Feb 14, 2017</td><td></td><td class="vo">Created Feb 14, 2017.  textView</td><td class="bounds">74,298,378,315</td></tr>
+<tr><td>5</td><td>textView</td><td>Now that we have defined the main rules </td><td></td><td class="vo">Now that we have defined the main rules and features of the </td><td class="bounds">24,331,378,398</td></tr>
+<tr><td>6</td><td>button</td><td>Set due date</td><td>card expanded</td><td class="vo">Set due date, card expanded.  button</td><td class="bounds">24,408,378,446</td></tr>
+<tr><td>7</td><td>text</td><td>Set due date</td><td></td><td class="vo">Set due date.  text</td><td class="bounds">166,418,253,436</td></tr>
+<tr><td>8</td><td>button</td><td>Comment</td><td>card collapsed</td><td class="vo">Comment, card collapsed.  button</td><td class="bounds">24,461,378,499</td></tr>
+<tr><td>9</td><td>text</td><td>Comment</td><td></td><td class="vo">Comment.  text</td><td class="bounds">177,471,244,489</td></tr>
+<tr><td>10</td><td>button</td><td>Enter the due date</td><td></td><td class="vo">Enter the due date.  button</td><td class="bounds">24,542,378,576</td></tr>
+<tr><td>11</td><td>button</td><td>Send</td><td></td><td class="vo">Send.  button</td><td class="bounds">24,586,378,624</td></tr>
+<tr><td>12</td><td>text</td><td>Send</td><td></td><td class="vo">Send.  text</td><td class="bounds">183,596,218,614</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5526561 Activity Dismiss Afterdismiss</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5526561_activity_dismiss_afterdismiss.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5526561_activity_dismiss_afterdismiss.png" alt="annotated"></div>
+</div>
+<details><summary>9 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>textView</td><td>Publish Adaptive Card schema</td><td></td><td class="vo">Publish Adaptive Card schema.  textView</td><td class="bounds">24,250,378,270</td></tr>
+<tr><td>2</td><td>image</td><td>Matt Hidinger</td><td></td><td class="vo">Matt Hidinger.  image</td><td class="bounds">24,281,64,321</td></tr>
+<tr><td>3</td><td>textView</td><td>Matt Hidinger</td><td></td><td class="vo">Matt Hidinger.  textView</td><td class="bounds">74,281,378,298</td></tr>
+<tr><td>4</td><td>textView</td><td>Created Feb 14, 2017</td><td></td><td class="vo">Created Feb 14, 2017.  textView</td><td class="bounds">74,298,378,315</td></tr>
+<tr><td>5</td><td>textView</td><td>Now that we have defined the main rules </td><td></td><td class="vo">Now that we have defined the main rules and features of the </td><td class="bounds">24,331,378,398</td></tr>
+<tr><td>6</td><td>button</td><td>Set due date</td><td>card collapsed</td><td class="vo">Set due date, card collapsed.  button</td><td class="bounds">24,408,378,446</td></tr>
+<tr><td>7</td><td>text</td><td>Set due date</td><td></td><td class="vo">Set due date.  text</td><td class="bounds">166,418,253,436</td></tr>
+<tr><td>8</td><td>button</td><td>Comment</td><td>card collapsed</td><td class="vo">Comment, card collapsed.  button</td><td class="bounds">24,461,378,499</td></tr>
+<tr><td>9</td><td>text</td><td>Comment</td><td></td><td class="vo">Comment.  text</td><td class="bounds">177,471,244,489</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5526561 Activity Dismiss Before</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5526561_activity_dismiss_before.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5526561_activity_dismiss_before.png" alt="annotated"></div>
+</div>
+<details><summary>9 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>textView</td><td>Publish Adaptive Card schema</td><td></td><td class="vo">Publish Adaptive Card schema.  textView</td><td class="bounds">24,250,378,270</td></tr>
+<tr><td>2</td><td>image</td><td>Matt Hidinger</td><td></td><td class="vo">Matt Hidinger.  image</td><td class="bounds">24,281,64,321</td></tr>
+<tr><td>3</td><td>textView</td><td>Matt Hidinger</td><td></td><td class="vo">Matt Hidinger.  textView</td><td class="bounds">74,281,378,298</td></tr>
+<tr><td>4</td><td>textView</td><td>Created Feb 14, 2017</td><td></td><td class="vo">Created Feb 14, 2017.  textView</td><td class="bounds">74,298,378,315</td></tr>
+<tr><td>5</td><td>textView</td><td>Now that we have defined the main rules </td><td></td><td class="vo">Now that we have defined the main rules and features of the </td><td class="bounds">24,331,378,398</td></tr>
+<tr><td>6</td><td>button</td><td>Set due date</td><td>card collapsed</td><td class="vo">Set due date, card collapsed.  button</td><td class="bounds">24,408,378,446</td></tr>
+<tr><td>7</td><td>text</td><td>Set due date</td><td></td><td class="vo">Set due date.  text</td><td class="bounds">166,418,253,436</td></tr>
+<tr><td>8</td><td>button</td><td>Comment</td><td>card collapsed</td><td class="vo">Comment, card collapsed.  button</td><td class="bounds">24,461,378,499</td></tr>
+<tr><td>9</td><td>text</td><td>Comment</td><td></td><td class="vo">Comment.  text</td><td class="bounds">177,471,244,489</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5532275 Compoundbutton</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5532275_compoundbutton.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5532275_compoundbutton.png" alt="annotated"></div>
+</div>
+<details><summary>12 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>text</td><td>Summarize</td><td></td><td class="vo">Summarize.  text</td><td class="bounds">84,272,173,292</td></tr>
+<tr><td>2</td><td>text</td><td>New</td><td></td><td class="vo">New.  text</td><td class="bounds">189,275,214,289</td></tr>
+<tr><td>3</td><td>text</td><td>Create a work item and assign it to your</td><td></td><td class="vo">Create a work item and assign it to your or a team member.  </td><td class="bounds">40,302,344,338</td></tr>
+<tr><td>4</td><td>text</td><td>View active work items</td><td></td><td class="vo">View active work items.  text</td><td class="bounds">40,380,222,400</td></tr>
+<tr><td>5</td><td>text</td><td>New</td><td></td><td class="vo">New.  text</td><td class="bounds">237,383,262,397</td></tr>
+<tr><td>6</td><td>text</td><td>See active tasks assigned to you or team</td><td></td><td class="vo">See active tasks assigned to you or team members.  text</td><td class="bounds">40,405,285,441</td></tr>
+<tr><td>7</td><td>text</td><td>Give feedback</td><td></td><td class="vo">Give feedback.  text</td><td class="bounds">80,489,193,509</td></tr>
+<tr><td>8</td><td>text</td><td>To give us feedback on Azure DevOps</td><td></td><td class="vo">To give us feedback on Azure DevOps.  text</td><td class="bounds">40,519,300,537</td></tr>
+<tr><td>9</td><td>text</td><td>Summarize</td><td></td><td class="vo">Summarize.  text</td><td class="bounds">40,579,129,599</td></tr>
+<tr><td>10</td><td>text</td><td>Create a work item and assign it to your</td><td></td><td class="vo">Create a work item and assign it to your or a team member.  </td><td class="bounds">40,603,344,639</td></tr>
+<tr><td>11</td><td>text</td><td>Pending Tasks</td><td></td><td class="vo">Pending Tasks.  text</td><td class="bounds">92,687,206,707</td></tr>
+<tr><td>12</td><td>text</td><td>Priority</td><td></td><td class="vo">Priority.  text</td><td class="bounds">222,690,264,704</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5532354 Compoundbutton Kbd</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5532354_compoundbutton_kbd.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5532354_compoundbutton_kbd.png" alt="annotated"></div>
+</div>
+<details><summary>12 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>text</td><td>Summarize</td><td></td><td class="vo">Summarize.  text</td><td class="bounds">84,272,173,292</td></tr>
+<tr><td>2</td><td>text</td><td>New</td><td></td><td class="vo">New.  text</td><td class="bounds">189,275,214,289</td></tr>
+<tr><td>3</td><td>text</td><td>Create a work item and assign it to your</td><td></td><td class="vo">Create a work item and assign it to your or a team member.  </td><td class="bounds">40,302,344,338</td></tr>
+<tr><td>4</td><td>text</td><td>View active work items</td><td></td><td class="vo">View active work items.  text</td><td class="bounds">40,380,222,400</td></tr>
+<tr><td>5</td><td>text</td><td>New</td><td></td><td class="vo">New.  text</td><td class="bounds">237,383,262,397</td></tr>
+<tr><td>6</td><td>text</td><td>See active tasks assigned to you or team</td><td></td><td class="vo">See active tasks assigned to you or team members.  text</td><td class="bounds">40,405,285,441</td></tr>
+<tr><td>7</td><td>text</td><td>Give feedback</td><td></td><td class="vo">Give feedback.  text</td><td class="bounds">80,489,193,509</td></tr>
+<tr><td>8</td><td>text</td><td>To give us feedback on Azure DevOps</td><td></td><td class="vo">To give us feedback on Azure DevOps.  text</td><td class="bounds">40,519,300,537</td></tr>
+<tr><td>9</td><td>text</td><td>Summarize</td><td></td><td class="vo">Summarize.  text</td><td class="bounds">40,579,129,599</td></tr>
+<tr><td>10</td><td>text</td><td>Create a work item and assign it to your</td><td></td><td class="vo">Create a work item and assign it to your or a team member.  </td><td class="bounds">40,603,344,639</td></tr>
+<tr><td>11</td><td>text</td><td>Pending Tasks</td><td></td><td class="vo">Pending Tasks.  text</td><td class="bounds">92,687,206,707</td></tr>
+<tr><td>12</td><td>text</td><td>Priority</td><td></td><td class="vo">Priority.  text</td><td class="bounds">222,690,264,704</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5533268 Fluenticon Rtl</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5533268_fluenticon_rtl.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5533268_fluenticon_rtl.png" alt="annotated"></div>
+</div>
+<details><summary>13 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>textView</td><td>RTL is supported (Toggle rtl property at</td><td></td><td class="vo">RTL is supported (Toggle rtl property at root AdaptiveCard).</td><td class="bounds">24,250,378,300</td></tr>
+<tr><td>2</td><td>button</td><td>Airplane</td><td></td><td class="vo">Airplane.  button</td><td class="bounds">24,311,378,343</td></tr>
+<tr><td>3</td><td>textView</td><td>RTL is supported for colored fonts</td><td></td><td class="vo">RTL is supported for colored fonts.  textView</td><td class="bounds">24,565,378,590</td></tr>
+<tr><td>4</td><td>textView</td><td>RTL is supported</td><td></td><td class="vo">RTL is supported.  textView</td><td class="bounds">24,732,378,757</td></tr>
+<tr><td>5</td><td>textView</td><td>Clickable icons</td><td></td><td class="vo">Clickable icons.  textView</td><td class="bounds">24,839,378,864</td></tr>
+<tr><td>6</td><td>button</td><td>Click me!</td><td></td><td class="vo">Click me!.  button</td><td class="bounds">24,875,378,907</td></tr>
+<tr><td>7</td><td>textView</td><td>Icons on buttons</td><td></td><td class="vo">Icons on buttons.  textView</td><td class="bounds">24,923,378,948</td></tr>
+<tr><td>8</td><td>link</td><td>RTL supported</td><td></td><td class="vo">RTL supported.  link</td><td class="bounds">24,958,378,1022</td></tr>
+<tr><td>9</td><td>text</td><td>RTL supported</td><td></td><td class="vo">RTL supported.  text</td><td class="bounds">155,994,257,1012</td></tr>
+<tr><td>10</td><td>link</td><td>RTL supported</td><td></td><td class="vo">RTL supported.  link</td><td class="bounds">24,1037,378,1101</td></tr>
+<tr><td>11</td><td>text</td><td>RTL supported</td><td></td><td class="vo">RTL supported.  text</td><td class="bounds">155,1073,257,1091</td></tr>
+<tr><td>12</td><td>link</td><td>No RTL</td><td></td><td class="vo">No RTL.  link</td><td class="bounds">24,1116,378,1180</td></tr>
+<tr><td>13</td><td>text</td><td>No RTL</td><td></td><td class="vo">No RTL.  text</td><td class="bounds">180,1152,231,1170</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5535831 Rating Input</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5535831_rating_input.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5535831_rating_input.png" alt="annotated"></div>
+</div>
+<details><summary>17 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>textView</td><td>Rating input</td><td></td><td class="vo">Rating input.  textView</td><td class="bounds">24,250,378,275</td></tr>
+<tr><td>2</td><td>image</td><td>Rate 1 Star</td><td></td><td class="vo">Rate 1 Star.  image</td><td class="bounds">24,313,68,357</td></tr>
+<tr><td>3</td><td>image</td><td>Rate 2 Star</td><td></td><td class="vo">Rate 2 Star.  image</td><td class="bounds">68,313,112,357</td></tr>
+<tr><td>4</td><td>image</td><td>Rate 3 Star</td><td></td><td class="vo">Rate 3 Star.  image</td><td class="bounds">112,313,156,357</td></tr>
+<tr><td>5</td><td>image</td><td>Rate 4 Star</td><td></td><td class="vo">Rate 4 Star.  image</td><td class="bounds">156,313,200,357</td></tr>
+<tr><td>6</td><td>image</td><td>Rate 5 Star</td><td></td><td class="vo">Rate 5 Star.  image</td><td class="bounds">200,313,244,357</td></tr>
+<tr><td>7</td><td>image</td><td>Rate 1 Star</td><td></td><td class="vo">Rate 1 Star.  image</td><td class="bounds">24,394,68,438</td></tr>
+<tr><td>8</td><td>image</td><td>Rate 2 Star</td><td></td><td class="vo">Rate 2 Star.  image</td><td class="bounds">68,394,112,438</td></tr>
+<tr><td>9</td><td>image</td><td>Rate 3 Star</td><td></td><td class="vo">Rate 3 Star.  image</td><td class="bounds">112,394,156,438</td></tr>
+<tr><td>10</td><td>image</td><td>Rate 4 Star</td><td></td><td class="vo">Rate 4 Star.  image</td><td class="bounds">156,394,200,438</td></tr>
+<tr><td>11</td><td>image</td><td>Rate 5 Star</td><td></td><td class="vo">Rate 5 Star.  image</td><td class="bounds">200,394,244,438</td></tr>
+<tr><td>12</td><td>textView</td><td>Read-only ratings</td><td></td><td class="vo">Read-only ratings.  textView</td><td class="bounds">24,458,378,483</td></tr>
+<tr><td>13</td><td>text</td><td>Rating 3.2,</td><td></td><td class="vo">Rating 3.2,.  text</td><td class="bounds">116,492,167,510</td></tr>
+<tr><td>14</td><td>text</td><td>Rating 3.2,</td><td></td><td class="vo">Rating 3.2,.  text</td><td class="bounds">136,519,201,539</td></tr>
+<tr><td>15</td><td>text</td><td>Rating 3.2,</td><td></td><td class="vo">Rating 3.2,.  text</td><td class="bounds">48,549,124,569</td></tr>
+<tr><td>16</td><td>button</td><td>Submit</td><td></td><td class="vo">Submit.  button</td><td class="bounds">24,579,378,617</td></tr>
+<tr><td>17</td><td>text</td><td>Submit</td><td></td><td class="vo">Submit.  text</td><td class="bounds">177,589,225,607</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5536765 Actionmode Cancel After</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5536765_actionmode_cancel_after.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5536765_actionmode_cancel_after.png" alt="annotated"></div>
+</div>
+<details><summary>40 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>button</td><td>Root Overflow Actions (...)</td><td></td><td class="vo">Root Overflow Actions (...).  button</td><td class="bounds">16,242,266,282</td></tr>
+<tr><td>2</td><td>text</td><td>Root Overflow Actions (...)</td><td></td><td class="vo">Root Overflow Actions (...).  text</td><td class="bounds">50,253,231,271</td></tr>
+<tr><td>3</td><td>textView</td><td>Overflow Action Test Card!</td><td></td><td class="vo">Overflow Action Test Card!.  textView</td><td class="bounds">24,300,378,325</td></tr>
+<tr><td>4</td><td>textView</td><td>ActionSet all secondary actions</td><td></td><td class="vo">ActionSet all secondary actions.  textView</td><td class="bounds">24,336,378,353</td></tr>
+<tr><td>5</td><td>button</td><td>More options</td><td></td><td class="vo">More options.  button</td><td class="bounds">24,363,378,401</td></tr>
+<tr><td>6</td><td>text</td><td>...</td><td></td><td class="vo">....  text</td><td class="bounds">194,373,206,391</td></tr>
+<tr><td>7</td><td>textView</td><td>ActionSet primary + secondary actions</td><td></td><td class="vo">ActionSet primary + secondary actions.  textView</td><td class="bounds">24,411,378,428</td></tr>
+<tr><td>8</td><td>button</td><td>Submit</td><td></td><td class="vo">Submit.  button</td><td class="bounds">24,438,378,476</td></tr>
+<tr><td>9</td><td>text</td><td>Submit</td><td></td><td class="vo">Submit.  text</td><td class="bounds">177,448,225,466</td></tr>
+<tr><td>10</td><td>button</td><td>More options</td><td></td><td class="vo">More options.  button</td><td class="bounds">24,491,378,529</td></tr>
+<tr><td>11</td><td>text</td><td>...</td><td></td><td class="vo">....  text</td><td class="bounds">194,501,206,518</td></tr>
+<tr><td>12</td><td>textView</td><td>Check actions.length > maxActions</td><td></td><td class="vo">Check actions.length > maxActions.  textView</td><td class="bounds">24,539,378,556</td></tr>
+<tr><td>13</td><td>button</td><td>Action 1</td><td></td><td class="vo">Action 1.  button</td><td class="bounds">24,566,378,604</td></tr>
+<tr><td>14</td><td>text</td><td>Action 1</td><td></td><td class="vo">Action 1.  text</td><td class="bounds">174,576,228,594</td></tr>
+<tr><td>15</td><td>button</td><td>Action 2</td><td></td><td class="vo">Action 2.  button</td><td class="bounds">24,619,378,657</td></tr>
+<tr><td>16</td><td>text</td><td>Action 2</td><td></td><td class="vo">Action 2.  text</td><td class="bounds">172,629,228,647</td></tr>
+<tr><td>17</td><td>button</td><td>Action 3</td><td></td><td class="vo">Action 3.  button</td><td class="bounds">24,672,378,710</td></tr>
+<tr><td>18</td><td>text</td><td>Action 3</td><td></td><td class="vo">Action 3.  text</td><td class="bounds">172,682,229,700</td></tr>
+<tr><td>19</td><td>button</td><td>Action 4</td><td></td><td class="vo">Action 4.  button</td><td class="bounds">24,725,378,763</td></tr>
+<tr><td>20</td><td>text</td><td>Action 4</td><td></td><td class="vo">Action 4.  text</td><td class="bounds">172,735,229,753</td></tr>
+<tr><td>21</td><td>button</td><td>Action 5</td><td></td><td class="vo">Action 5.  button</td><td class="bounds">24,778,378,816</td></tr>
+<tr><td>22</td><td>text</td><td>Action 5</td><td></td><td class="vo">Action 5.  text</td><td class="bounds">172,788,228,806</td></tr>
+<tr><td>23</td><td>button</td><td>Action 6</td><td></td><td class="vo">Action 6.  button</td><td class="bounds">24,831,378,869</td></tr>
+<tr><td>24</td><td>text</td><td>Action 6</td><td></td><td class="vo">Action 6.  text</td><td class="bounds">172,841,229,859</td></tr>
+<tr><td>25</td><td>button</td><td>Action 7</td><td></td><td class="vo">Action 7.  button</td><td class="bounds">24,884,378,922</td></tr>
+<tr><td>26</td><td>text</td><td>Action 7</td><td></td><td class="vo">Action 7.  text</td><td class="bounds">173,894,229,912</td></tr>
+<tr><td>27</td><td>button</td><td>Action 8</td><td></td><td class="vo">Action 8.  button</td><td class="bounds">24,937,378,975</td></tr>
+<tr><td>28</td><td>text</td><td>Action 8</td><td></td><td class="vo">Action 8.  text</td><td class="bounds">172,947,229,965</td></tr>
+<tr><td>29</td><td>button</td><td>Action 9</td><td></td><td class="vo">Action 9.  button</td><td class="bounds">24,990,378,1028</td></tr>
+<tr><td>30</td><td>text</td><td>Action 9</td><td></td><td class="vo">Action 9.  text</td><td class="bounds">172,1000,229,1018</td></tr>
+<tr><td>31</td><td>textView</td><td>Show Card Tests</td><td></td><td class="vo">Show Card Tests.  textView</td><td class="bounds">24,1038,378,1055</td></tr>
+<tr><td>32</td><td>button</td><td>Primary 1</td><td>card collapsed</td><td class="vo">Primary 1, card collapsed.  button</td><td class="bounds">24,1065,378,1103</td></tr>
+<tr><td>33</td><td>text</td><td>Primary 1</td><td></td><td class="vo">Primary 1.  text</td><td class="bounds">178,1075,241,1093</td></tr>
+<tr><td>34</td><td>button</td><td>Primary 2</td><td>card collapsed</td><td class="vo">Primary 2, card collapsed.  button</td><td class="bounds">24,1118,378,1156</td></tr>
+<tr><td>35</td><td>text</td><td>Primary 2</td><td></td><td class="vo">Primary 2.  text</td><td class="bounds">177,1128,242,1146</td></tr>
+<tr><td>36</td><td>button</td><td>More options</td><td></td><td class="vo">More options.  button</td><td class="bounds">24,1171,378,1209</td></tr>
+<tr><td>37</td><td>text</td><td>...</td><td></td><td class="vo">....  text</td><td class="bounds">194,1181,206,1199</td></tr>
+<tr><td>38</td><td>textView</td><td>========= I am bottom line of body =====</td><td></td><td class="vo">========= I am bottom line of body =========.  textView</td><td class="bounds">24,1219,378,1236</td></tr>
+<tr><td>39</td><td>link</td><td>Primary OpenUrl</td><td></td><td class="vo">Primary OpenUrl.  link</td><td class="bounds">24,1246,378,1284</td></tr>
+<tr><td>40</td><td>text</td><td>Primary OpenUrl</td><td></td><td class="vo">Primary OpenUrl.  text</td><td class="bounds">144,1256,257,1274</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5536765 Actionmode Cancel Afterdismiss</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5536765_actionmode_cancel_afterdismiss.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5536765_actionmode_cancel_afterdismiss.png" alt="annotated"></div>
+</div>
+<details><summary>40 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>button</td><td>Root Overflow Actions (...)</td><td></td><td class="vo">Root Overflow Actions (...).  button</td><td class="bounds">16,242,266,282</td></tr>
+<tr><td>2</td><td>text</td><td>Root Overflow Actions (...)</td><td></td><td class="vo">Root Overflow Actions (...).  text</td><td class="bounds">50,253,231,271</td></tr>
+<tr><td>3</td><td>textView</td><td>Overflow Action Test Card!</td><td></td><td class="vo">Overflow Action Test Card!.  textView</td><td class="bounds">24,300,378,325</td></tr>
+<tr><td>4</td><td>textView</td><td>ActionSet all secondary actions</td><td></td><td class="vo">ActionSet all secondary actions.  textView</td><td class="bounds">24,336,378,353</td></tr>
+<tr><td>5</td><td>button</td><td>More options</td><td></td><td class="vo">More options.  button</td><td class="bounds">24,363,378,401</td></tr>
+<tr><td>6</td><td>text</td><td>...</td><td></td><td class="vo">....  text</td><td class="bounds">194,373,206,391</td></tr>
+<tr><td>7</td><td>textView</td><td>ActionSet primary + secondary actions</td><td></td><td class="vo">ActionSet primary + secondary actions.  textView</td><td class="bounds">24,411,378,428</td></tr>
+<tr><td>8</td><td>button</td><td>Submit</td><td></td><td class="vo">Submit.  button</td><td class="bounds">24,438,378,476</td></tr>
+<tr><td>9</td><td>text</td><td>Submit</td><td></td><td class="vo">Submit.  text</td><td class="bounds">177,448,225,466</td></tr>
+<tr><td>10</td><td>button</td><td>More options</td><td></td><td class="vo">More options.  button</td><td class="bounds">24,491,378,529</td></tr>
+<tr><td>11</td><td>text</td><td>...</td><td></td><td class="vo">....  text</td><td class="bounds">194,501,206,518</td></tr>
+<tr><td>12</td><td>textView</td><td>Check actions.length > maxActions</td><td></td><td class="vo">Check actions.length > maxActions.  textView</td><td class="bounds">24,539,378,556</td></tr>
+<tr><td>13</td><td>button</td><td>Action 1</td><td></td><td class="vo">Action 1.  button</td><td class="bounds">24,566,378,604</td></tr>
+<tr><td>14</td><td>text</td><td>Action 1</td><td></td><td class="vo">Action 1.  text</td><td class="bounds">174,576,228,594</td></tr>
+<tr><td>15</td><td>button</td><td>Action 2</td><td></td><td class="vo">Action 2.  button</td><td class="bounds">24,619,378,657</td></tr>
+<tr><td>16</td><td>text</td><td>Action 2</td><td></td><td class="vo">Action 2.  text</td><td class="bounds">172,629,228,647</td></tr>
+<tr><td>17</td><td>button</td><td>Action 3</td><td></td><td class="vo">Action 3.  button</td><td class="bounds">24,672,378,710</td></tr>
+<tr><td>18</td><td>text</td><td>Action 3</td><td></td><td class="vo">Action 3.  text</td><td class="bounds">172,682,229,700</td></tr>
+<tr><td>19</td><td>button</td><td>Action 4</td><td></td><td class="vo">Action 4.  button</td><td class="bounds">24,725,378,763</td></tr>
+<tr><td>20</td><td>text</td><td>Action 4</td><td></td><td class="vo">Action 4.  text</td><td class="bounds">172,735,229,753</td></tr>
+<tr><td>21</td><td>button</td><td>Action 5</td><td></td><td class="vo">Action 5.  button</td><td class="bounds">24,778,378,816</td></tr>
+<tr><td>22</td><td>text</td><td>Action 5</td><td></td><td class="vo">Action 5.  text</td><td class="bounds">172,788,228,806</td></tr>
+<tr><td>23</td><td>button</td><td>Action 6</td><td></td><td class="vo">Action 6.  button</td><td class="bounds">24,831,378,869</td></tr>
+<tr><td>24</td><td>text</td><td>Action 6</td><td></td><td class="vo">Action 6.  text</td><td class="bounds">172,841,229,859</td></tr>
+<tr><td>25</td><td>button</td><td>Action 7</td><td></td><td class="vo">Action 7.  button</td><td class="bounds">24,884,378,922</td></tr>
+<tr><td>26</td><td>text</td><td>Action 7</td><td></td><td class="vo">Action 7.  text</td><td class="bounds">173,894,229,912</td></tr>
+<tr><td>27</td><td>button</td><td>Action 8</td><td></td><td class="vo">Action 8.  button</td><td class="bounds">24,937,378,975</td></tr>
+<tr><td>28</td><td>text</td><td>Action 8</td><td></td><td class="vo">Action 8.  text</td><td class="bounds">172,947,229,965</td></tr>
+<tr><td>29</td><td>button</td><td>Action 9</td><td></td><td class="vo">Action 9.  button</td><td class="bounds">24,990,378,1028</td></tr>
+<tr><td>30</td><td>text</td><td>Action 9</td><td></td><td class="vo">Action 9.  text</td><td class="bounds">172,1000,229,1018</td></tr>
+<tr><td>31</td><td>textView</td><td>Show Card Tests</td><td></td><td class="vo">Show Card Tests.  textView</td><td class="bounds">24,1038,378,1055</td></tr>
+<tr><td>32</td><td>button</td><td>Primary 1</td><td>card collapsed</td><td class="vo">Primary 1, card collapsed.  button</td><td class="bounds">24,1065,378,1103</td></tr>
+<tr><td>33</td><td>text</td><td>Primary 1</td><td></td><td class="vo">Primary 1.  text</td><td class="bounds">178,1075,241,1093</td></tr>
+<tr><td>34</td><td>button</td><td>Primary 2</td><td>card collapsed</td><td class="vo">Primary 2, card collapsed.  button</td><td class="bounds">24,1118,378,1156</td></tr>
+<tr><td>35</td><td>text</td><td>Primary 2</td><td></td><td class="vo">Primary 2.  text</td><td class="bounds">177,1128,242,1146</td></tr>
+<tr><td>36</td><td>button</td><td>More options</td><td></td><td class="vo">More options.  button</td><td class="bounds">24,1171,378,1209</td></tr>
+<tr><td>37</td><td>text</td><td>...</td><td></td><td class="vo">....  text</td><td class="bounds">194,1181,206,1199</td></tr>
+<tr><td>38</td><td>textView</td><td>========= I am bottom line of body =====</td><td></td><td class="vo">========= I am bottom line of body =========.  textView</td><td class="bounds">24,1219,378,1236</td></tr>
+<tr><td>39</td><td>link</td><td>Primary OpenUrl</td><td></td><td class="vo">Primary OpenUrl.  link</td><td class="bounds">24,1246,378,1284</td></tr>
+<tr><td>40</td><td>text</td><td>Primary OpenUrl</td><td></td><td class="vo">Primary OpenUrl.  text</td><td class="bounds">144,1256,257,1274</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5536765 Actionmode Cancel Before</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5536765_actionmode_cancel_before.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5536765_actionmode_cancel_before.png" alt="annotated"></div>
+</div>
+<details><summary>40 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>button</td><td>Root Overflow Actions (...)</td><td></td><td class="vo">Root Overflow Actions (...).  button</td><td class="bounds">16,242,266,282</td></tr>
+<tr><td>2</td><td>text</td><td>Root Overflow Actions (...)</td><td></td><td class="vo">Root Overflow Actions (...).  text</td><td class="bounds">50,253,231,271</td></tr>
+<tr><td>3</td><td>textView</td><td>Overflow Action Test Card!</td><td></td><td class="vo">Overflow Action Test Card!.  textView</td><td class="bounds">24,300,378,325</td></tr>
+<tr><td>4</td><td>textView</td><td>ActionSet all secondary actions</td><td></td><td class="vo">ActionSet all secondary actions.  textView</td><td class="bounds">24,336,378,353</td></tr>
+<tr><td>5</td><td>button</td><td>More options</td><td></td><td class="vo">More options.  button</td><td class="bounds">24,363,378,401</td></tr>
+<tr><td>6</td><td>text</td><td>...</td><td></td><td class="vo">....  text</td><td class="bounds">194,373,206,391</td></tr>
+<tr><td>7</td><td>textView</td><td>ActionSet primary + secondary actions</td><td></td><td class="vo">ActionSet primary + secondary actions.  textView</td><td class="bounds">24,411,378,428</td></tr>
+<tr><td>8</td><td>button</td><td>Submit</td><td></td><td class="vo">Submit.  button</td><td class="bounds">24,438,378,476</td></tr>
+<tr><td>9</td><td>text</td><td>Submit</td><td></td><td class="vo">Submit.  text</td><td class="bounds">177,448,225,466</td></tr>
+<tr><td>10</td><td>button</td><td>More options</td><td></td><td class="vo">More options.  button</td><td class="bounds">24,491,378,529</td></tr>
+<tr><td>11</td><td>text</td><td>...</td><td></td><td class="vo">....  text</td><td class="bounds">194,501,206,518</td></tr>
+<tr><td>12</td><td>textView</td><td>Check actions.length > maxActions</td><td></td><td class="vo">Check actions.length > maxActions.  textView</td><td class="bounds">24,539,378,556</td></tr>
+<tr><td>13</td><td>button</td><td>Action 1</td><td></td><td class="vo">Action 1.  button</td><td class="bounds">24,566,378,604</td></tr>
+<tr><td>14</td><td>text</td><td>Action 1</td><td></td><td class="vo">Action 1.  text</td><td class="bounds">174,576,228,594</td></tr>
+<tr><td>15</td><td>button</td><td>Action 2</td><td></td><td class="vo">Action 2.  button</td><td class="bounds">24,619,378,657</td></tr>
+<tr><td>16</td><td>text</td><td>Action 2</td><td></td><td class="vo">Action 2.  text</td><td class="bounds">172,629,228,647</td></tr>
+<tr><td>17</td><td>button</td><td>Action 3</td><td></td><td class="vo">Action 3.  button</td><td class="bounds">24,672,378,710</td></tr>
+<tr><td>18</td><td>text</td><td>Action 3</td><td></td><td class="vo">Action 3.  text</td><td class="bounds">172,682,229,700</td></tr>
+<tr><td>19</td><td>button</td><td>Action 4</td><td></td><td class="vo">Action 4.  button</td><td class="bounds">24,725,378,763</td></tr>
+<tr><td>20</td><td>text</td><td>Action 4</td><td></td><td class="vo">Action 4.  text</td><td class="bounds">172,735,229,753</td></tr>
+<tr><td>21</td><td>button</td><td>Action 5</td><td></td><td class="vo">Action 5.  button</td><td class="bounds">24,778,378,816</td></tr>
+<tr><td>22</td><td>text</td><td>Action 5</td><td></td><td class="vo">Action 5.  text</td><td class="bounds">172,788,228,806</td></tr>
+<tr><td>23</td><td>button</td><td>Action 6</td><td></td><td class="vo">Action 6.  button</td><td class="bounds">24,831,378,869</td></tr>
+<tr><td>24</td><td>text</td><td>Action 6</td><td></td><td class="vo">Action 6.  text</td><td class="bounds">172,841,229,859</td></tr>
+<tr><td>25</td><td>button</td><td>Action 7</td><td></td><td class="vo">Action 7.  button</td><td class="bounds">24,884,378,922</td></tr>
+<tr><td>26</td><td>text</td><td>Action 7</td><td></td><td class="vo">Action 7.  text</td><td class="bounds">173,894,229,912</td></tr>
+<tr><td>27</td><td>button</td><td>Action 8</td><td></td><td class="vo">Action 8.  button</td><td class="bounds">24,937,378,975</td></tr>
+<tr><td>28</td><td>text</td><td>Action 8</td><td></td><td class="vo">Action 8.  text</td><td class="bounds">172,947,229,965</td></tr>
+<tr><td>29</td><td>button</td><td>Action 9</td><td></td><td class="vo">Action 9.  button</td><td class="bounds">24,990,378,1028</td></tr>
+<tr><td>30</td><td>text</td><td>Action 9</td><td></td><td class="vo">Action 9.  text</td><td class="bounds">172,1000,229,1018</td></tr>
+<tr><td>31</td><td>textView</td><td>Show Card Tests</td><td></td><td class="vo">Show Card Tests.  textView</td><td class="bounds">24,1038,378,1055</td></tr>
+<tr><td>32</td><td>button</td><td>Primary 1</td><td>card collapsed</td><td class="vo">Primary 1, card collapsed.  button</td><td class="bounds">24,1065,378,1103</td></tr>
+<tr><td>33</td><td>text</td><td>Primary 1</td><td></td><td class="vo">Primary 1.  text</td><td class="bounds">178,1075,241,1093</td></tr>
+<tr><td>34</td><td>button</td><td>Primary 2</td><td>card collapsed</td><td class="vo">Primary 2, card collapsed.  button</td><td class="bounds">24,1118,378,1156</td></tr>
+<tr><td>35</td><td>text</td><td>Primary 2</td><td></td><td class="vo">Primary 2.  text</td><td class="bounds">177,1128,242,1146</td></tr>
+<tr><td>36</td><td>button</td><td>More options</td><td></td><td class="vo">More options.  button</td><td class="bounds">24,1171,378,1209</td></tr>
+<tr><td>37</td><td>text</td><td>...</td><td></td><td class="vo">....  text</td><td class="bounds">194,1181,206,1199</td></tr>
+<tr><td>38</td><td>textView</td><td>========= I am bottom line of body =====</td><td></td><td class="vo">========= I am bottom line of body =========.  textView</td><td class="bounds">24,1219,378,1236</td></tr>
+<tr><td>39</td><td>link</td><td>Primary OpenUrl</td><td></td><td class="vo">Primary OpenUrl.  link</td><td class="bounds">24,1246,378,1284</td></tr>
+<tr><td>40</td><td>text</td><td>Primary OpenUrl</td><td></td><td class="vo">Primary OpenUrl.  text</td><td class="bounds">144,1256,257,1274</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5536877 Rtlfalse</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5536877_rtlfalse.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5536877_rtlfalse.png" alt="annotated"></div>
+</div>
+<details><summary>21 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>textView</td><td>Card (rtl: unset)</td><td></td><td class="vo">Card (rtl: unset).  textView</td><td class="bounds">24,250,378,267</td></tr>
+<tr><td>2</td><td>textView</td><td>Column 1</td><td></td><td class="vo">Column 1.  textView</td><td class="bounds">24,277,135,294</td></tr>
+<tr><td>3</td><td>textView</td><td>Column 2</td><td></td><td class="vo">Column 2.  textView</td><td class="bounds">145,277,256,294</td></tr>
+<tr><td>4</td><td>textView</td><td>Column 3</td><td></td><td class="vo">Column 3.  textView</td><td class="bounds">266,277,377,294</td></tr>
+<tr><td>5</td><td>textField</td><td>Input w/ Inline Action</td><td></td><td class="vo">Input w/ Inline Action.  textField</td><td class="bounds">24,331,340,365</td></tr>
+<tr><td>6</td><td>textView</td><td>Lorem ipsum dolor sit amet.</td><td></td><td class="vo">Lorem ipsum dolor sit amet..  textView</td><td class="bounds">24,375,378,392</td></tr>
+<tr><td>7</td><td>textView</td><td>لكن لا بد أن أوضح لك أن كل هذه الأفكار.</td><td></td><td class="vo">لكن لا بد أن أوضح لك أن كل هذه الأفكار..  textView</td><td class="bounds">24,402,378,419</td></tr>
+<tr><td>8</td><td>textView</td><td>Container (rtl: true)</td><td></td><td class="vo">Container (rtl: true).  textView</td><td class="bounds">32,437,370,454</td></tr>
+<tr><td>9</td><td>textView</td><td>Column 3</td><td></td><td class="vo">Column 3.  textView</td><td class="bounds">32,464,138,481</td></tr>
+<tr><td>10</td><td>textView</td><td>Column 2</td><td></td><td class="vo">Column 2.  textView</td><td class="bounds">148,464,254,481</td></tr>
+<tr><td>11</td><td>textView</td><td>Column 1</td><td></td><td class="vo">Column 1.  textView</td><td class="bounds">264,464,370,481</td></tr>
+<tr><td>12</td><td>textField</td><td>Input w/ Inline Action</td><td></td><td class="vo">Input w/ Inline Action.  textField</td><td class="bounds">70,518,370,552</td></tr>
+<tr><td>13</td><td>textView</td><td>Lorem ipsum dolor sit amet.</td><td></td><td class="vo">Lorem ipsum dolor sit amet..  textView</td><td class="bounds">32,562,370,579</td></tr>
+<tr><td>14</td><td>textView</td><td>لكن لا بد أن أوضح لك أن كل هذه الأفكار.</td><td></td><td class="vo">لكن لا بد أن أوضح لك أن كل هذه الأفكار..  textView</td><td class="bounds">32,589,370,606</td></tr>
+<tr><td>15</td><td>textView</td><td>Container (rtl: false)</td><td></td><td class="vo">Container (rtl: false).  textView</td><td class="bounds">32,632,370,649</td></tr>
+<tr><td>16</td><td>textView</td><td>Column 1</td><td></td><td class="vo">Column 1.  textView</td><td class="bounds">32,659,138,676</td></tr>
+<tr><td>17</td><td>textView</td><td>Column 2</td><td></td><td class="vo">Column 2.  textView</td><td class="bounds">148,659,254,676</td></tr>
+<tr><td>18</td><td>textView</td><td>Column 3</td><td></td><td class="vo">Column 3.  textView</td><td class="bounds">264,659,370,676</td></tr>
+<tr><td>19</td><td>textField</td><td>Input w/ Inline Action</td><td></td><td class="vo">Input w/ Inline Action.  textField</td><td class="bounds">32,713,332,747</td></tr>
+<tr><td>20</td><td>textView</td><td>Lorem ipsum dolor sit amet.</td><td></td><td class="vo">Lorem ipsum dolor sit amet..  textView</td><td class="bounds">32,757,370,774</td></tr>
+<tr><td>21</td><td>textView</td><td>لكن لا بد أن أوضح لك أن كل هذه الأفكار.</td><td></td><td class="vo">لكن لا بد أن أوضح لك أن كل هذه الأفكار..  textView</td><td class="bounds">32,784,370,801</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5536935 Tooltip</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5536935_tooltip.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5536935_tooltip.png" alt="annotated"></div>
+</div>
+<details><summary>35 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>button</td><td>title</td><td></td><td class="vo">title.  button</td><td class="bounds">16,242,386,2424</td></tr>
+<tr><td>2</td><td>textView</td><td>Button with no title or tooltip</td><td></td><td class="vo">Button with no title or tooltip.  textView</td><td class="bounds">24,250,378,267</td></tr>
+<tr><td>3</td><td>textView</td><td>Button with a title</td><td></td><td class="vo">Button with a title.  textView</td><td class="bounds">24,325,378,342</td></tr>
+<tr><td>4</td><td>button</td><td>Title</td><td></td><td class="vo">Title.  button</td><td class="bounds">24,352,378,390</td></tr>
+<tr><td>5</td><td>text</td><td>Title</td><td></td><td class="vo">Title.  text</td><td class="bounds">186,362,216,380</td></tr>
+<tr><td>6</td><td>textView</td><td>Button with a tooltip</td><td></td><td class="vo">Button with a tooltip.  textView</td><td class="bounds">24,400,378,417</td></tr>
+<tr><td>7</td><td>textView</td><td>Button with a title and a tooltip</td><td></td><td class="vo">Button with a title and a tooltip.  textView</td><td class="bounds">24,475,378,492</td></tr>
+<tr><td>8</td><td>button</td><td>Title</td><td></td><td class="vo">Title.  button</td><td class="bounds">24,502,378,540</td></tr>
+<tr><td>9</td><td>text</td><td>Title</td><td></td><td class="vo">Title.  text</td><td class="bounds">186,512,216,530</td></tr>
+<tr><td>10</td><td>textField</td><td>Inline Action with a title (title should</td><td></td><td class="vo">Inline Action with a title (title should show on button, no </td><td class="bounds">24,594,340,628</td></tr>
+<tr><td>11</td><td>text</td><td>Title</td><td></td><td class="vo">Title.  text</td><td class="bounds">348,602,378,620</td></tr>
+<tr><td>12</td><td>button</td><td>Title</td><td></td><td class="vo">Title.  button</td><td class="bounds">348,594,378,628</td></tr>
+<tr><td>13</td><td>textField</td><td>Inline Action with a title and a tooltip</td><td></td><td class="vo">Inline Action with a title and a tooltip (title should show </td><td class="bounds">24,682,340,716</td></tr>
+<tr><td>14</td><td>text</td><td>Title</td><td></td><td class="vo">Title.  text</td><td class="bounds">348,690,378,708</td></tr>
+<tr><td>15</td><td>button</td><td>Title</td><td></td><td class="vo">Title.  button</td><td class="bounds">348,682,378,716</td></tr>
+<tr><td>16</td><td>textField</td><td>Inline Action with an icon and a tooltip</td><td></td><td class="vo">Inline Action with an icon and a tooltip (icon should show o</td><td class="bounds">24,769,370,803</td></tr>
+<tr><td>17</td><td>textField</td><td>Inline Action with an icon and a title (</td><td></td><td class="vo">Inline Action with an icon and a title (icon should show on </td><td class="bounds">24,857,370,891</td></tr>
+<tr><td>18</td><td>textField</td><td>Inline Action with an icon and a title a</td><td></td><td class="vo">Inline Action with an icon and a title and a tooltip (icon s</td><td class="bounds">24,945,370,979</td></tr>
+<tr><td>19</td><td>textView</td><td>A container with a text block and an ima</td><td></td><td class="vo">A container with a text block and an image. No title or tool</td><td class="bounds">24,989,378,1022</td></tr>
+<tr><td>20</td><td>button</td><td>Text block content.,Image Alt Text.</td><td></td><td class="vo">Text block content.,Image Alt Text..  button</td><td class="bounds">24,1032,378,1139</td></tr>
+<tr><td>21</td><td>textView</td><td>A container with a text block and an ima</td><td></td><td class="vo">A container with a text block and an image. Action has title</td><td class="bounds">24,1149,378,1182</td></tr>
+<tr><td>22</td><td>button</td><td>Title,Text block content.,Image Alt Text</td><td></td><td class="vo">Title,Text block content.,Image Alt Text..  button</td><td class="bounds">24,1193,378,1300</td></tr>
+<tr><td>23</td><td>textView</td><td>A container with a text block and an ima</td><td></td><td class="vo">A container with a text block and an image. Action has toolt</td><td class="bounds">24,1310,378,1343</td></tr>
+<tr><td>24</td><td>button</td><td>Text block content.,Image Alt Text.</td><td></td><td class="vo">Text block content.,Image Alt Text..  button</td><td class="bounds">24,1354,378,1461</td></tr>
+<tr><td>25</td><td>textView</td><td>A container with a text block and an ima</td><td></td><td class="vo">A container with a text block and an image. Action has title</td><td class="bounds">24,1471,378,1521</td></tr>
+<tr><td>26</td><td>button</td><td>Title,Text block content.,Image Alt Text</td><td></td><td class="vo">Title,Text block content.,Image Alt Text..  button</td><td class="bounds">24,1531,378,1638</td></tr>
+<tr><td>27</td><td>link</td><td>RichTextBlock with SelectAction, Action </td><td></td><td class="vo">RichTextBlock with SelectAction, Action has title and toolti</td><td class="bounds">24,1647,378,1664</td></tr>
+<tr><td>28</td><td>link</td><td>RichTextBlock with SelectAction, Action </td><td></td><td class="vo">RichTextBlock with SelectAction, Action has title and no too</td><td class="bounds">163,1680,377,1697</td></tr>
+<tr><td>29</td><td>textView</td><td>Image has SelectAction. No title or tool</td><td></td><td class="vo">Image has SelectAction. No title or tooltip (no tooltip).  t</td><td class="bounds">24,1742,378,1775</td></tr>
+<tr><td>30</td><td>button</td><td>Image Alt Text.</td><td></td><td class="vo">Image Alt Text..  button</td><td class="bounds">24,1785,378,1945</td></tr>
+<tr><td>31</td><td>textView</td><td>Image has SelectAction. Action has title</td><td></td><td class="vo">Image has SelectAction. Action has title and tooltip. (toolt</td><td class="bounds">24,1955,378,1988</td></tr>
+<tr><td>32</td><td>button</td><td>Image Alt Text.title, tooltip</td><td></td><td class="vo">Image Alt Text.title, tooltip.  button</td><td class="bounds">24,1999,378,2159</td></tr>
+<tr><td>33</td><td>textView</td><td>Image has SelectAction. Action has title</td><td></td><td class="vo">Image has SelectAction. Action has title. (title should be u</td><td class="bounds">24,2169,378,2202</td></tr>
+<tr><td>34</td><td>button</td><td>Image Alt Text.title</td><td></td><td class="vo">Image Alt Text.title.  button</td><td class="bounds">24,2213,378,2373</td></tr>
+<tr><td>35</td><td>textView</td><td>Adaptive Card has SelectAction Action ha</td><td></td><td class="vo">Adaptive Card has SelectAction Action has tooltip. (tooltip </td><td class="bounds">24,2383,378,2416</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5539188 Inputlabel Link</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5539188_inputlabel_link.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5539188_inputlabel_link.png" alt="annotated"></div>
+</div>
+<details><summary>34 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>textView</td><td>id:textInputId00, required, label: ID 00</td><td></td><td class="vo">id:textInputId00, required, label: ID 00.  textView</td><td class="bounds">32,258,370,275</td></tr>
+<tr><td>2</td><td>textField</td><td>RichTextBlock 4 This is the first text r</td><td>Placeholder 00</td><td class="vo">RichTextBlock 4 This is the first text run.  Click here for </td><td class="bounds">32,312,370,346</td></tr>
+<tr><td>3</td><td>textView</td><td>id:textInputId01, not required, label: I</td><td></td><td class="vo">id:textInputId01, not required, label: ID 01.  textView</td><td class="bounds">32,356,370,373</td></tr>
+<tr><td>4</td><td>textField</td><td>RichTextBlock 2 This is the first text r</td><td>Placeholder 01</td><td class="vo">RichTextBlock 2 This is the first text run.  Click here for </td><td class="bounds">32,410,370,444</td></tr>
+<tr><td>5</td><td>textView</td><td>id:textInputId02, required, label: ID 02</td><td></td><td class="vo">id:textInputId02, required, label: ID 02.  textView</td><td class="bounds">32,454,370,471</td></tr>
+<tr><td>6</td><td>textField</td><td>ID 02 *
+Required</td><td>Placeholder 02</td><td class="vo">ID 02 *
+Required, Placeholder 02.  textField</td><td class="bounds">32,508,370,542</td></tr>
+<tr><td>7</td><td>textView</td><td>id:textInputId03, not required, label: I</td><td></td><td class="vo">id:textInputId03, not required, label: ID 03 [No Match].  te</td><td class="bounds">32,552,370,569</td></tr>
+<tr><td>8</td><td>textField</td><td>ID 03</td><td>Placeholder 03</td><td class="vo">ID 03, Placeholder 03.  textField</td><td class="bounds">32,606,370,640</td></tr>
+<tr><td>9</td><td>textView</td><td>id:textInputId04, required, no label [No</td><td></td><td class="vo">id:textInputId04, required, no label [No Match].  textView</td><td class="bounds">32,650,370,667</td></tr>
+<tr><td>10</td><td>textView</td><td>RichTextBlock 1 labelFor:textInputId00</td><td></td><td class="vo">RichTextBlock 1 labelFor:textInputId00.  textView</td><td class="bounds">32,755,370,772</td></tr>
+<tr><td>11</td><td>link</td><td>Click here for action.</td><td></td><td class="vo">Click here for action..  link</td><td class="bounds">288,781,369,798</td></tr>
+<tr><td>12</td><td>textView</td><td>RichTextBlock 2 labelFor:textInputId01</td><td></td><td class="vo">RichTextBlock 2 labelFor:textInputId01.  textView</td><td class="bounds">32,826,370,843</td></tr>
+<tr><td>13</td><td>link</td><td>Click here for action.</td><td></td><td class="vo">Click here for action..  link</td><td class="bounds">290,852,369,869</td></tr>
+<tr><td>14</td><td>textView</td><td>RichTextBlock 3 labelFor:textInputId000 </td><td></td><td class="vo">RichTextBlock 3 labelFor:textInputId000 [No Match].  textVie</td><td class="bounds">32,897,370,914</td></tr>
+<tr><td>15</td><td>link</td><td>Click here for action.</td><td></td><td class="vo">Click here for action..  link</td><td class="bounds">290,923,369,940</td></tr>
+<tr><td>16</td><td>textView</td><td>RichTextBlock 4 labelFor:textInputId00 [</td><td></td><td class="vo">RichTextBlock 4 labelFor:textInputId00 [Duplicate with RichT</td><td class="bounds">32,967,370,984</td></tr>
+<tr><td>17</td><td>link</td><td>Click here for action.</td><td></td><td class="vo">Click here for action..  link</td><td class="bounds">290,993,369,1010</td></tr>
+<tr><td>18</td><td>textView</td><td>id:textInputId10, required, label: ID 10</td><td></td><td class="vo">id:textInputId10, required, label: ID 10.  textView</td><td class="bounds">32,1054,370,1071</td></tr>
+<tr><td>19</td><td>textField</td><td>Fourth Block
+Required</td><td>Placeholder 10</td><td class="vo">Fourth Block
+Required, Placeholder 10.  textField</td><td class="bounds">32,1108,370,1142</td></tr>
+<tr><td>20</td><td>textView</td><td>id:textInputId11, not required, label: I</td><td></td><td class="vo">id:textInputId11, not required, label: ID 11.  textView</td><td class="bounds">32,1152,370,1169</td></tr>
+<tr><td>21</td><td>textField</td><td>Second Block</td><td>Placeholder 11</td><td class="vo">Second Block, Placeholder 11.  textField</td><td class="bounds">32,1206,370,1240</td></tr>
+<tr><td>22</td><td>textView</td><td>id:textInputId12, required, label: ID 12</td><td></td><td class="vo">id:textInputId12, required, label: ID 12.  textView</td><td class="bounds">32,1250,370,1267</td></tr>
+<tr><td>23</td><td>textField</td><td>ID 12 *
+Required</td><td>Placeholder 12</td><td class="vo">ID 12 *
+Required, Placeholder 12.  textField</td><td class="bounds">32,1304,370,1338</td></tr>
+<tr><td>24</td><td>textView</td><td>id:textInputId13, not required, label: I</td><td></td><td class="vo">id:textInputId13, not required, label: ID 13 [No Match].  te</td><td class="bounds">32,1348,370,1365</td></tr>
+<tr><td>25</td><td>textField</td><td>ID 13</td><td>Placeholder 13</td><td class="vo">ID 13, Placeholder 13.  textField</td><td class="bounds">32,1402,370,1436</td></tr>
+<tr><td>26</td><td>textView</td><td>id:textInputId14, required, no label [No</td><td></td><td class="vo">id:textInputId14, required, no label [No Match].  textView</td><td class="bounds">32,1446,370,1463</td></tr>
+<tr><td>27</td><td>textView</td><td>TextBlock 1 labelFor:textInputId10</td><td></td><td class="vo">TextBlock 1 labelFor:textInputId10.  textView</td><td class="bounds">32,1551,370,1568</td></tr>
+<tr><td>28</td><td>textView</td><td>First Block *</td><td></td><td class="vo">First Block *.  textView</td><td class="bounds">32,1578,370,1595</td></tr>
+<tr><td>29</td><td>textView</td><td>TextBlock 2 labelFor:textInputId11</td><td></td><td class="vo">TextBlock 2 labelFor:textInputId11.  textView</td><td class="bounds">32,1605,370,1622</td></tr>
+<tr><td>30</td><td>textView</td><td>Second Block</td><td></td><td class="vo">Second Block.  textView</td><td class="bounds">32,1632,370,1649</td></tr>
+<tr><td>31</td><td>textView</td><td>TextBlock 3 labelFor:textInputId100 [No </td><td></td><td class="vo">TextBlock 3 labelFor:textInputId100 [No Match].  textView</td><td class="bounds">32,1659,370,1676</td></tr>
+<tr><td>32</td><td>textView</td><td>Third Block</td><td></td><td class="vo">Third Block.  textView</td><td class="bounds">32,1686,370,1703</td></tr>
+<tr><td>33</td><td>textView</td><td>TextBlock 4 labelFor:textInputId10 [Dupl</td><td></td><td class="vo">TextBlock 4 labelFor:textInputId10 [Duplicate with TextBlock</td><td class="bounds">32,1713,370,1730</td></tr>
+<tr><td>34</td><td>textView</td><td>Fourth Block *</td><td></td><td class="vo">Fourth Block *.  textView</td><td class="bounds">32,1740,370,1757</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5539230 Inlineaction</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5539230_inlineaction.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5539230_inlineaction.png" alt="annotated"></div>
+</div>
+<details><summary>4 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>textField</td><td>Text input with an inline action</td><td></td><td class="vo">Text input with an inline action.  textField</td><td class="bounds">24,277,370,311</td></tr>
+<tr><td>2</td><td>textField</td><td>Text input with an inline action with no</td><td></td><td class="vo">Text input with an inline action with no icon.  textField</td><td class="bounds">24,348,331,382</td></tr>
+<tr><td>3</td><td>link</td><td>Reply</td><td></td><td class="vo">Reply.  link</td><td class="bounds">339,348,378,382</td></tr>
+<tr><td>4</td><td>text</td><td>Reply</td><td></td><td class="vo">Reply.  text</td><td class="bounds">339,356,378,374</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5539328 Columnset Choiceset</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5539328_columnset_choiceset.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5539328_columnset_choiceset.png" alt="annotated"></div>
+</div>
+<details><summary>32 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>textView</td><td>Lorem ipsum dolor sit amet, consectetur </td><td></td><td class="vo">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed</td><td class="bounds">24,250,131,768</td></tr>
+<tr><td>2</td><td>textView</td><td>This is a textblock that doesn't stretch</td><td></td><td class="vo">This is a textblock that doesn't stretch, but the input text</td><td class="bounds">147,250,254,333</td></tr>
+<tr><td>3</td><td>textView</td><td>This is a textblock that doesn't stretch</td><td></td><td class="vo">This is a textblock that doesn't stretch, but the input text</td><td class="bounds">270,250,377,333</td></tr>
+<tr><td>4</td><td>cell</td><td>, Red, check box</td><td></td><td class="vo">, Red, check box.  cell</td><td class="bounds">270,344,377,388</td></tr>
+<tr><td>5</td><td>text</td><td>Red</td><td></td><td class="vo">Red.  text</td><td class="bounds">298,344,378,388</td></tr>
+<tr><td>6</td><td>image</td><td>selected</td><td></td><td class="vo">selected.  image</td><td class="bounds">270,357,289,374</td></tr>
+<tr><td>7</td><td>cell</td><td>, Green, check box</td><td></td><td class="vo">, Green, check box.  cell</td><td class="bounds">270,388,377,432</td></tr>
+<tr><td>8</td><td>text</td><td>Green</td><td></td><td class="vo">Green.  text</td><td class="bounds">298,388,378,432</td></tr>
+<tr><td>9</td><td>image</td><td>square</td><td></td><td class="vo">square.  image</td><td class="bounds">270,401,289,418</td></tr>
+<tr><td>10</td><td>cell</td><td>, Blue, check box</td><td></td><td class="vo">, Blue, check box.  cell</td><td class="bounds">270,432,377,476</td></tr>
+<tr><td>11</td><td>text</td><td>Blue</td><td></td><td class="vo">Blue.  text</td><td class="bounds">298,432,378,476</td></tr>
+<tr><td>12</td><td>image</td><td>selected</td><td></td><td class="vo">selected.  image</td><td class="bounds">270,445,289,462</td></tr>
+<tr><td>13</td><td>cell</td><td>, Red, radio button</td><td></td><td class="vo">, Red, radio button.  cell</td><td class="bounds">147,531,254,575</td></tr>
+<tr><td>14</td><td>text</td><td>Red</td><td></td><td class="vo">Red.  text</td><td class="bounds">175,531,254,575</td></tr>
+<tr><td>15</td><td>cell</td><td>, Red, check box</td><td></td><td class="vo">, Red, check box.  cell</td><td class="bounds">270,531,377,575</td></tr>
+<tr><td>16</td><td>text</td><td>Red</td><td></td><td class="vo">Red.  text</td><td class="bounds">298,531,378,575</td></tr>
+<tr><td>17</td><td>image</td><td>Screen Recording</td><td></td><td class="vo">Screen Recording.  image</td><td class="bounds">147,544,166,563</td></tr>
+<tr><td>18</td><td>image</td><td>selected</td><td></td><td class="vo">selected.  image</td><td class="bounds">270,545,289,562</td></tr>
+<tr><td>19</td><td>cell</td><td>, Green, radio button</td><td></td><td class="vo">, Green, radio button.  cell</td><td class="bounds">147,575,254,619</td></tr>
+<tr><td>20</td><td>text</td><td>Green</td><td></td><td class="vo">Green.  text</td><td class="bounds">175,575,254,619</td></tr>
+<tr><td>21</td><td>cell</td><td>, Green, check box</td><td></td><td class="vo">, Green, check box.  cell</td><td class="bounds">270,575,377,619</td></tr>
+<tr><td>22</td><td>text</td><td>Green</td><td></td><td class="vo">Green.  text</td><td class="bounds">298,575,378,619</td></tr>
+<tr><td>23</td><td>image</td><td>circle</td><td></td><td class="vo">circle.  image</td><td class="bounds">147,588,166,607</td></tr>
+<tr><td>24</td><td>image</td><td>square</td><td></td><td class="vo">square.  image</td><td class="bounds">270,589,289,606</td></tr>
+<tr><td>25</td><td>cell</td><td>, Blue, radio button</td><td></td><td class="vo">, Blue, radio button.  cell</td><td class="bounds">147,619,254,663</td></tr>
+<tr><td>26</td><td>text</td><td>Blue</td><td></td><td class="vo">Blue.  text</td><td class="bounds">175,619,254,663</td></tr>
+<tr><td>27</td><td>cell</td><td>, Blue, check box</td><td></td><td class="vo">, Blue, check box.  cell</td><td class="bounds">270,619,377,663</td></tr>
+<tr><td>28</td><td>text</td><td>Blue</td><td></td><td class="vo">Blue.  text</td><td class="bounds">298,619,378,663</td></tr>
+<tr><td>29</td><td>image</td><td>circle</td><td></td><td class="vo">circle.  image</td><td class="bounds">147,632,166,651</td></tr>
+<tr><td>30</td><td>image</td><td>square</td><td></td><td class="vo">square.  image</td><td class="bounds">270,633,289,650</td></tr>
+<tr><td>31</td><td>textView</td><td>One last text block at the bottom</td><td></td><td class="vo">One last text block at the bottom.  textView</td><td class="bounds">147,718,254,768</td></tr>
+<tr><td>32</td><td>textView</td><td>One last text block at the bottom</td><td></td><td class="vo">One last text block at the bottom.  textView</td><td class="bounds">270,718,377,768</td></tr>
+</tbody></table></details>
+<h2>A11Ymas 5539505 Inputstyle</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="a11ymas_5539505_inputstyle.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_a11ymas_5539505_inputstyle.png" alt="annotated"></div>
+</div>
+<details><summary>10 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>textField</td><td>Product Name</td><td>Cosmetics</td><td class="vo">Product Name, Cosmetics.  textField</td><td class="bounds">24,277,378,311</td></tr>
+<tr><td>2</td><td>button</td><td>Clear text</td><td></td><td class="vo">Clear text.  button</td><td class="bounds">355,286,372,303</td></tr>
+<tr><td>3</td><td>button</td><td>Est. Delivery</td><td>Oct 12, 2017</td><td class="vo">Est. Delivery, Oct 12, 2017.  button</td><td class="bounds">24,348,378,382</td></tr>
+<tr><td>4</td><td>button</td><td>Est. Time</td><td>3:30 PM</td><td class="vo">Est. Time, 3:30 PM.  button</td><td class="bounds">24,463,378,497</td></tr>
+<tr><td>5</td><td>switch</td><td>Please check the box:, I accept the term</td><td>0</td><td class="vo">Please check the box:, I accept the terms and agreements,, 0</td><td class="bounds">329,534,380,565</td></tr>
+<tr><td>6</td><td>button</td><td>Select color</td><td>Red</td><td class="vo">Select color, Red.  button</td><td class="bounds">24,602,378,636</td></tr>
+<tr><td>7</td><td>button</td><td>Save</td><td></td><td class="vo">Save.  button</td><td class="bounds">24,647,378,685</td></tr>
+<tr><td>8</td><td>text</td><td>Save</td><td></td><td class="vo">Save.  text</td><td class="bounds">184,657,217,675</td></tr>
+<tr><td>9</td><td>link</td><td>Learn More</td><td></td><td class="vo">Learn More.  link</td><td class="bounds">24,700,378,738</td></tr>
+<tr><td>10</td><td>text</td><td>Learn More</td><td></td><td class="vo">Learn More.  text</td><td class="bounds">162,710,239,728</td></tr>
+</tbody></table></details>
+<h2>Auto Activity Initial</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="auto_activity_initial.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_auto_activity_initial.png" alt="annotated"></div>
+</div>
+<details><summary>9 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>textView</td><td>Publish Adaptive Card schema</td><td></td><td class="vo">Publish Adaptive Card schema.  textView</td><td class="bounds">24,294,378,314</td></tr>
+<tr><td>2</td><td>image</td><td>Matt Hidinger</td><td></td><td class="vo">Matt Hidinger.  image</td><td class="bounds">24,325,64,365</td></tr>
+<tr><td>3</td><td>textView</td><td>Matt Hidinger</td><td></td><td class="vo">Matt Hidinger.  textView</td><td class="bounds">74,325,378,342</td></tr>
+<tr><td>4</td><td>textView</td><td>Created Feb 14, 2017</td><td></td><td class="vo">Created Feb 14, 2017.  textView</td><td class="bounds">74,342,378,359</td></tr>
+<tr><td>5</td><td>textView</td><td>Now that we have defined the main rules </td><td></td><td class="vo">Now that we have defined the main rules and features of the </td><td class="bounds">24,375,378,442</td></tr>
+<tr><td>6</td><td>button</td><td>Set due date</td><td>card collapsed</td><td class="vo">Set due date, card collapsed.  button</td><td class="bounds">24,452,378,490</td></tr>
+<tr><td>7</td><td>text</td><td>Set due date</td><td></td><td class="vo">Set due date.  text</td><td class="bounds">166,462,253,480</td></tr>
+<tr><td>8</td><td>button</td><td>Comment</td><td>card collapsed</td><td class="vo">Comment, card collapsed.  button</td><td class="bounds">24,505,378,542</td></tr>
+<tr><td>9</td><td>text</td><td>Comment</td><td></td><td class="vo">Comment.  text</td><td class="bounds">177,515,244,533</td></tr>
+</tbody></table></details>
+<h2>Auto Activity Showcard Expanded</h2>
+<div class="compare">
+  <div class="card"><h3>Raw Screenshot</h3><img src="auto_activity_showcard_expanded.png" alt="raw"></div>
+  <div class="card"><h3>A11y Element Overlay</h3><img src="annotated_auto_activity_showcard_expanded.png" alt="annotated"></div>
+</div>
+<details><summary>12 VoiceOver elements</summary>
+<table class="transcript"><thead><tr><th>#</th><th>Role</th><th>Label</th><th>Value</th><th>VoiceOver Reads</th><th>Bounds</th></tr></thead><tbody>
+<tr><td>1</td><td>textView</td><td>Publish Adaptive Card schema</td><td></td><td class="vo">Publish Adaptive Card schema.  textView</td><td class="bounds">24,294,378,314</td></tr>
+<tr><td>2</td><td>image</td><td>Matt Hidinger</td><td></td><td class="vo">Matt Hidinger.  image</td><td class="bounds">24,325,64,365</td></tr>
+<tr><td>3</td><td>textView</td><td>Matt Hidinger</td><td></td><td class="vo">Matt Hidinger.  textView</td><td class="bounds">74,325,378,342</td></tr>
+<tr><td>4</td><td>textView</td><td>Created Feb 14, 2017</td><td></td><td class="vo">Created Feb 14, 2017.  textView</td><td class="bounds">74,342,378,359</td></tr>
+<tr><td>5</td><td>textView</td><td>Now that we have defined the main rules </td><td></td><td class="vo">Now that we have defined the main rules and features of the </td><td class="bounds">24,375,378,442</td></tr>
+<tr><td>6</td><td>button</td><td>Set due date</td><td>card collapsed</td><td class="vo">Set due date, card collapsed.  button</td><td class="bounds">24,452,378,490</td></tr>
+<tr><td>7</td><td>text</td><td>Set due date</td><td></td><td class="vo">Set due date.  text</td><td class="bounds">166,462,253,480</td></tr>
+<tr><td>8</td><td>button</td><td>Comment</td><td>card expanded</td><td class="vo">Comment, card expanded.  button</td><td class="bounds">24,505,378,543</td></tr>
+<tr><td>9</td><td>text</td><td>Comment</td><td></td><td class="vo">Comment.  text</td><td class="bounds">177,515,244,533</td></tr>
+<tr><td>10</td><td>textView</td><td>Add a comment</td><td></td><td class="vo">Add a comment.  textView</td><td class="bounds">24,586,378,674</td></tr>
+<tr><td>11</td><td>button</td><td>OK</td><td></td><td class="vo">OK.  button</td><td class="bounds">24,684,378,722</td></tr>
+<tr><td>12</td><td>text</td><td>OK</td><td></td><td class="vo">OK.  text</td><td class="bounds">190,694,211,712</td></tr>
+</tbody></table></details>
+
+
+  <h2>Data Source</h2>
+  <div class="card" style="max-width:600px;">
+    <p><strong>Platform:</strong> iOS (XCUIElement)</p>
+    <p><strong>API:</strong> UIAccessibility (accessibilityLabel, accessibilityValue, frame)</p>
+    <p><strong>Overlays:</strong> Pillow (numbered colored bounding boxes at element coordinates)</p>
+    <p><strong>Narration:</strong> macOS say (Samantha voice from element labels)</p>
+    <p>All element data comes from the same UIAccessibility properties that VoiceOver queries at runtime.</p>
+  </div>
+</body>
+</html>

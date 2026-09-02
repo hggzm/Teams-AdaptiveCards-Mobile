@@ -1,0 +1,639 @@
+[
+  {
+    "traits" : "staticText",
+    "depth" : 4,
+    "colors" : {
+      "viewClass" : "ACRViewAttachingTextView",
+      "background" : {
+        "hex" : "#FFFFFF",
+        "alpha" : 1,
+        "source" : "ACRView"
+      }
+    },
+    "frame" : {
+      "y" : 49.999999999999993,
+      "x" : 26,
+      "width" : 350,
+      "height" : 25.333333333333336
+    },
+    "hint" : "",
+    "label" : "Available Sample JSONs",
+    "value" : "",
+    "canActivate" : true
+  },
+  {
+    "traits" : "button",
+    "depth" : 4,
+    "colors" : {
+      "background" : {
+        "hex" : "#0A84FF",
+        "alpha" : 1,
+        "source" : "ACRButton"
+      },
+      "viewClass" : "ACRButton",
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.normal"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.disabled"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleLabel.textColor"
+        }
+      ]
+    },
+    "frame" : {
+      "y" : 83.333333333333314,
+      "x" : 26,
+      "width" : 48,
+      "height" : 38
+    },
+    "hint" : "",
+    "label" : "v1.0",
+    "value" : "",
+    "canActivate" : true
+  },
+  {
+    "traits" : "button",
+    "depth" : 4,
+    "colors" : {
+      "background" : {
+        "hex" : "#0A84FF",
+        "alpha" : 1,
+        "source" : "ACRButton"
+      },
+      "viewClass" : "ACRButton",
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.normal"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.disabled"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleLabel.textColor"
+        }
+      ]
+    },
+    "frame" : {
+      "y" : 83.333333333333314,
+      "x" : 84,
+      "width" : 45,
+      "height" : 38
+    },
+    "hint" : "",
+    "label" : "v1.1",
+    "value" : "",
+    "canActivate" : true
+  },
+  {
+    "traits" : "button",
+    "depth" : 4,
+    "colors" : {
+      "background" : {
+        "hex" : "#0A84FF",
+        "alpha" : 1,
+        "source" : "ACRButton"
+      },
+      "viewClass" : "ACRButton",
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.normal"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.disabled"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleLabel.textColor"
+        }
+      ]
+    },
+    "frame" : {
+      "y" : 83.333333333333314,
+      "x" : 139,
+      "width" : 47,
+      "height" : 38
+    },
+    "hint" : "",
+    "label" : "v1.2",
+    "value" : "",
+    "canActivate" : true
+  },
+  {
+    "traits" : "button",
+    "depth" : 4,
+    "colors" : {
+      "background" : {
+        "hex" : "#0A84FF",
+        "alpha" : 1,
+        "source" : "ACRButton"
+      },
+      "viewClass" : "ACRButton",
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.normal"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.disabled"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleLabel.textColor"
+        }
+      ]
+    },
+    "frame" : {
+      "y" : 83.333333333333314,
+      "x" : 196,
+      "width" : 48,
+      "height" : 38
+    },
+    "hint" : "",
+    "label" : "v1.3",
+    "value" : "",
+    "canActivate" : true
+  },
+  {
+    "traits" : "button",
+    "depth" : 4,
+    "colors" : {
+      "background" : {
+        "hex" : "#0A84FF",
+        "alpha" : 1,
+        "source" : "ACRButton"
+      },
+      "viewClass" : "ACRButton",
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.normal"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.disabled"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleLabel.textColor"
+        }
+      ]
+    },
+    "frame" : {
+      "y" : 83.333333333333314,
+      "x" : 254,
+      "width" : 48,
+      "height" : 38
+    },
+    "hint" : "",
+    "label" : "v1.4",
+    "value" : "",
+    "canActivate" : true
+  },
+  {
+    "traits" : "button",
+    "depth" : 4,
+    "colors" : {
+      "background" : {
+        "hex" : "#0A84FF",
+        "alpha" : 1,
+        "source" : "ACRButton"
+      },
+      "viewClass" : "ACRButton",
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.normal"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.disabled"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleLabel.textColor"
+        }
+      ]
+    },
+    "frame" : {
+      "y" : 83.333333333333314,
+      "x" : 312,
+      "width" : 48,
+      "height" : 38
+    },
+    "hint" : "",
+    "label" : "v1.5",
+    "value" : "",
+    "canActivate" : true
+  },
+  {
+    "traits" : "button",
+    "depth" : 4,
+    "colors" : {
+      "background" : {
+        "hex" : "#0A84FF",
+        "alpha" : 1,
+        "source" : "ACRButton"
+      },
+      "viewClass" : "ACRButton",
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.normal"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.disabled"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleLabel.textColor"
+        }
+      ]
+    },
+    "frame" : {
+      "y" : 83.333333333333314,
+      "x" : 370,
+      "width" : 48,
+      "height" : 38
+    },
+    "hint" : "",
+    "label" : "v1.6",
+    "value" : "",
+    "canActivate" : true
+  },
+  {
+    "traits" : "button",
+    "depth" : 4,
+    "colors" : {
+      "background" : {
+        "hex" : "#0A84FF",
+        "alpha" : 1,
+        "source" : "ACRButton"
+      },
+      "viewClass" : "ACRButton",
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.normal"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.disabled"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleLabel.textColor"
+        }
+      ]
+    },
+    "frame" : {
+      "y" : 83.333333333333314,
+      "x" : 428,
+      "width" : 119,
+      "height" : 38
+    },
+    "hint" : "",
+    "label" : "webRendering",
+    "value" : "",
+    "canActivate" : true
+  },
+  {
+    "traits" : "none",
+    "depth" : 2,
+    "colors" : {
+      "viewClass" : "UITableView",
+      "background" : {
+        "hex" : "#000000",
+        "alpha" : 1,
+        "source" : "UITableView"
+      }
+    },
+    "frame" : {
+      "y" : 131.33333333333334,
+      "x" : 16,
+      "width" : 370,
+      "height" : 200.00000000000003
+    },
+    "hint" : "",
+    "label" : "Empty list",
+    "value" : "",
+    "canActivate" : true
+  },
+  {
+    "traits" : "button",
+    "depth" : 2,
+    "colors" : {
+      "background" : {
+        "hex" : "#007AFF",
+        "alpha" : 1,
+        "source" : "UIButton"
+      },
+      "viewClass" : "UIButton",
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.normal"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.disabled"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleLabel.textColor"
+        }
+      ]
+    },
+    "frame" : {
+      "y" : 139.33333333333334,
+      "x" : 16,
+      "width" : 180,
+      "height" : 28
+    },
+    "hint" : "",
+    "label" : "Delete All Cards",
+    "value" : "",
+    "canActivate" : true
+  },
+  {
+    "traits" : "button",
+    "depth" : 2,
+    "colors" : {
+      "background" : {
+        "hex" : "#00994D",
+        "alpha" : 1,
+        "source" : "UIButton"
+      },
+      "viewClass" : "UIButton",
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.normal"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.disabled"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleLabel.textColor"
+        }
+      ]
+    },
+    "frame" : {
+      "y" : 139.33333333333334,
+      "x" : 206,
+      "width" : 180,
+      "height" : 28
+    },
+    "hint" : "",
+    "label" : "A11y",
+    "value" : "",
+    "canActivate" : true
+  },
+  {
+    "traits" : "staticText",
+    "depth" : 2,
+    "colors" : {
+      "layout" : {
+        "overflows" : 0,
+        "clippedByAncestor" : false,
+        "actualHeight" : 20.333333333333332,
+        "neededHeight" : 20.333333333333332
+      },
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "textColor"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "attributedText[0..21]"
+        }
+      ],
+      "viewClass" : "UILabel",
+      "background" : {
+        "hex" : "#FFCCCC",
+        "alpha" : 1,
+        "source" : "UIView"
+      }
+    },
+    "frame" : {
+      "y" : 180.66666666666666,
+      "x" : 151.66666666666663,
+      "width" : 175.33333333333337,
+      "height" : 20.333333333333343
+    },
+    "hint" : "",
+    "label" : "Enable Custom Control",
+    "value" : "",
+    "canActivate" : true
+  },
+  {
+    "traits" : "header",
+    "depth" : 4,
+    "colors" : {
+      "viewClass" : "ACRViewAttachingTextView",
+      "background" : {
+        "hex" : "#FFFFFF",
+        "alpha" : 1,
+        "source" : "ACRView"
+      }
+    },
+    "frame" : {
+      "y" : 250.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 25.333333333333314
+    },
+    "hint" : "",
+    "label" : "Malt & Vine Order Form",
+    "value" : "",
+    "canActivate" : true
+  },
+  {
+    "traits" : "none",
+    "depth" : 4,
+    "colors" : {
+      "background" : {
+        "hex" : "#000000",
+        "alpha" : 1,
+        "source" : "ACRChoiceSetCompactStyleView"
+      },
+      "viewClass" : "ACRChoiceSetCompactStyleView",
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "textColor"
+        },
+        {
+          "hex" : "#EBEBF5",
+          "alpha" : 0.29803921568627451,
+          "source" : "attributedPlaceholder"
+        }
+      ]
+    },
+    "frame" : {
+      "y" : 313,
+      "x" : 24,
+      "width" : 354,
+      "height" : 34
+    },
+    "hint" : "combo box, collapsed, double tap to activate it",
+    "label" : "Which entree would you like? *\nRequired",
+    "value" : "Please choose",
+    "canActivate" : true
+  },
+  {
+    "traits" : "none",
+    "depth" : 4,
+    "colors" : {
+      "background" : {
+        "hex" : "#000000",
+        "alpha" : 1,
+        "source" : "ACRChoiceSetCompactStyleView"
+      },
+      "viewClass" : "ACRChoiceSetCompactStyleView",
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "textColor"
+        },
+        {
+          "hex" : "#EBEBF5",
+          "alpha" : 0.29803921568627451,
+          "source" : "attributedPlaceholder"
+        }
+      ]
+    },
+    "frame" : {
+      "y" : 384,
+      "x" : 24,
+      "width" : 354,
+      "height" : 34
+    },
+    "hint" : "combo box, collapsed, double tap to activate it",
+    "label" : "Which side would you like? *\nRequired",
+    "value" : "Please choose",
+    "canActivate" : true
+  },
+  {
+    "traits" : "none",
+    "depth" : 4,
+    "colors" : {
+      "background" : {
+        "hex" : "#000000",
+        "alpha" : 1,
+        "source" : "ACRChoiceSetCompactStyleView"
+      },
+      "viewClass" : "ACRChoiceSetCompactStyleView",
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "textColor"
+        },
+        {
+          "hex" : "#EBEBF5",
+          "alpha" : 0.29803921568627451,
+          "source" : "attributedPlaceholder"
+        }
+      ]
+    },
+    "frame" : {
+      "y" : 455,
+      "x" : 24,
+      "width" : 354,
+      "height" : 34
+    },
+    "hint" : "combo box, collapsed, double tap to activate it",
+    "label" : "Which drink would you like? *\nRequired",
+    "value" : "Please choose",
+    "canActivate" : true
+  },
+  {
+    "traits" : "button",
+    "depth" : 4,
+    "colors" : {
+      "background" : {
+        "hex" : "#0A84FF",
+        "alpha" : 1,
+        "source" : "ACRButton"
+      },
+      "viewClass" : "ACRButton",
+      "foregrounds" : [
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.normal"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleColor.disabled"
+        },
+        {
+          "hex" : "#FFFFFF",
+          "alpha" : 1,
+          "source" : "titleLabel.textColor"
+        }
+      ]
+    },
+    "frame" : {
+      "y" : 499.33333333333337,
+      "x" : 24,
+      "width" : 354,
+      "height" : 38
+    },
+    "hint" : "",
+    "label" : "Place Order",
+    "value" : "",
+    "canActivate" : true
+  }
+]

@@ -1,0 +1,152 @@
+[
+  {
+    "frame" : {
+      "y" : 277.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 34
+    },
+    "role" : "textField",
+    "isHittable" : true,
+    "identifier" : "inputProduct",
+    "label" : "Product Name",
+    "value" : "Cosmetics",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 286.66666666666669,
+      "x" : 355,
+      "width" : 17.666666666666686,
+      "height" : 17
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Clear text",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 348.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 34
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "inputDate",
+    "label" : "Est. Delivery",
+    "value" : "Oct 12, 2017",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 463.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 34
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "inputTime",
+    "label" : "Est. Time",
+    "value" : "3:30 PM",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 534.66666666666674,
+      "x" : 329,
+      "width" : 51,
+      "height" : 31
+    },
+    "role" : "switch",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Please check the box:, I accept the terms and agreements,",
+    "value" : "0",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 602.66666666666674,
+      "x" : 24,
+      "width" : 354,
+      "height" : 34
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "itemColor",
+    "label" : "Select color",
+    "value" : "Red",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 647,
+      "x" : 24,
+      "width" : 354,
+      "height" : 38
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Save",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 657,
+      "x" : 184.33333333333334,
+      "width" : 33.333333333333314,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Save",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 700,
+      "x" : 24,
+      "width" : 354,
+      "height" : 38
+    },
+    "role" : "link",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Learn More",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 710,
+      "x" : 162.33333333333334,
+      "width" : 77.666666666666657,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Learn More",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]

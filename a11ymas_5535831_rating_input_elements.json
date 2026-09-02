@@ -1,0 +1,257 @@
+[
+  {
+    "frame" : {
+      "y" : 250.66666666666666,
+      "x" : 24,
+      "width" : 354,
+      "height" : 25.333333333333343
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Rating input",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 313,
+      "x" : 24,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_28_regular",
+    "label" : "Rate 1 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 313,
+      "x" : 68,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_28_regular",
+    "label" : "Rate 2 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 313,
+      "x" : 112,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_28_regular",
+    "label" : "Rate 3 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 313,
+      "x" : 156,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_28_regular",
+    "label" : "Rate 4 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 313,
+      "x" : 200,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_28_regular",
+    "label" : "Rate 5 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 394,
+      "x" : 24,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_32_filled",
+    "label" : "Rate 1 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 394,
+      "x" : 68,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_32_filled",
+    "label" : "Rate 2 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 394,
+      "x" : 112,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_32_regular",
+    "label" : "Rate 3 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 394,
+      "x" : 156,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_32_regular",
+    "label" : "Rate 4 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 394,
+      "x" : 200,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_32_regular",
+    "label" : "Rate 5 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 458,
+      "x" : 24,
+      "width" : 354,
+      "height" : 25.333333333333314
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Read-only ratings",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 492.33333333333331,
+      "x" : 116,
+      "width" : 51,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Rating 3.2,",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 519.33333333333337,
+      "x" : 136,
+      "width" : 65.666666666666657,
+      "height" : 20.333333333333371
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Rating 3.2,",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 549.33333333333337,
+      "x" : 48,
+      "width" : 76,
+      "height" : 20.333333333333371
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Rating 3.2,",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 579.66666666666674,
+      "x" : 24,
+      "width" : 354,
+      "height" : 38
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Submit",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 589.66666666666674,
+      "x" : 177,
+      "width" : 48.333333333333343,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Submit",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]

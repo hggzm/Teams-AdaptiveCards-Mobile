@@ -1,0 +1,393 @@
+{
+  "rows": [
+    {
+      "label": "A11y",
+      "source": "titleColor.disabled",
+      "light_ratio": 3.708,
+      "light_passes": false,
+      "dark_ratio": 3.708,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "A11y",
+      "source": "titleColor.normal",
+      "light_ratio": 3.708,
+      "light_passes": false,
+      "dark_ratio": 3.708,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "A11y",
+      "source": "titleLabel.textColor",
+      "light_ratio": 3.708,
+      "light_passes": false,
+      "dark_ratio": 3.708,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "Delete All Cards",
+      "source": "titleColor.disabled",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 4.017,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "Delete All Cards",
+      "source": "titleColor.normal",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 4.017,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "Delete All Cards",
+      "source": "titleLabel.textColor",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 4.017,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "Enable Custom Control",
+      "source": "attributedText[0..21]",
+      "light_ratio": 14.761,
+      "light_passes": true,
+      "dark_ratio": 1.423,
+      "dark_passes": false,
+      "divergent": true
+    },
+    {
+      "label": "Enable Custom Control",
+      "source": "textColor",
+      "light_ratio": 14.761,
+      "light_passes": true,
+      "dark_ratio": 1.423,
+      "dark_passes": false,
+      "divergent": true
+    },
+    {
+      "label": "Place Order",
+      "source": "titleColor.disabled",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "Place Order",
+      "source": "titleColor.normal",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "Place Order",
+      "source": "titleLabel.textColor",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "Which drink would you like? *\nRequired",
+      "source": "attributedPlaceholder",
+      "light_ratio": 1.695,
+      "light_passes": false,
+      "dark_ratio": 2.233,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "Which drink would you like? *\nRequired",
+      "source": "textColor",
+      "light_ratio": 18.819,
+      "light_passes": true,
+      "dark_ratio": 21.0,
+      "dark_passes": true,
+      "divergent": false
+    },
+    {
+      "label": "Which entree would you like? *\nRequired",
+      "source": "attributedPlaceholder",
+      "light_ratio": 1.695,
+      "light_passes": false,
+      "dark_ratio": 2.233,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "Which entree would you like? *\nRequired",
+      "source": "textColor",
+      "light_ratio": 18.819,
+      "light_passes": true,
+      "dark_ratio": 21.0,
+      "dark_passes": true,
+      "divergent": false
+    },
+    {
+      "label": "Which side would you like? *\nRequired",
+      "source": "attributedPlaceholder",
+      "light_ratio": 1.695,
+      "light_passes": false,
+      "dark_ratio": 2.233,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "Which side would you like? *\nRequired",
+      "source": "textColor",
+      "light_ratio": 18.819,
+      "light_passes": true,
+      "dark_ratio": 21.0,
+      "dark_passes": true,
+      "divergent": false
+    },
+    {
+      "label": "v1.0",
+      "source": "titleColor.disabled",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.0",
+      "source": "titleColor.normal",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.0",
+      "source": "titleLabel.textColor",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.1",
+      "source": "titleColor.disabled",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.1",
+      "source": "titleColor.normal",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.1",
+      "source": "titleLabel.textColor",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.2",
+      "source": "titleColor.disabled",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.2",
+      "source": "titleColor.normal",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.2",
+      "source": "titleLabel.textColor",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.3",
+      "source": "titleColor.disabled",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.3",
+      "source": "titleColor.normal",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.3",
+      "source": "titleLabel.textColor",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.4",
+      "source": "titleColor.disabled",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.4",
+      "source": "titleColor.normal",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.4",
+      "source": "titleLabel.textColor",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.5",
+      "source": "titleColor.disabled",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.5",
+      "source": "titleColor.normal",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.5",
+      "source": "titleLabel.textColor",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.6",
+      "source": "titleColor.disabled",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.6",
+      "source": "titleColor.normal",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "v1.6",
+      "source": "titleLabel.textColor",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "webRendering",
+      "source": "titleColor.disabled",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "webRendering",
+      "source": "titleColor.normal",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    },
+    {
+      "label": "webRendering",
+      "source": "titleLabel.textColor",
+      "light_ratio": 4.017,
+      "light_passes": false,
+      "dark_ratio": 3.647,
+      "dark_passes": false,
+      "divergent": false
+    }
+  ],
+  "divergent": [
+    {
+      "label": "Enable Custom Control",
+      "source": "attributedText[0..21]",
+      "light_ratio": 14.761,
+      "light_passes": true,
+      "dark_ratio": 1.423,
+      "dark_passes": false,
+      "divergent": true
+    },
+    {
+      "label": "Enable Custom Control",
+      "source": "textColor",
+      "light_ratio": 14.761,
+      "light_passes": true,
+      "dark_ratio": 1.423,
+      "dark_passes": false,
+      "divergent": true
+    }
+  ]
+}

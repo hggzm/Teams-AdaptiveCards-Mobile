@@ -1,0 +1,197 @@
+[
+  {
+    "frame" : {
+      "y" : 250.66666666666666,
+      "x" : 24,
+      "width" : 354,
+      "height" : 50.333333333333343
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "RTL is supported (Toggle rtl property at root AdaptiveCard)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 311,
+      "x" : 24,
+      "width" : 354,
+      "height" : 32
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Airplane",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 565,
+      "x" : 24,
+      "width" : 354,
+      "height" : 25.333333333333371
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "RTL is supported for colored fonts",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 732.33333333333337,
+      "x" : 24,
+      "width" : 354,
+      "height" : 25.333333333333258
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "RTL is supported",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 839.66666666666663,
+      "x" : 24,
+      "width" : 354,
+      "height" : 25.333333333333485
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Clickable icons",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 875,
+      "x" : 24,
+      "width" : 354,
+      "height" : 32
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Click me!",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 923,
+      "x" : 24,
+      "width" : 354,
+      "height" : 25.333333333333371
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Icons on buttons",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 958.66666666666663,
+      "x" : 24,
+      "width" : 354,
+      "height" : 64
+    },
+    "role" : "link",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "RTL supported",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 994.66666666666663,
+      "x" : 155,
+      "width" : 102,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "RTL supported",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1037.6666666666667,
+      "x" : 24,
+      "width" : 354,
+      "height" : 64
+    },
+    "role" : "link",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "RTL supported",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1073.6666666666667,
+      "x" : 155,
+      "width" : 102,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "RTL supported",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1116.6666666666667,
+      "x" : 24,
+      "width" : 354,
+      "height" : 64
+    },
+    "role" : "link",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "No RTL",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1152.6666666666667,
+      "x" : 180.66666666666666,
+      "width" : 51,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "No RTL",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]
