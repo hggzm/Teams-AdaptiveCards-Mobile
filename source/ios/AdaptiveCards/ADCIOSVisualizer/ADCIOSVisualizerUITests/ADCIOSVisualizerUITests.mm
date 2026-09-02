@@ -836,6 +836,27 @@
     XCUIElement *popoverTextView = [testApp.textViews elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label == %@", @"This is a popover"]];
     XCTAssertTrue(popoverTextView.exists, @"'This is a popover' TextView should exist");
     [self dismissPopoverBottomSheet];
+    // ---- TEMPORARY DIAGNOSTIC (proxy-only, never graduates) ----
+    // Four hypotheses have now been wrong. Dump ground truth instead of guessing:
+    // every button, its exact label, frame, and hittability at the moment of failure.
+    {
+        NSArray<XCUIElement *> *popdiagButtons = testApp.buttons.allElementsBoundByIndex;
+        NSLog(@"POPDIAG_BEGIN count=%lu", (unsigned long)popdiagButtons.count);
+        for (XCUIElement *b in popdiagButtons) {
+            NSLog(@"POPDIAG label='%@' frame=%@ hittable=%d enabled=%d exists=%d",
+                  b.label, NSStringFromCGRect(b.frame), b.isHittable, b.isEnabled, b.exists);
+        }
+        NSLog(@"POPDIAG_WINDOW %@", NSStringFromCGRect(testApp.windows.firstMatch.frame));
+        NSArray<XCUIElement *> *popdiagImages = testApp.images.allElementsBoundByIndex;
+        NSLog(@"POPDIAG_IMAGES count=%lu", (unsigned long)popdiagImages.count);
+        for (XCUIElement *im in popdiagImages) {
+            if (im.label.length) {
+                NSLog(@"POPDIAG image label='%@' frame=%@ hittable=%d", im.label, NSStringFromCGRect(im.frame), im.isHittable);
+            }
+        }
+        NSLog(@"POPDIAG_END");
+    }
+    // ---- END TEMPORARY DIAGNOSTIC ----
     XCUIElement *popoverIcon = [testApp.buttons elementMatchingPredicate:[NSPredicate predicateWithFormat:@"label == %@", @", Click me to show a popover"]];
     XCTAssertTrue(popoverIcon.exists && popoverIcon.isHittable, @"Button ', Click me to show a popover' should exist and be hittable");
     [popoverIcon tap];
