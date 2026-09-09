@@ -202,6 +202,61 @@ static const NSTimeInterval kACRPopoverTimeout = 10.0;
     XCTAssertTrue([firstInput valueForKey:@"hasKeyboardFocus"], "First input is not selected");
 }
 
+- (void)testReview741_NumberInputRetainsValueAcrossFocus
+{
+    // Proxy-only behavioral probe. Use the existing, network-free Input.Number card
+    // and the SDK's real renderer, input handler, accessibility tree, and submit path.
+    [self openCardForVersion:@"v1.3" forCardType:@"Elements" withCardName:@"Input.Number.json"];
+    XCUIElementQuery *fields = [testApp.tables[@"ChatWindow"].textFields matchingIdentifier:@"number"];
+    XCUIElement *numberField = fields.element;
+    XCTAssertTrue([numberField waitForExistenceWithTimeout:10]);
+    XCTAssertEqual(fields.count, 1);
+    XCTAssertEqualObjects(numberField.label, @"Enter a number");
+    XCTAssertEqualObjects(numberField.value, @"3");
+
+    XCTAttachment *before = [XCTAttachment attachmentWithScreenshot:[testApp screenshot]];
+    before.name = @"PR741-number-before-focus";
+    before.lifetime = XCTAttachmentLifetimeKeepAlways;
+    [self addAttachment:before];
+
+    [numberField tap];
+    [self expectationForPredicate:[NSPredicate predicateWithFormat:@"hasKeyboardFocus == YES"]
+             evaluatedWithObject:numberField handler:nil];
+    [self waitForExpectationsWithTimeout:10 handler:nil];
+    NSLog(@"PR741_FOCUS id=%@ label=%@ value=%@ frame=%@", numberField.identifier,
+          numberField.label, numberField.value, NSStringFromCGRect(numberField.frame));
+    XCTAssertEqualObjects(numberField.value, @"3", @"PR741_FOCUS_VALUE_CHANGED");
+
+    // Explicit user editing must still work; disabling automatic clearing must not
+    // prevent deleting, entering a replacement, or serializing that replacement.
+    [numberField typeText:XCUIKeyboardKeyDelete];
+    XCTAssertTrue([numberField.value isEqual:@""] || [numberField.value isEqual:@"Enter a number"]);
+    [numberField typeText:@"8"];
+    XCTAssertEqualObjects(numberField.value, @"8");
+    [self tapOnButtonWithText:@"OK"];
+    NSDictionary *firstInputs = [self getInputsFromResultsDictionary:[self parseJsonToDictionary:[self getInputsString]]];
+    XCTAssertEqualObjects([firstInputs[@"number"] description], @"8");
+    XCTAssertFalse([[numberField valueForKey:@"hasKeyboardFocus"] boolValue]);
+
+    [numberField tap];
+    [self expectationForPredicate:[NSPredicate predicateWithFormat:@"hasKeyboardFocus == YES"]
+             evaluatedWithObject:numberField handler:nil];
+    [self waitForExpectationsWithTimeout:10 handler:nil];
+    XCTAssertEqualObjects(numberField.value, @"8", @"PR741_REFOCUS_VALUE_CHANGED");
+    XCTAssertEqualObjects(numberField.label, @"Enter a number");
+    XCTAssertEqualObjects(numberField.identifier, @"number");
+
+    XCTAttachment *after = [XCTAttachment attachmentWithScreenshot:[testApp screenshot]];
+    after.name = @"PR741-number-after-refocus";
+    after.lifetime = XCTAttachmentLifetimeKeepAlways;
+    [self addAttachment:after];
+    NSLog(@"PR741_REFOCUS id=%@ label=%@ value=%@", numberField.identifier, numberField.label, numberField.value);
+
+    [self tapOnButtonWithText:@"OK"];
+    NSDictionary *secondInputs = [self getInputsFromResultsDictionary:[self parseJsonToDictionary:[self getInputsString]]];
+    XCTAssertEqualObjects([secondInputs[@"number"] description], @"8");
+}
+
 - (void)testLongPressAndDragRaiseNoEventInContainers
 {
     [self openCardForVersion:@"v1.5" forCardType:@"Tests" withCardName:@"Container.ScrollableSelectableList.json"];

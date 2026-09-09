@@ -1,0 +1,131 @@
+name: PR 741 numeric focus review
+
+on:
+  push:
+    branches: [proxy/review-pr741-number-focus-20260909]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: review-number-focus-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  focus:
+    name: Numeric focus (${{ matrix.variant }})
+    runs-on: macos-15
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: baseline
+            ref: 24a11a038cb3415709c467479ad30f46ec2960b9
+          - variant: candidate
+            ref: 39241c0cb41457f16871b41cf2edadbfe0fc1e0c
+    env:
+      SDK_REF: ${{ matrix.ref }}
+      VARIANT: ${{ matrix.variant }}
+      TEST_ID: ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testReview741_NumberInputRetainsValueAcrossFocus
+      TEST_PATH: source/ios/AdaptiveCards/ADCIOSVisualizer/ADCIOSVisualizerUITests/ADCIOSVisualizerUITests.mm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: instrument
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: microsoft/Teams-AdaptiveCards-Mobile
+          ref: ${{ matrix.ref }}
+          path: sdk
+          persist-credentials: false
+      - name: Verify source and install identical test instrument
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/number-focus"
+          test "$(git -C sdk rev-parse HEAD)" = "$SDK_REF"
+          cp "instrument/$TEST_PATH" "sdk/$TEST_PATH"
+          test "$(git -C sdk diff --name-only)" = "$TEST_PATH"
+          if grep -q 'a11yBtn' sdk/source/ios/AdaptiveCards/ADCIOSVisualizer/ADCIOSVisualizer/ViewController.m; then
+            echo 'Unexpected inspector chrome in the SDK under test'; exit 1
+          fi
+          {
+            echo "variant=$VARIANT source=$SDK_REF"
+            xcodebuild -version
+            sw_vers
+            shasum -a 256 "sdk/$TEST_PATH"
+          } | tee "$RUNNER_TEMP/number-focus/provenance.txt"
+      - name: Select and boot simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          SIM=$(xcrun simctl list devices available --json | ruby -rjson -e 'd=JSON.parse(STDIN.read)["devices"]; d.keys.sort.reverse_each { |r| next unless r.include?("iOS"); d[r].each { |v| if v["isAvailable"] && v["name"].include?("iPhone"); puts v["udid"]; exit 0; end } }; abort "No available iOS simulator"')
+          test -n "$SIM"
+          echo "SIM_UDID=$SIM" >> "$GITHUB_ENV"
+          echo "simulator=$SIM" >> "$RUNNER_TEMP/number-focus/provenance.txt"
+          if ! xcrun simctl list devices booted --json | grep -q "$SIM"; then
+            xcrun simctl boot "$SIM"
+          fi
+          xcrun simctl bootstatus "$SIM" -b
+      - name: Install dependencies
+        working-directory: sdk/source/ios/AdaptiveCards
+        shell: bash
+        run: |
+          set -euo pipefail
+          pod install --repo-update 2>&1 | tee "$RUNNER_TEMP/number-focus/pod-install.log"
+      - name: Build once
+        working-directory: sdk/source/ios/AdaptiveCards
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild build-for-testing -workspace AdaptiveCards.xcworkspace -scheme ADCIOSVisualizer \
+            -sdk iphonesimulator -destination "platform=iOS Simulator,id=$SIM_UDID" \
+            -derivedDataPath "$RUNNER_TEMP/number-focus-build" \
+            CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee "$RUNNER_TEMP/number-focus/build.log" | tail -25
+      - name: Exercise real focus, editing, and submission three times
+        working-directory: sdk/source/ios/AdaptiveCards
+        shell: bash
+        run: |
+          set -euo pipefail
+          passed=0
+          reproduced=0
+          for i in 1 2 3; do
+            log="$RUNNER_TEMP/number-focus/iteration-$i.log"
+            rc=0
+            xcodebuild test-without-building -workspace AdaptiveCards.xcworkspace -scheme ADCIOSVisualizer \
+              -sdk iphonesimulator -destination "platform=iOS Simulator,id=$SIM_UDID" \
+              -derivedDataPath "$RUNNER_TEMP/number-focus-build" -parallel-testing-enabled NO \
+              -only-testing:"$TEST_ID" -resultBundlePath "$RUNNER_TEMP/number-focus/iteration-$i.xcresult" \
+              CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+              > "$log" 2>&1 || rc=$?
+            if [ "$rc" -eq 0 ] && grep -Eq 'Executed 1 test, with 0 failures' "$log" && grep -q 'PR741_REFOCUS' "$log"; then
+              passed=$((passed + 1))
+              echo "iteration $i: PASS"
+            elif [ "$rc" -eq 65 ] && grep -Eq 'Executed 1 test, with 1 failure' "$log" && grep -q 'failed.*PR741_FOCUS_VALUE_CHANGED' "$log" && grep -q 'PR741_FOCUS id=number' "$log"; then
+              reproduced=$((reproduced + 1))
+              echo "iteration $i: REPRODUCED original focus-value loss"
+            else
+              echo "Unexpected test or infrastructure failure (exit $rc)"
+              tail -90 "$log"
+              exit 1
+            fi
+            grep -E 'PR741_FOCUS|PR741_REFOCUS|Executed 1 test' "$log"
+          done
+          printf 'variant=%s passed=%s/3 original_bug_reproduced=%s/3\n' "$VARIANT" "$passed" "$reproduced" | tee "$RUNNER_TEMP/number-focus/verdict.txt"
+          cat "$RUNNER_TEMP/number-focus/verdict.txt" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$VARIANT" = candidate ]; then
+            test "$passed" -eq 3 && test "$reproduced" -eq 0
+          else
+            test "$reproduced" -eq 3 && test "$passed" -eq 0
+          fi
+      - name: Preserve logs and screenshots in xcresult bundles
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: number-focus-${{ matrix.variant }}
+          path: ${{ runner.temp }}/number-focus/
+          if-no-files-found: error
