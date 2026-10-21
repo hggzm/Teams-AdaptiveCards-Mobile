@@ -1829,8 +1829,8 @@ static const NSTimeInterval kACRPopoverTimeout = 10.0;
 
     NSString *pageLabel = @"A11YMAS 5771275 page one marker";
     NSString *footerLabel = @"A11YMAS 5771275 footer marker";
-    XCUIElement *pageMarker = testApp.staticTexts[pageLabel];
-    XCUIElement *footerMarker = testApp.staticTexts[footerLabel];
+    XCUIElement *pageMarker = testApp.textViews[pageLabel];
+    XCUIElement *footerMarker = testApp.textViews[footerLabel];
     BOOL markersVisible = [pageMarker waitForExistenceWithTimeout:20.0] &&
                           [footerMarker waitForExistenceWithTimeout:20.0];
     XCTAssertTrue(markersVisible, @"A11YMAS WI#5771275: carousel and footer markers should be visible");
