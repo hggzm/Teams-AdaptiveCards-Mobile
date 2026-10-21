@@ -1,0 +1,25 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.6",
+  "body": [
+    {
+      "type": "Input.ChoiceSet",
+      "id": "multiGameChoices",
+      "label": "Choose MultiGame options",
+      "style": "filtered",
+      "choices.data": {
+        "type": "Data.Query",
+        "dataset": "a11y-5527375-multigame",
+        "count": 15,
+        "skip": 0
+      }
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.Submit",
+      "title": "Submit"
+    }
+  ]
+}

@@ -1594,6 +1594,78 @@ static const NSTimeInterval kACRPopoverTimeout = 10.0;
                        wi:@"5536877"];
 }
 
+/// WI#5527375 — dynamic typeahead (Data.Query): the one-line field clips a long selected value and cannot be scrolled.
+/// The target is the collapsed field after the long value is selected.
+- (void)testA11yMAS_DynamicTypeaheadLongSelectedValue_5527375
+{
+    NSString *cardName = @"Input.ChoiceSet.DynamicTypeahead.LongSelectedValue.5527375.json";
+    BOOL loaded = [self launchDirectlyWithCard:@"v1.6" type:@"Tests" card:cardName];
+    XCTAssertTrue(loaded, @"A11YMAS WI#5527375: should load %@", cardName);
+    if (!loaded) { return; }
+
+    NSArray<NSString *> *titles = @[
+        @"MultiGame - Aurora expedition across the Crimson Nebula, including its campaign, mission, and seasonal rewards",
+        @"MultiGame - Deep-space rescue operation across the Sapphire Expanse, including its campaign, mission, and seasonal rewards",
+        @"MultiGame - Forgotten station investigation across the Obsidian Reach, including its campaign, mission, and seasonal rewards",
+        @"MultiGame - Frontier settlement defense across the Verdant Belt, including its campaign, mission, and seasonal rewards",
+        @"MultiGame - Interstellar convoy escort across the Amber Corridor, including its campaign, mission, and seasonal rewards",
+        @"MultiGame - Lost archive recovery across the Cobalt Frontier, including its campaign, mission, and seasonal rewards",
+        @"MultiGame - Outer-rim exploration across the Silver Meridian, including its campaign, mission, and seasonal rewards",
+        @"MultiGame - Terraforming survey across the Violet Horizon, including its campaign, mission, and seasonal rewards"
+    ];
+    [self saveA11yState:@"a11ymas_5527375_initial"];
+
+    XCUIElement *choiceSet = testApp.tables[@"ChatWindow"].buttons[@"multiGameChoices"];
+    XCTAssertTrue([choiceSet waitForExistenceWithTimeout:10.0],
+                  @"A11YMAS WI#5527375: dynamic typeahead ChoiceSet should be present");
+    if (!choiceSet.exists) { return; }
+
+    [choiceSet tap];
+    XCUIElement *searchBar = testApp.otherElements[@"searchBar, multiGameChoices"];
+    if (![searchBar waitForExistenceWithTimeout:10.0]) {
+        searchBar = testApp.searchFields[@"searchBar, multiGameChoices"];
+    }
+    XCTAssertTrue(searchBar.exists, @"A11YMAS WI#5527375: typeahead search should be presented");
+    if (!searchBar.exists) { return; }
+
+    [searchBar typeText:@"MultiGame"];
+    XCUIElement *listView = testApp.tables[@"listView, multiGameChoices"];
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:15.0];
+    while (listView.cells.count < titles.count && [deadline timeIntervalSinceNow] > 0) {
+        [NSThread sleepForTimeInterval:0.25];
+    }
+    XCTAssertEqual(listView.cells.count, titles.count,
+                   @"A11YMAS WI#5527375: the deterministic host callback should return all long choices");
+    [self saveA11yState:@"a11ymas_5527375_picker_results"];
+
+    XCUIElement *longChoice = listView.staticTexts[titles[0]];
+    XCTAssertTrue([longChoice waitForExistenceWithTimeout:10.0],
+                  @"A11YMAS WI#5527375: the long dynamic choice should be selectable");
+    if (!longChoice.exists) { return; }
+    [longChoice tap];
+    [NSThread sleepForTimeInterval:0.5];
+
+    choiceSet = testApp.tables[@"ChatWindow"].buttons[@"multiGameChoices"];
+    XCTAssertTrue([choiceSet waitForExistenceWithTimeout:10.0],
+                  @"A11YMAS WI#5527375: the collapsed field should be back on the card");
+    if (!choiceSet.exists) { return; }
+    [self saveA11yState:@"a11ymas_5527375_long_value_selected"];
+    NSString *selectedValue = [choiceSet.value isKindOfClass:[NSString class]] ? (NSString *)choiceSet.value : @"";
+    NSLog(@"A11YMAS_TARGET: WI#5527375 state=long-value-selected role=%ld label='%@' value='%@' valueLength=%lu choiceLength=%lu identifier='%@' frame=%@",
+          (long)choiceSet.elementType, choiceSet.label, selectedValue, (unsigned long)selectedValue.length,
+          (unsigned long)titles[0].length, choiceSet.identifier, NSStringFromCGRect(choiceSet.frame));
+
+    // A horizontal swipe is how a clipped one-line field would be scrolled; record what it does instead.
+    if (choiceSet.isHittable) {
+        [choiceSet swipeLeft];
+        [NSThread sleepForTimeInterval:0.5];
+        [self saveA11yState:@"a11ymas_5527375_after_scroll_attempt"];
+        NSLog(@"A11YMAS_TARGET: WI#5527375 state=after-scroll-attempt fieldOnCard=%d value='%@' frame=%@",
+              choiceSet.exists, choiceSet.exists ? choiceSet.value : nil,
+              choiceSet.exists ? NSStringFromCGRect(choiceSet.frame) : @"none");
+    }
+}
+
 // ===== C-group: focus retention after action =====
 
 /// WI#5526561 — ActivityUpdate: focus not retained when activating dismiss.
