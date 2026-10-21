@@ -1,0 +1,54 @@
+{
+  "$schema": "https://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.6",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "Synthetic forwarded-carousel layout probe",
+      "wrap": true
+    },
+    {
+      "type": "Carousel",
+      "pages": [
+        {
+          "type": "CarouselPage",
+          "id": "pageOne",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "A11YMAS 5771275 page one marker",
+              "wrap": true
+            },
+            {
+              "type": "TextBlock",
+              "text": "Synthetic static content for idle layout measurement.",
+              "wrap": true
+            }
+          ]
+        },
+        {
+          "type": "CarouselPage",
+          "id": "pageTwo",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "A11YMAS 5771275 page two marker",
+              "wrap": true
+            },
+            {
+              "type": "TextBlock",
+              "text": "Synthetic static content for idle layout measurement.",
+              "wrap": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TextBlock",
+      "text": "A11YMAS 5771275 footer marker",
+      "wrap": true
+    }
+  ]
+}

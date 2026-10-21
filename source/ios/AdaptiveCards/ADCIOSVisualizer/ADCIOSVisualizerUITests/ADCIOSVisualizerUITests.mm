@@ -1818,4 +1818,60 @@ static const NSTimeInterval kACRPopoverTimeout = 10.0;
                            wi:@"5428636"];
 }
 
+
+/// WI#5771275 — sample a synthetic Carousel's frames while idle; Teams forwarding is not modeled here.
+- (void)testA11yMAS_CarouselForwardedHeightStability_5771275
+{
+    BOOL navigated = [self launchDirectlyWithCard:@"v1.6" type:@"Tests"
+                                               card:@"Carousel.ForwardedHeightStability.5771275.json"];
+    XCTAssertTrue(navigated, @"A11YMAS WI#5771275: should load the synthetic carousel probe");
+    if (!navigated) { return; }
+
+    NSString *pageLabel = @"A11YMAS 5771275 page one marker";
+    NSString *footerLabel = @"A11YMAS 5771275 footer marker";
+    XCUIElement *pageMarker = testApp.staticTexts[pageLabel];
+    XCUIElement *footerMarker = testApp.staticTexts[footerLabel];
+    BOOL markersVisible = [pageMarker waitForExistenceWithTimeout:20.0] &&
+                          [footerMarker waitForExistenceWithTimeout:20.0];
+    XCTAssertTrue(markersVisible, @"A11YMAS WI#5771275: carousel and footer markers should be visible");
+    if (!markersVisible) { return; }
+
+    NSDate *started = [NSDate date];
+    CGRect firstPageFrame = CGRectZero;
+    CGRect firstFooterFrame = CGRectZero;
+    BOOL idleGeometryChanged = NO;
+
+    for (NSUInteger sample = 0; sample < 10; sample++) {
+        if (sample > 0) { [NSThread sleepForTimeInterval:1.0]; }
+        NSString *stateName = [NSString stringWithFormat:@"a11ymas_5771275_idle_%02lu",
+                               (unsigned long)sample];
+        [self saveA11yState:stateName];
+
+        CGRect pageFrame = pageMarker.frame;
+        CGRect footerFrame = footerMarker.frame;
+        NSTimeInterval elapsed = [[NSDate date] timeIntervalSinceDate:started];
+        NSLog(@"A11YMAS_GEOMETRY: WI#5771275 sample=%lu elapsed=%.2f page=(%.1f,%.1f,%.1f,%.1f) footer=(%.1f,%.1f,%.1f,%.1f)",
+              (unsigned long)sample, elapsed,
+              pageFrame.origin.x, pageFrame.origin.y, pageFrame.size.width, pageFrame.size.height,
+              footerFrame.origin.x, footerFrame.origin.y, footerFrame.size.width, footerFrame.size.height);
+
+        if (sample == 0) {
+            firstPageFrame = pageFrame;
+            firstFooterFrame = footerFrame;
+        } else if (fabs(pageFrame.origin.x - firstPageFrame.origin.x) > 1.0 ||
+                   fabs(pageFrame.origin.y - firstPageFrame.origin.y) > 1.0 ||
+                   fabs(pageFrame.size.width - firstPageFrame.size.width) > 1.0 ||
+                   fabs(pageFrame.size.height - firstPageFrame.size.height) > 1.0 ||
+                   fabs(footerFrame.origin.x - firstFooterFrame.origin.x) > 1.0 ||
+                   fabs(footerFrame.origin.y - firstFooterFrame.origin.y) > 1.0 ||
+                   fabs(footerFrame.size.width - firstFooterFrame.size.width) > 1.0 ||
+                   fabs(footerFrame.size.height - firstFooterFrame.size.height) > 1.0) {
+            idleGeometryChanged = YES;
+        }
+    }
+
+    NSLog(@"A11YMAS_IDLE_GEOMETRY: WI#5771275 result=%@ samples=10; no user/page/timer changes; host forwarding/reuse not modeled",
+          idleGeometryChanged ? @"changed" : @"stable");
+}
+
 @end
