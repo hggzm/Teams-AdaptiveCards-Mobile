@@ -7,6 +7,11 @@ on:
       - '.github/workflows/axe-a11y-pipeline.yml'
       - '.github/scripts/a11y_axe_pipeline.py'
       - 'source/ios/**'
+      # A fixture under samples/ or a fix in the shared C++ object model changes what iOS renders, and
+      # this workflow is not on the fork's default branch, so workflow_dispatch cannot start it: the
+      # push trigger has to see those paths (adaptive-card-a11y-fix skill, 2026-10-21).
+      - 'samples/**'
+      - 'source/shared/**'
   workflow_dispatch:
 
 permissions:
