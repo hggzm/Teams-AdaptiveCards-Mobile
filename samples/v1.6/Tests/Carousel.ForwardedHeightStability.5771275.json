@@ -5,7 +5,7 @@
   "body": [
     {
       "type": "TextBlock",
-      "text": "Synthetic forwarded-carousel layout probe",
+      "text": "Synthetic forwarded-carousel height probe",
       "wrap": true
     },
     {
@@ -17,12 +17,18 @@
           "items": [
             {
               "type": "TextBlock",
-              "text": "A11YMAS 5771275 page one marker",
+              "text": "A11YMAS 5771275 short page marker",
               "wrap": true
             },
             {
+              "type": "Image",
+              "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAABfUlEQVRIS72UPU/DMBRF+69hYaJIbBUjfwFRkFCLKFH4iBQWOpeJbMBG5kzGJ+pLbOeFhKbhSkdW/O57t07dTowx/4K6OQaNjfXry9rK7IHInRuGaA011EM0n4PMrkLSNF1bzAhchEGaaTCceuegz68Pdb+NnYI2mzcay1WrazDfC0qSp06KoqCxXLW6BvOrIM0QIqcR8az5Qqz6BXFNGSqnEfHMPnWtT7Dyg57jRxPHcbnyhYeDu4SfPmYIDwm/WydICqvovlwJzvMcU2/hp09mCVbNoOhuVRn+EoaPHj6oILOs6iC36JoxdoVpIS5WfpCEhGHhbQtF3fW7MMuqeSKNLMswt4q61idY1UHL5cK0Eb467VnrE6z6Bck15+pyQdhj5RlRD3tcrLqDeMfyJ6rV2aeOT6uDF3Rze2WuF/uHuV6QZtoXXpBNPmeTT/Ab7itpq7NKyOV8fuAFAVdxWxzMds67zPaCYHY2O52eTM1Avo+OD8uTCF7IeJjJD3xajPLilAzRAAAAAElFTkSuQmCC",
+              "altText": "Synthetic local image",
+              "size": "medium"
+            },
+            {
               "type": "TextBlock",
-              "text": "Synthetic static content for idle layout measurement.",
+              "text": "Short page with a deterministic local image.",
               "wrap": true
             }
           ]
@@ -33,12 +39,27 @@
           "items": [
             {
               "type": "TextBlock",
-              "text": "A11YMAS 5771275 page two marker",
+              "text": "A11YMAS 5771275 tall page marker",
               "wrap": true
             },
             {
               "type": "TextBlock",
-              "text": "Synthetic static content for idle layout measurement.",
+              "text": "Synthetic long content exercises a taller carousel page and stable text wrapping at the Visualizer width.",
+              "wrap": true
+            },
+            {
+              "type": "TextBlock",
+              "text": "This second block adds more deterministic page content without a network image or customer payload.",
+              "wrap": true
+            },
+            {
+              "type": "TextBlock",
+              "text": "A third wrapped block makes the page height measurably different from the short page.",
+              "wrap": true
+            },
+            {
+              "type": "TextBlock",
+              "text": "A11YMAS 5771275 tall page end marker",
               "wrap": true
             }
           ]

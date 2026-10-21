@@ -1819,7 +1819,7 @@ static const NSTimeInterval kACRPopoverTimeout = 10.0;
 }
 
 
-/// WI#5771275 — sample a synthetic Carousel's frames while idle; Teams forwarding is not modeled here.
+/// WI#5771275 — sample unequal synthetic Carousel pages, navigation and a fresh render.
 - (void)testA11yMAS_CarouselForwardedHeightStability_5771275
 {
     BOOL navigated = [self launchDirectlyWithCard:@"v1.6" type:@"Tests"
@@ -1827,30 +1827,33 @@ static const NSTimeInterval kACRPopoverTimeout = 10.0;
     XCTAssertTrue(navigated, @"A11YMAS WI#5771275: should load the synthetic carousel probe");
     if (!navigated) { return; }
 
-    NSString *pageLabel = @"A11YMAS 5771275 page one marker";
+    NSString *shortPageLabel = @"A11YMAS 5771275 short page marker";
+    NSString *tallPageLabel = @"A11YMAS 5771275 tall page marker";
     NSString *footerLabel = @"A11YMAS 5771275 footer marker";
-    XCUIElement *pageMarker = testApp.textViews[pageLabel];
+    XCUIElement *shortPageMarker = testApp.textViews[shortPageLabel];
+    XCUIElement *tallPageMarker = testApp.textViews[tallPageLabel];
     XCUIElement *footerMarker = testApp.textViews[footerLabel];
-    BOOL markersVisible = [pageMarker waitForExistenceWithTimeout:20.0] &&
+    BOOL markersVisible = [shortPageMarker waitForExistenceWithTimeout:20.0] &&
                           [footerMarker waitForExistenceWithTimeout:20.0];
-    XCTAssertTrue(markersVisible, @"A11YMAS WI#5771275: carousel and footer markers should be visible");
+    XCTAssertTrue(markersVisible, @"A11YMAS WI#5771275: short-page and footer markers should be visible");
     if (!markersVisible) { return; }
 
+    [self saveA11yState:@"a11ymas_5771275_short_page_initial"];
     NSDate *started = [NSDate date];
     CGRect firstPageFrame = CGRectZero;
     CGRect firstFooterFrame = CGRectZero;
-    BOOL idleGeometryChanged = NO;
+    BOOL shortPageGeometryChanged = NO;
 
     for (NSUInteger sample = 0; sample < 10; sample++) {
         if (sample > 0) { [NSThread sleepForTimeInterval:1.0]; }
-        NSString *stateName = [NSString stringWithFormat:@"a11ymas_5771275_idle_%02lu",
+        NSString *stateName = [NSString stringWithFormat:@"a11ymas_5771275_short_page_idle_%02lu",
                                (unsigned long)sample];
         [self saveA11yState:stateName];
 
-        CGRect pageFrame = pageMarker.frame;
+        CGRect pageFrame = shortPageMarker.frame;
         CGRect footerFrame = footerMarker.frame;
         NSTimeInterval elapsed = [[NSDate date] timeIntervalSinceDate:started];
-        NSLog(@"A11YMAS_GEOMETRY: WI#5771275 sample=%lu elapsed=%.2f page=(%.1f,%.1f,%.1f,%.1f) footer=(%.1f,%.1f,%.1f,%.1f)",
+        NSLog(@"A11YMAS_GEOMETRY: WI#5771275 phase=short sample=%lu elapsed=%.2f page=(%.1f,%.1f,%.1f,%.1f) footer=(%.1f,%.1f,%.1f,%.1f)",
               (unsigned long)sample, elapsed,
               pageFrame.origin.x, pageFrame.origin.y, pageFrame.size.width, pageFrame.size.height,
               footerFrame.origin.x, footerFrame.origin.y, footerFrame.size.width, footerFrame.size.height);
@@ -1866,12 +1869,75 @@ static const NSTimeInterval kACRPopoverTimeout = 10.0;
                    fabs(footerFrame.origin.y - firstFooterFrame.origin.y) > 1.0 ||
                    fabs(footerFrame.size.width - firstFooterFrame.size.width) > 1.0 ||
                    fabs(footerFrame.size.height - firstFooterFrame.size.height) > 1.0) {
-            idleGeometryChanged = YES;
+            shortPageGeometryChanged = YES;
         }
     }
 
-    NSLog(@"A11YMAS_IDLE_GEOMETRY: WI#5771275 result=%@ samples=10; no user/page/timer changes; host forwarding/reuse not modeled",
-          idleGeometryChanged ? @"changed" : @"stable");
+    NSLog(@"A11YMAS_PAGE_GEOMETRY: WI#5771275 phase=short result=%@ samples=10; no user/page/timer changes",
+          shortPageGeometryChanged ? @"changed" : @"stable");
+
+    [shortPageMarker swipeLeft];
+    BOOL tallPageVisible = [tallPageMarker waitForExistenceWithTimeout:20.0];
+    XCTAssertTrue(tallPageVisible, @"A11YMAS WI#5771275: swiping should reveal the taller carousel page");
+    if (!tallPageVisible) { return; }
+    [NSThread sleepForTimeInterval:2.0];
+    [self saveA11yState:@"a11ymas_5771275_tall_page_selected"];
+
+    started = [NSDate date];
+    firstPageFrame = CGRectZero;
+    firstFooterFrame = CGRectZero;
+    BOOL tallPageGeometryChanged = NO;
+    for (NSUInteger sample = 0; sample < 10; sample++) {
+        if (sample > 0) { [NSThread sleepForTimeInterval:1.0]; }
+        NSString *stateName = [NSString stringWithFormat:@"a11ymas_5771275_tall_page_idle_%02lu",
+                               (unsigned long)sample];
+        [self saveA11yState:stateName];
+
+        CGRect pageFrame = tallPageMarker.frame;
+        CGRect footerFrame = footerMarker.frame;
+        NSTimeInterval elapsed = [[NSDate date] timeIntervalSinceDate:started];
+        NSLog(@"A11YMAS_GEOMETRY: WI#5771275 phase=tall sample=%lu elapsed=%.2f page=(%.1f,%.1f,%.1f,%.1f) footer=(%.1f,%.1f,%.1f,%.1f)",
+              (unsigned long)sample, elapsed,
+              pageFrame.origin.x, pageFrame.origin.y, pageFrame.size.width, pageFrame.size.height,
+              footerFrame.origin.x, footerFrame.origin.y, footerFrame.size.width, footerFrame.size.height);
+
+        if (sample == 0) {
+            firstPageFrame = pageFrame;
+            firstFooterFrame = footerFrame;
+        } else if (fabs(pageFrame.origin.x - firstPageFrame.origin.x) > 1.0 ||
+                   fabs(pageFrame.origin.y - firstPageFrame.origin.y) > 1.0 ||
+                   fabs(pageFrame.size.width - firstPageFrame.size.width) > 1.0 ||
+                   fabs(pageFrame.size.height - firstPageFrame.size.height) > 1.0 ||
+                   fabs(footerFrame.origin.x - firstFooterFrame.origin.x) > 1.0 ||
+                   fabs(footerFrame.origin.y - firstFooterFrame.origin.y) > 1.0 ||
+                   fabs(footerFrame.size.width - firstFooterFrame.size.width) > 1.0 ||
+                   fabs(footerFrame.size.height - firstFooterFrame.size.height) > 1.0) {
+            tallPageGeometryChanged = YES;
+        }
+    }
+
+    NSLog(@"A11YMAS_PAGE_GEOMETRY: WI#5771275 phase=tall result=%@ samples=10; no user/page/timer changes",
+          tallPageGeometryChanged ? @"changed" : @"stable");
+
+    [tallPageMarker swipeRight];
+    BOOL returnedToShortPage = [shortPageMarker waitForExistenceWithTimeout:20.0];
+    XCTAssertTrue(returnedToShortPage, @"A11YMAS WI#5771275: swiping back should restore the short page");
+    if (!returnedToShortPage) { return; }
+    [NSThread sleepForTimeInterval:2.0];
+    [self saveA11yState:@"a11ymas_5771275_return_short_page"];
+
+    BOOL reloaded = [self launchDirectlyWithCard:@"v1.6" type:@"Tests"
+                                             card:@"Carousel.ForwardedHeightStability.5771275.json"];
+    XCTAssertTrue(reloaded, @"A11YMAS WI#5771275: the same synthetic card should render again");
+    if (!reloaded) { return; }
+    XCUIElement *reloadedShortPageMarker = testApp.textViews[shortPageLabel];
+    XCUIElement *reloadedFooterMarker = testApp.textViews[footerLabel];
+    BOOL reloadedVisible = [reloadedShortPageMarker waitForExistenceWithTimeout:20.0] &&
+                           [reloadedFooterMarker waitForExistenceWithTimeout:20.0];
+    XCTAssertTrue(reloadedVisible, @"A11YMAS WI#5771275: reloaded card markers should be visible");
+    if (!reloadedVisible) { return; }
+    [NSThread sleepForTimeInterval:2.0];
+    [self saveA11yState:@"a11ymas_5771275_reloaded_short_page"];
 }
 
 @end
