@@ -81,6 +81,7 @@ rc, timed_out = run_test_streaming([
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yAutomation_InputForm",
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_FoodOrderShowCard_dropdown",
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_ChoiceSetPlaceholderContrast_5536079",
+    "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_DynamicTypeaheadMultiSelectOverflow_5527375",
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_ColumnSetChoiceSet_name",
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_InputStyle_fieldName",
     "-only-testing:ADCIOSVisualizerUITests/ADCIOSVisualizerUITests/testA11yMAS_CompoundButton_role",

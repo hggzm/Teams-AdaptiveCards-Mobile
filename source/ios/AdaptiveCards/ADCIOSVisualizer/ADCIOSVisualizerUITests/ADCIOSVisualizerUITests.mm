@@ -1594,6 +1594,106 @@ static const NSTimeInterval kACRPopoverTimeout = 10.0;
                        wi:@"5536877"];
 }
 
+/// WI#5527375 — dynamic multi-select with long values: record the actual picker and field path.
+- (void)testA11yMAS_DynamicTypeaheadMultiSelectOverflow_5527375
+{
+    NSString *cardName = @"Input.ChoiceSet.DynamicTypeahead.MultiSelectOverflow.5527375.json";
+    BOOL loaded = [self launchDirectlyWithCard:@"v1.6" type:@"Tests" card:cardName];
+    XCTAssertTrue(loaded, @"A11YMAS WI#5527375: should load %@", cardName);
+    if (!loaded) { return; }
+
+    NSArray<NSString *> *titles = @[
+        @"MultiGame - Aurora expedition across the Crimson Nebula, including its campaign, mission, and seasonal rewards",
+        @"MultiGame - Deep-space rescue operation across the Sapphire Expanse, including its campaign, mission, and seasonal rewards",
+        @"MultiGame - Forgotten station investigation across the Obsidian Reach, including its campaign, mission, and seasonal rewards",
+        @"MultiGame - Frontier settlement defense across the Verdant Belt, including its campaign, mission, and seasonal rewards",
+        @"MultiGame - Interstellar convoy escort across the Amber Corridor, including its campaign, mission, and seasonal rewards",
+        @"MultiGame - Lost archive recovery across the Cobalt Frontier, including its campaign, mission, and seasonal rewards",
+        @"MultiGame - Outer-rim exploration across the Silver Meridian, including its campaign, mission, and seasonal rewards",
+        @"MultiGame - Terraforming survey across the Violet Horizon, including its campaign, mission, and seasonal rewards"
+    ];
+    [self saveA11yState:@"a11ymas_5527375_initial"];
+
+    XCUIElement *choiceSet = testApp.tables[@"ChatWindow"].buttons[@"multiGameChoices"];
+    XCTAssertTrue([choiceSet waitForExistenceWithTimeout:10.0],
+                  @"A11YMAS WI#5527375: multi-select ChoiceSet should be present");
+    if (!choiceSet.exists) { return; }
+    NSLog(@"A11YMAS_TARGET: WI#5527375 state=collapsed role=%ld label='%@' value='%@' identifier='%@' frame=%@",
+          (long)choiceSet.elementType, choiceSet.label, choiceSet.value, choiceSet.identifier,
+          NSStringFromCGRect(choiceSet.frame));
+
+    [choiceSet tap];
+    XCUIElement *searchBar = testApp.otherElements[@"searchBar, multiGameChoices"];
+    if (![searchBar waitForExistenceWithTimeout:10.0]) {
+        searchBar = testApp.searchFields[@"searchBar, multiGameChoices"];
+    }
+    XCTAssertTrue(searchBar.exists, @"A11YMAS WI#5527375: typeahead search should be presented");
+    if (!searchBar.exists) { return; }
+
+    [searchBar typeText:@"MultiGame"];
+    XCUIElement *listView = testApp.tables[@"listView, multiGameChoices"];
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:15.0];
+    while (listView.cells.count < titles.count && [deadline timeIntervalSinceNow] > 0) {
+        [NSThread sleepForTimeInterval:0.25];
+    }
+    XCTAssertEqual(listView.cells.count, titles.count,
+                   @"A11YMAS WI#5527375: the deterministic host callback should return all long choices");
+    [self saveA11yState:@"a11ymas_5527375_picker_results"];
+
+    for (NSUInteger index = 0; index < listView.cells.count; index++) {
+        XCUIElement *cell = [listView.cells elementBoundByIndex:index];
+        NSLog(@"A11YMAS_TARGET: WI#5527375 state=picker role=%ld label='%@' value='%@' identifier='%@' frame=%@",
+              (long)cell.elementType, cell.label, cell.value, cell.identifier, NSStringFromCGRect(cell.frame));
+    }
+
+    XCUIElement *firstChoice = listView.staticTexts[titles[0]];
+    XCTAssertTrue([firstChoice waitForExistenceWithTimeout:10.0],
+                  @"A11YMAS WI#5527375: first dynamic choice should be selectable");
+    [firstChoice tap];
+    [NSThread sleepForTimeInterval:0.5];
+    [self saveA11yState:@"a11ymas_5527375_after_first_selection"];
+
+    choiceSet = testApp.tables[@"ChatWindow"].buttons[@"multiGameChoices"];
+    NSLog(@"A11YMAS_TARGET: WI#5527375 state=after-first-selection role=%ld label='%@' value='%@' identifier='%@' frame=%@",
+          (long)choiceSet.elementType, choiceSet.label, choiceSet.value, choiceSet.identifier,
+          NSStringFromCGRect(choiceSet.frame));
+
+    searchBar = testApp.otherElements[@"searchBar, multiGameChoices"];
+    if (!searchBar.exists) {
+        searchBar = testApp.searchFields[@"searchBar, multiGameChoices"];
+    }
+    if (searchBar.exists) {
+        XCUIElement *secondChoice = testApp.tables[@"listView, multiGameChoices"].staticTexts[titles[1]];
+        if (secondChoice.exists && secondChoice.isHittable) {
+            [secondChoice tap];
+            [self saveA11yState:@"a11ymas_5527375_after_second_selection"];
+        }
+    } else {
+        NSLog(@"A11YMAS_OBSERVATION: WI#5527375 dynamic typeahead dismissed after one choice despite isMultiSelect=true; no multi-value area is exposed in this SDK host");
+    }
+
+    if (choiceSet.exists && choiceSet.isHittable) {
+        [choiceSet swipeUp];
+        [NSThread sleepForTimeInterval:0.25];
+        [self saveA11yState:@"a11ymas_5527375_after_scroll_attempt"];
+        NSLog(@"A11YMAS_TARGET: WI#5527375 state=after-scroll-attempt role=%ld label='%@' value='%@' identifier='%@' frame=%@",
+              (long)choiceSet.elementType, choiceSet.label, choiceSet.value, choiceSet.identifier,
+              NSStringFromCGRect(choiceSet.frame));
+    }
+
+    XCUIElement *submit = testApp.buttons[@"Submit"];
+    XCTAssertTrue([submit waitForExistenceWithTimeout:10.0],
+                  @"A11YMAS WI#5527375: submit should remain available");
+    [submit tap];
+    NSString *resultsString = [self getInputsString];
+    XCTAssertTrue(resultsString.length > 0, @"A11YMAS WI#5527375: submitted input should be captured");
+    NSDictionary *results = [self parseJsonToDictionary:resultsString];
+    NSDictionary *inputs = [self getInputsFromResultsDictionary:results];
+    [self verifyInput:@"multiGameChoices" matchesExpectedValue:@"synthetic-multigame-01" inInputSet:inputs];
+    NSLog(@"A11YMAS_SUBMIT: WI#5527375 inputs=%@", resultsString);
+    [self saveA11yState:@"a11ymas_5527375_submitted"];
+}
+
 // ===== C-group: focus retention after action =====
 
 /// WI#5526561 — ActivityUpdate: focus not retained when activating dismiss.
