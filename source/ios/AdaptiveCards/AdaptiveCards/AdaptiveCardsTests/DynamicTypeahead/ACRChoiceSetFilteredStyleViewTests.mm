@@ -52,6 +52,16 @@
     ACOHostConfig *_hostConfig;
 }
 
+- (UILabel *)selectedValueLabelInView:(ACRChoiceSetFilteredStyleView *)view
+{
+    for (UIView *subview in view.subviews) {
+        if ([subview isKindOfClass:[UILabel class]] && ((UILabel *)subview).numberOfLines == 0) {
+            return (UILabel *)subview;
+        }
+    }
+    return nil;
+}
+
 - (void)setUp
 {
     _rootView = [[MockACRView alloc] initWithFrame:CGRectMake(0, 0, 20, 30)];
@@ -98,6 +108,7 @@
 
     XCTAssertGreaterThan(selectedSize.height, initialHeight);
     XCTAssertEqualObjects(filteredView.text, longTitle);
+    XCTAssertEqualObjects(filteredView.textColor, UIColor.clearColor);
     XCTAssertEqualObjects(filteredView.accessibilityValue, longTitle);
     XCTAssertTrue((filteredView.accessibilityTraits & UIAccessibilityTraitButton) != 0);
     XCTAssertFalse([filteredView textFieldShouldBeginEditing:filteredView]);
@@ -154,11 +165,41 @@
 - (void)testPlaceholderMeetsContrastRequirement
 {
     ACRChoiceSetFilteredStyleView *filteredView = [[ACRChoiceSetFilteredStyleView alloc] initWithInputChoiceSet:_acoElem rootView:_rootView hostConfig:_hostConfig searchStateParams:nil typeaheadViewTitle:@"typeahead"];
-    UIColor *placeholderColor = [filteredView.attributedPlaceholder attribute:NSForegroundColorAttributeName atIndex:0 effectiveRange:nil];
+    UILabel *selectedValueLabel = [self selectedValueLabelInView:filteredView];
+    XCTAssertNotNil(selectedValueLabel);
+
+    NSAttributedString *visiblePlaceholder = selectedValueLabel.attributedText;
+    XCTAssertGreaterThan(visiblePlaceholder.length, 0);
+    if (visiblePlaceholder.length == 0) {
+        return;
+    }
+
+    UIColor *placeholderColor = [visiblePlaceholder attribute:NSForegroundColorAttributeName atIndex:0 effectiveRange:nil];
     UITraitCollection *lightTraits = [UITraitCollection traitCollectionWithUserInterfaceStyle:UIUserInterfaceStyleLight];
     UIColor *backgroundColor = [UIColor.systemGroupedBackgroundColor resolvedColorWithTraitCollection:lightTraits];
 
+    XCTAssertEqualObjects(visiblePlaceholder.string, @"Please choose");
     XCTAssertGreaterThanOrEqual(ACRContrastRatio(placeholderColor, backgroundColor, lightTraits), 4.5);
+}
+
+- (void)testPlaceholderIsDrawnOnlyByWrappingLabel
+{
+    ACRChoiceSetFilteredStyleView *filteredView = [[ACRChoiceSetFilteredStyleView alloc] initWithInputChoiceSet:_acoElem rootView:_rootView hostConfig:_hostConfig searchStateParams:nil typeaheadViewTitle:@"typeahead"];
+    UILabel *selectedValueLabel = [self selectedValueLabelInView:filteredView];
+    XCTAssertNotNil(selectedValueLabel);
+
+    NSAttributedString *visiblePlaceholder = selectedValueLabel.attributedText;
+    NSAttributedString *nativePlaceholder = filteredView.attributedPlaceholder;
+    XCTAssertGreaterThan(visiblePlaceholder.length, 0);
+    XCTAssertGreaterThan(nativePlaceholder.length, 0);
+    if (visiblePlaceholder.length == 0 || nativePlaceholder.length == 0) {
+        return;
+    }
+
+    UIColor *nativePlaceholderColor = [nativePlaceholder attribute:NSForegroundColorAttributeName atIndex:0 effectiveRange:nil];
+    XCTAssertEqualObjects(visiblePlaceholder.string, @"Please choose");
+    XCTAssertEqualObjects(nativePlaceholder.string, @"Please choose");
+    XCTAssertEqualObjects(nativePlaceholderColor, UIColor.clearColor);
 }
 
 @end

@@ -44,6 +44,9 @@ static const CGFloat ACRChoiceSetFilteredStyleViewAccessorySpacing = 8.0;
     ACRTypeaheadStateAllParameters *_searchStateParams;
     NSMutableArray<CompletionHandler> *_completionHandlers;
     UILabel *_selectedValueLabel;
+    NSAttributedString *_selectedValueAttributedPlaceholder;
+    NSString *_selectedValuePlaceholder;
+    UIColor *_selectedValueTextColor;
     CGFloat _lastLayoutWidth;
 }
 
@@ -59,6 +62,7 @@ static const CGFloat ACRChoiceSetFilteredStyleViewAccessorySpacing = 8.0;
         std::shared_ptr<ChoiceSetInput> choiceSet = std::dynamic_pointer_cast<ChoiceSetInput>(elem);
         _rootView = rootView;
         _inputElem = acoElem;
+        _selectedValueTextColor = [super textColor];
         _hostConfig = hostConfig;
         _searchStateParams = searchStateParams;
         _typeaheadViewTitle = typeaheadViewTitle;
@@ -85,7 +89,7 @@ static const CGFloat ACRChoiceSetFilteredStyleViewAccessorySpacing = 8.0;
         _selectedValueLabel.userInteractionEnabled = NO;
         [self addSubview:_selectedValueLabel];
         _lastLayoutWidth = -1.0;
-        [self updateSelectedValueLabel];
+        self.textColor = _selectedValueTextColor;
 
         // configure AdaptiveCards input handler
         self.id = [NSString stringWithCString:choiceSet->GetId().c_str()
@@ -127,19 +131,37 @@ static const CGFloat ACRChoiceSetFilteredStyleViewAccessorySpacing = 8.0;
 
 - (void)setTextColor:(UIColor *)textColor
 {
-    [super setTextColor:textColor];
+    _selectedValueTextColor = textColor;
+    // The wrapping label is the visible value; hide UITextField's single-line copy.
+    [super setTextColor:UIColor.clearColor];
     [self updateSelectedValueLabel];
 }
 
 - (void)setPlaceholder:(NSString *)placeholder
 {
-    [super setPlaceholder:placeholder];
+    _selectedValuePlaceholder = [placeholder copy];
+    _selectedValueAttributedPlaceholder = nil;
+    NSAttributedString *nativePlaceholder = nil;
+    if (placeholder.length > 0) {
+        nativePlaceholder = [[NSAttributedString alloc] initWithString:placeholder
+                                                            attributes:@{NSForegroundColorAttributeName : UIColor.clearColor}];
+    }
+    [super setAttributedPlaceholder:nativePlaceholder];
     [self updateSelectedValueLabel];
 }
 
 - (void)setAttributedPlaceholder:(NSAttributedString *)attributedPlaceholder
 {
-    [super setAttributedPlaceholder:attributedPlaceholder];
+    _selectedValueAttributedPlaceholder = [attributedPlaceholder copy];
+    _selectedValuePlaceholder = [attributedPlaceholder.string copy];
+    NSMutableAttributedString *nativePlaceholder = [attributedPlaceholder mutableCopy];
+    if (nativePlaceholder.length > 0) {
+        // UITextField draws its placeholder independently of drawPlaceholderInRect:.
+        [nativePlaceholder addAttribute:NSForegroundColorAttributeName
+                                 value:UIColor.clearColor
+                                 range:NSMakeRange(0, nativePlaceholder.length)];
+    }
+    [super setAttributedPlaceholder:nativePlaceholder];
     [self updateSelectedValueLabel];
 }
 
@@ -154,12 +176,12 @@ static const CGFloat ACRChoiceSetFilteredStyleViewAccessorySpacing = 8.0;
     _selectedValueLabel.semanticContentAttribute = self.semanticContentAttribute;
     _selectedValueLabel.attributedText = nil;
     _selectedValueLabel.text = self.text;
-    _selectedValueLabel.textColor = self.textColor;
+    _selectedValueLabel.textColor = _selectedValueTextColor;
     if (!self.text.length) {
-        if (self.attributedPlaceholder) {
-            _selectedValueLabel.attributedText = self.attributedPlaceholder;
+        if (_selectedValueAttributedPlaceholder) {
+            _selectedValueLabel.attributedText = _selectedValueAttributedPlaceholder;
         } else {
-            _selectedValueLabel.text = self.placeholder;
+            _selectedValueLabel.text = _selectedValuePlaceholder;
         }
     }
 
@@ -242,7 +264,7 @@ static const CGFloat ACRChoiceSetFilteredStyleViewAccessorySpacing = 8.0;
     }
 }
 
-// The wrapping label renders the value; this remains a non-editable picker trigger.
+// The wrapping label renders the value and placeholder; this remains a picker trigger.
 - (void)drawTextInRect:(CGRect)rect
 {
     (void)rect;
