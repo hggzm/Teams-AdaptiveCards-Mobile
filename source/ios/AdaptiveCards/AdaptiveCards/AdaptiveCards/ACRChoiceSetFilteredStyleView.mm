@@ -12,7 +12,7 @@
 #import "ACRActionDelegate.h"
 #import "ACRBaseCardElementRenderer.h"
 #import "ACRChoiceSetCompactStyleView.h"
-#import "ACRInputLabelView.h"
+#import "ACRInputLabelViewPrivate.h"
 #import "ACRTypeaheadSearchParameters.h"
 #import "ACRTypeaheadSearchViewControllerPrivate.h"
 #import "ACRView.h"
@@ -24,6 +24,15 @@
 
 using namespace AdaptiveCards;
 
+static const CGFloat ACRChoiceSetFilteredStyleViewVerticalTextPadding = 6.0;
+static const CGFloat ACRChoiceSetFilteredStyleViewAccessorySpacing = 8.0;
+
+@interface ACRChoiceSetFilteredStyleView ()
+- (void)updateSelectedValueLabel;
+- (CGRect)selectedValueRectForBounds:(CGRect)bounds;
+- (void)notifyInputLabelViewOfIntrinsicContentSizeChange;
+@end
+
 @implementation ACRChoiceSetFilteredStyleView {
     ACOFilteredDataSource *_filteredDataSource;
     ACOChoiceSetFilteredStyleValidator *_validator;
@@ -34,6 +43,8 @@ using namespace AdaptiveCards;
     NSString *_typeaheadViewTitle;
     ACRTypeaheadStateAllParameters *_searchStateParams;
     NSMutableArray<CompletionHandler> *_completionHandlers;
+    UILabel *_selectedValueLabel;
+    CGFloat _lastLayoutWidth;
 }
 
 - (instancetype)initWithInputChoiceSet:(ACOBaseCardElement *)acoElem
@@ -66,6 +77,16 @@ using namespace AdaptiveCards;
         self.allowsEditingTextAttributes = NO;
         self.text = _validator.userInitialChoice;
 
+        _selectedValueLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+        _selectedValueLabel.numberOfLines = 0;
+        _selectedValueLabel.lineBreakMode = NSLineBreakByWordWrapping;
+        _selectedValueLabel.adjustsFontSizeToFitWidth = NO;
+        _selectedValueLabel.isAccessibilityElement = NO;
+        _selectedValueLabel.userInteractionEnabled = NO;
+        [self addSubview:_selectedValueLabel];
+        _lastLayoutWidth = -1.0;
+        [self updateSelectedValueLabel];
+
         // configure AdaptiveCards input handler
         self.id = [NSString stringWithCString:choiceSet->GetId().c_str()
                                      encoding:NSUTF8StringEncoding];
@@ -87,6 +108,149 @@ using namespace AdaptiveCards;
         }
     }
     return self;
+}
+
+- (void)setText:(NSString *)text
+{
+    [super setText:text];
+    [self updateSelectedValueLabel];
+}
+
+- (void)setFont:(UIFont *)font
+{
+    [super setFont:font];
+    _selectedValueLabel.font = font;
+    [self invalidateIntrinsicContentSize];
+    [self setNeedsLayout];
+    [self notifyInputLabelViewOfIntrinsicContentSizeChange];
+}
+
+- (void)setTextColor:(UIColor *)textColor
+{
+    [super setTextColor:textColor];
+    [self updateSelectedValueLabel];
+}
+
+- (void)setPlaceholder:(NSString *)placeholder
+{
+    [super setPlaceholder:placeholder];
+    [self updateSelectedValueLabel];
+}
+
+- (void)setAttributedPlaceholder:(NSAttributedString *)attributedPlaceholder
+{
+    [super setAttributedPlaceholder:attributedPlaceholder];
+    [self updateSelectedValueLabel];
+}
+
+- (void)updateSelectedValueLabel
+{
+    if (!_selectedValueLabel) {
+        return;
+    }
+
+    _selectedValueLabel.font = self.font;
+    _selectedValueLabel.textAlignment = self.textAlignment;
+    _selectedValueLabel.semanticContentAttribute = self.semanticContentAttribute;
+    _selectedValueLabel.attributedText = nil;
+    _selectedValueLabel.text = self.text;
+    _selectedValueLabel.textColor = self.textColor;
+    if (!self.text.length) {
+        if (self.attributedPlaceholder) {
+            _selectedValueLabel.attributedText = self.attributedPlaceholder;
+        } else {
+            _selectedValueLabel.text = self.placeholder;
+        }
+    }
+
+    self.accessibilityValue = self.text.length ? self.text : nil;
+    [self invalidateIntrinsicContentSize];
+    [self setNeedsLayout];
+    [self notifyInputLabelViewOfIntrinsicContentSizeChange];
+}
+
+- (void)notifyInputLabelViewOfIntrinsicContentSizeChange
+{
+    UIView *ancestor = self.superview;
+    while (ancestor && ![ancestor isKindOfClass:[ACRInputLabelView class]]) {
+        ancestor = ancestor.superview;
+    }
+    [(ACRInputLabelView *)ancestor inputViewIntrinsicContentSizeDidChange];
+}
+
+- (CGRect)selectedValueRectForBounds:(CGRect)bounds
+{
+    CGRect contentRect = [super textRectForBounds:bounds];
+    if (self.rightView) {
+        CGRect accessoryRect = [self rightViewRectForBounds:bounds];
+        if (CGRectIntersectsRect(contentRect, accessoryRect)) {
+            if (CGRectGetMidX(accessoryRect) >= CGRectGetMidX(contentRect)) {
+                CGFloat contentMaxX = CGRectGetMinX(accessoryRect) - ACRChoiceSetFilteredStyleViewAccessorySpacing;
+                contentRect.size.width = MAX(0, contentMaxX - CGRectGetMinX(contentRect));
+            } else {
+                CGFloat contentMaxX = CGRectGetMaxX(contentRect);
+                contentRect.origin.x = CGRectGetMaxX(accessoryRect) + ACRChoiceSetFilteredStyleViewAccessorySpacing;
+                contentRect.size.width = MAX(0, contentMaxX - contentRect.origin.x);
+            }
+        }
+    }
+
+    contentRect.origin.y = ACRChoiceSetFilteredStyleViewVerticalTextPadding;
+    contentRect.size.height = MAX(0, CGRectGetHeight(bounds) - 2 * ACRChoiceSetFilteredStyleViewVerticalTextPadding);
+    return contentRect;
+}
+
+- (CGSize)intrinsicContentSize
+{
+    CGSize size = [super intrinsicContentSize];
+    if (!_selectedValueLabel) {
+        return size;
+    }
+
+    CGFloat width = CGRectGetWidth(self.bounds);
+    if (width <= 0 && self.superview) {
+        width = CGRectGetWidth(self.superview.bounds);
+    }
+    if (width <= 0) {
+        return size;
+    }
+
+    CGRect sizingBounds = CGRectMake(0, 0, width, MAX(size.height, CGRectGetHeight(self.bounds)));
+    CGRect contentRect = [self selectedValueRectForBounds:sizingBounds];
+    CGSize labelSize = [_selectedValueLabel sizeThatFits:CGSizeMake(contentRect.size.width, CGFLOAT_MAX)];
+    CGFloat expandedHeight = labelSize.height + 2 * ACRChoiceSetFilteredStyleViewVerticalTextPadding;
+    return CGSizeMake(size.width, MAX(size.height, expandedHeight));
+}
+
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    if (!_selectedValueLabel) {
+        return;
+    }
+
+    CGFloat width = CGRectGetWidth(self.bounds);
+    if (width != _lastLayoutWidth) {
+        _lastLayoutWidth = width;
+        [self invalidateIntrinsicContentSize];
+        [self notifyInputLabelViewOfIntrinsicContentSizeChange];
+    }
+    _selectedValueLabel.frame = [self selectedValueRectForBounds:self.bounds];
+    [self bringSubviewToFront:_selectedValueLabel];
+    if (self.rightView) {
+        [self bringSubviewToFront:self.rightView];
+    }
+}
+
+// The wrapping label renders the value; this remains a non-editable picker trigger.
+- (void)drawTextInRect:(CGRect)rect
+{
+    (void)rect;
+}
+
+- (void)drawPlaceholderInRect:(CGRect)rect
+{
+    (void)rect;
 }
 
 - (void)launchFullScreenTypeaheadSearchView
