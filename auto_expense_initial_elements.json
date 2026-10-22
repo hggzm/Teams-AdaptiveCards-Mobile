@@ -1,0 +1,392 @@
+[
+  {
+    "frame" : {
+      "y" : 319.66666666666669,
+      "x" : 24,
+      "width" : 314,
+      "height" : 25.333333333333314
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "EXPENSE APPROVAL",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 367.66666666666669,
+      "x" : 24,
+      "width" : 210,
+      "height" : 31.333333333333314
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Trip to UAE",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 367.66666666666669,
+      "x" : 244,
+      "width" : 134,
+      "height" : 38
+    },
+    "role" : "link",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "EXPORT AS PDF",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 377.66666666666669,
+      "x" : 254.33333333333334,
+      "width" : 113.66666666666666,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "EXPORT AS PDF",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 620,
+      "x" : 24,
+      "width" : 36.666666666666664,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "DATE",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 620,
+      "x" : 76.666666666666671,
+      "width" : 227.33333333333331,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "CATEGORY",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 620,
+      "x" : 314,
+      "width" : 64,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "AMOUNT",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 655,
+      "x" : 24,
+      "width" : 36.666666666666664,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "06\/19",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 655,
+      "x" : 72.666666666666671,
+      "width" : 228.66666666666663,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Air Travel Expense",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 655,
+      "x" : 311.33333333333331,
+      "width" : 38.666666666666686,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "$ 300",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 655,
+      "x" : 358,
+      "width" : 20,
+      "height" : 20
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Air Travel Expense $300 collapsed",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 685,
+      "x" : 24,
+      "width" : 36.666666666666664,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "06\/19",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 685,
+      "x" : 72.666666666666657,
+      "width" : 230.99999999999997,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Auto Mobile Expense",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 685,
+      "x" : 313.66666666666669,
+      "width" : 36.333333333333314,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "$ 100",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 685,
+      "x" : 358,
+      "width" : 20,
+      "height" : 20
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Auto Mobile Expense $100 collapsed",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 715,
+      "x" : 24,
+      "width" : 38.666666666666664,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "06\/25",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 715,
+      "x" : 74.666666666666671,
+      "width" : 223.33333333333331,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Excess Baggage Cost",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 715,
+      "x" : 308,
+      "width" : 42,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "$ 4.30",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 715,
+      "x" : 358,
+      "width" : 20,
+      "height" : 20
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Excess Baggage Cost $50.38 collapsed",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 884,
+      "x" : 24,
+      "width" : 270,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Amount to be Reimbursed",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 884,
+      "x" : 304,
+      "width" : 64,
+      "height" : 17
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "$ 404.30",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 919,
+      "x" : 24,
+      "width" : 354,
+      "height" : 17
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Show history",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 946,
+      "x" : 24,
+      "width" : 354,
+      "height" : 38
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Approve",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 956,
+      "x" : 172.33333333333334,
+      "width" : 57.333333333333314,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Approve",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 999,
+      "x" : 24,
+      "width" : 354,
+      "height" : 38
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Reject",
+    "value" : "card collapsed",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1009,
+      "x" : 188.66666666666666,
+      "width" : 43.333333333333343,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Reject",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]

@@ -1,0 +1,257 @@
+[
+  {
+    "frame" : {
+      "y" : 275.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 25.333333333333314
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Rating input",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 338,
+      "x" : 24,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_28_regular",
+    "label" : "Rate 1 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 338,
+      "x" : 68,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_28_regular",
+    "label" : "Rate 2 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 338,
+      "x" : 112,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_28_regular",
+    "label" : "Rate 3 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 338,
+      "x" : 156,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_28_regular",
+    "label" : "Rate 4 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 338,
+      "x" : 200,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_28_regular",
+    "label" : "Rate 5 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 419,
+      "x" : 24,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_32_filled",
+    "label" : "Rate 1 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 419,
+      "x" : 68,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_32_filled",
+    "label" : "Rate 2 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 419,
+      "x" : 112,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_32_regular",
+    "label" : "Rate 3 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 419,
+      "x" : 156,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_32_regular",
+    "label" : "Rate 4 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 419,
+      "x" : 200,
+      "width" : 44,
+      "height" : 44
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "ic_fluent_star_32_regular",
+    "label" : "Rate 5 Star",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 483,
+      "x" : 24,
+      "width" : 354,
+      "height" : 25.333333333333314
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Read-only ratings",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 517.33333333333337,
+      "x" : 116,
+      "width" : 51,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Rating 3.2, Count 10",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 544.33333333333337,
+      "x" : 136,
+      "width" : 65.666666666666657,
+      "height" : 20.333333333333371
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Rating 3.2, Count 150",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 574.33333333333337,
+      "x" : 48,
+      "width" : 76,
+      "height" : 20.333333333333371
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Rating 3.2, Count 1500",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 604.66666666666674,
+      "x" : 24,
+      "width" : 354,
+      "height" : 38
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Submit",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 614.66666666666674,
+      "x" : 177,
+      "width" : 48.333333333333343,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Submit",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]

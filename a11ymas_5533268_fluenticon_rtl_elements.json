@@ -1,0 +1,197 @@
+[
+  {
+    "frame" : {
+      "y" : 275.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 50.333333333333314
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "RTL is supported (Toggle rtl property at root AdaptiveCard)",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 336,
+      "x" : 24,
+      "width" : 354,
+      "height" : 32
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Airplane",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 590,
+      "x" : 24,
+      "width" : 354,
+      "height" : 25.333333333333371
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "RTL is supported for colored fonts",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 757.33333333333337,
+      "x" : 24,
+      "width" : 354,
+      "height" : 25.333333333333258
+    },
+    "role" : "textView",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "RTL is supported",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 864.66666666666663,
+      "x" : 24,
+      "width" : 354,
+      "height" : 25.333333333333485
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Clickable icons",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 900,
+      "x" : 24,
+      "width" : 354,
+      "height" : 32
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Click me!",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 948,
+      "x" : 24,
+      "width" : 354,
+      "height" : 25.333333333333371
+    },
+    "role" : "textView",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Icons on buttons",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 983.66666666666663,
+      "x" : 24,
+      "width" : 354,
+      "height" : 64.000000000000114
+    },
+    "role" : "link",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "RTL supported",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1019.6666666666666,
+      "x" : 155,
+      "width" : 102,
+      "height" : 18.000000000000114
+    },
+    "role" : "text",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "RTL supported",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1062.6666666666667,
+      "x" : 24,
+      "width" : 354,
+      "height" : 64
+    },
+    "role" : "link",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "RTL supported",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1098.6666666666667,
+      "x" : 155,
+      "width" : 102,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "RTL supported",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1141.6666666666667,
+      "x" : 24,
+      "width" : 354,
+      "height" : 64
+    },
+    "role" : "link",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "No RTL",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 1177.6666666666667,
+      "x" : 180.66666666666666,
+      "width" : 51,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "No RTL",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]

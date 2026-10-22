@@ -1,0 +1,62 @@
+[
+  {
+    "frame" : {
+      "y" : 302.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 73
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "multiGameChoices",
+    "label" : "Choose MultiGame options",
+    "value" : "MultiGame - Aurora expedition across the Crimson Nebula, including its campaign, mission, and seasonal rewards",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 328.33333333333337,
+      "x" : 357.33333333333331,
+      "width" : 12.666666666666686,
+      "height" : 21.999999999999943
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Forward",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 386,
+      "x" : 24,
+      "width" : 354,
+      "height" : 38
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Submit",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 396,
+      "x" : 177,
+      "width" : 48.333333333333343,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Submit",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]

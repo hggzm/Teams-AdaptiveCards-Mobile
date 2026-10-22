@@ -1,0 +1,407 @@
+[
+  {
+    "frame" : {
+      "y" : 56.333333333333343,
+      "x" : 8,
+      "width" : 34.666666666666664,
+      "height" : 43.999999999999986
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Back",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 68.000000000000014,
+      "x" : 94.000000000000014,
+      "width" : 214.33333333333337,
+      "height" : 20.333333333333314
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Choose MultiGame options",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 120.66666666666664,
+      "x" : 22,
+      "width" : 20.333333333333329,
+      "height" : 18.666666666666671
+    },
+    "role" : "image",
+    "isHittable" : true,
+    "identifier" : "magnifyingglass",
+    "label" : "Search",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 120.99999999999996,
+      "x" : 360.66666666666669,
+      "width" : 19.666666666666629,
+      "height" : 19.000000000000014
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Clear text",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 177,
+      "x" : 0,
+      "width" : 394,
+      "height" : 85
+    },
+    "role" : "cell",
+    "isHittable" : true,
+    "identifier" : "multiGameChoices, MultiGame - Interstellar convoy escort across the Amber Corridor, including its campaign, mission, and seasonal rewards",
+    "label" : "Choose MultiGame options, MultiGame - Interstellar convoy escort across the Amber Corridor, including its campaign, mission, and seasonal rewards",
+    "value" : "1 of 8",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 177,
+      "x" : 20,
+      "width" : 354,
+      "height" : 85
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "MultiGame - Interstellar convoy escort across the Amber Corridor, including its campaign, mission, and seasonal rewards",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 262,
+      "x" : 0,
+      "width" : 394,
+      "height" : 85
+    },
+    "role" : "cell",
+    "isHittable" : true,
+    "identifier" : "multiGameChoices, MultiGame - Frontier settlement defense across the Verdant Belt, including its campaign, mission, and seasonal rewards",
+    "label" : "Choose MultiGame options, MultiGame - Frontier settlement defense across the Verdant Belt, including its campaign, mission, and seasonal rewards",
+    "value" : "2 of 8",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 262,
+      "x" : 20,
+      "width" : 354,
+      "height" : 85
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "MultiGame - Frontier settlement defense across the Verdant Belt, including its campaign, mission, and seasonal rewards",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 347,
+      "x" : 0,
+      "width" : 394,
+      "height" : 85
+    },
+    "role" : "cell",
+    "isHittable" : true,
+    "identifier" : "multiGameChoices, MultiGame - Deep-space rescue operation across the Sapphire Expanse, including its campaign, mission, and seasonal rewards",
+    "label" : "Choose MultiGame options, MultiGame - Deep-space rescue operation across the Sapphire Expanse, including its campaign, mission, and seasonal rewards",
+    "value" : "3 of 8",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 347,
+      "x" : 20,
+      "width" : 354,
+      "height" : 85
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "MultiGame - Deep-space rescue operation across the Sapphire Expanse, including its campaign, mission, and seasonal rewards",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 432,
+      "x" : 0,
+      "width" : 394,
+      "height" : 85
+    },
+    "role" : "cell",
+    "isHittable" : true,
+    "identifier" : "multiGameChoices, MultiGame - Lost archive recovery across the Cobalt Frontier, including its campaign, mission, and seasonal rewards",
+    "label" : "Choose MultiGame options, MultiGame - Lost archive recovery across the Cobalt Frontier, including its campaign, mission, and seasonal rewards",
+    "value" : "4 of 8",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 432,
+      "x" : 20,
+      "width" : 354,
+      "height" : 85
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "MultiGame - Lost archive recovery across the Cobalt Frontier, including its campaign, mission, and seasonal rewards",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 517,
+      "x" : 0,
+      "width" : 394,
+      "height" : 85
+    },
+    "role" : "cell",
+    "isHittable" : true,
+    "identifier" : "multiGameChoices, MultiGame - Terraforming survey across the Violet Horizon, including its campaign, mission, and seasonal rewards",
+    "label" : "Choose MultiGame options, MultiGame - Terraforming survey across the Violet Horizon, including its campaign, mission, and seasonal rewards",
+    "value" : "5 of 8",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 517,
+      "x" : 20,
+      "width" : 354,
+      "height" : 85
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "MultiGame - Terraforming survey across the Violet Horizon, including its campaign, mission, and seasonal rewards",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 602,
+      "x" : 0,
+      "width" : 394,
+      "height" : 85
+    },
+    "role" : "cell",
+    "isHittable" : false,
+    "identifier" : "multiGameChoices, MultiGame - Aurora expedition across the Crimson Nebula, including its campaign, mission, and seasonal rewards",
+    "label" : "Choose MultiGame options, MultiGame - Aurora expedition across the Crimson Nebula, including its campaign, mission, and seasonal rewards",
+    "value" : "6 of 8",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 602,
+      "x" : 20,
+      "width" : 354,
+      "height" : 85
+    },
+    "role" : "text",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "MultiGame - Aurora expedition across the Crimson Nebula, including its campaign, mission, and seasonal rewards",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 687,
+      "x" : 0,
+      "width" : 394,
+      "height" : 85
+    },
+    "role" : "cell",
+    "isHittable" : false,
+    "identifier" : "multiGameChoices, MultiGame - Forgotten station investigation across the Obsidian Reach, including its campaign, mission, and seasonal rewards",
+    "label" : "Choose MultiGame options, MultiGame - Forgotten station investigation across the Obsidian Reach, including its campaign, mission, and seasonal rewards",
+    "value" : "7 of 8",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 687,
+      "x" : 20,
+      "width" : 354,
+      "height" : 85
+    },
+    "role" : "text",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "MultiGame - Forgotten station investigation across the Obsidian Reach, including its campaign, mission, and seasonal rewards",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 698,
+      "x" : 0,
+      "width" : 51.333333333333336,
+      "height" : 46
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "shift",
+    "label" : "shift",
+    "value" : "",
+    "isSelected" : true,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 736.33333333333337,
+      "x" : 41,
+      "width" : 320,
+      "height" : 46.333333333333258
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Speed up your typing by sliding your finger across the letters to compose a word.",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 752,
+      "x" : 301.66666666666669,
+      "width" : 100.33333333333331,
+      "height" : 46
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "Search",
+    "label" : "search",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 772,
+      "x" : 0,
+      "width" : 394,
+      "height" : 85
+    },
+    "role" : "cell",
+    "isHittable" : false,
+    "identifier" : "multiGameChoices, MultiGame - Outer-rim exploration across the Silver Meridian, including its campaign, mission, and seasonal rewards",
+    "label" : "Choose MultiGame options, MultiGame - Outer-rim exploration across the Silver Meridian, including its campaign, mission, and seasonal rewards",
+    "value" : "8 of 8",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 772,
+      "x" : 20,
+      "width" : 354,
+      "height" : 85
+    },
+    "role" : "text",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "MultiGame - Outer-rim exploration across the Silver Meridian, including its campaign, mission, and seasonal rewards",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 805.69895679985711,
+      "x" : 8.4772656811592597,
+      "width" : 68.085295847508604,
+      "height" : 68.735163935050991
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "",
+    "label" : "Emoji",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 805.36562346652374,
+      "x" : 325.43743847133214,
+      "width" : 68.085295847508633,
+      "height" : 68.735163935051105
+    },
+    "role" : "button",
+    "isHittable" : false,
+    "identifier" : "dictation",
+    "label" : "Dictate",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 819,
+      "x" : 89,
+      "width" : 224,
+      "height" : 21
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Continue",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 818.33333333333337,
+      "x" : 163,
+      "width" : 76,
+      "height" : 22
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Continue",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]

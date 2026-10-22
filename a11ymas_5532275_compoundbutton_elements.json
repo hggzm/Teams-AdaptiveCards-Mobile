@@ -1,0 +1,77 @@
+[
+  {
+    "frame" : {
+      "y" : 275.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 104
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Summarize, New, Create a work item and assign it to your or a team member",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 389.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 92.333333333333314
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "View active work items, New, See active tasks assigned to you or team members",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 492.00000000000006,
+      "x" : 24,
+      "width" : 354,
+      "height" : 85.999999999999943
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Give feedback, To give us feedback on Azure DevOps",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 588,
+      "x" : 24,
+      "width" : 354,
+      "height" : 92.333333333333371
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Summarize, Create a work item and assign it to your or a team member",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 690.33333333333337,
+      "x" : 24,
+      "width" : 354,
+      "height" : 68
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Pending Tasks, Priority",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]

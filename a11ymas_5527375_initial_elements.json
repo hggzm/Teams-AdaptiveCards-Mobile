@@ -1,0 +1,62 @@
+[
+  {
+    "frame" : {
+      "y" : 302.66666666666669,
+      "x" : 24,
+      "width" : 354,
+      "height" : 34
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "multiGameChoices",
+    "label" : "Choose MultiGame options",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 308.66666666666669,
+      "x" : 357.33333333333331,
+      "width" : 12.666666666666686,
+      "height" : 22
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Forward",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 347,
+      "x" : 24,
+      "width" : 354,
+      "height" : 38
+    },
+    "role" : "button",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Submit",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  },
+  {
+    "frame" : {
+      "y" : 357,
+      "x" : 177,
+      "width" : 48.333333333333343,
+      "height" : 18
+    },
+    "role" : "text",
+    "isHittable" : true,
+    "identifier" : "",
+    "label" : "Submit",
+    "value" : "",
+    "isSelected" : false,
+    "isEnabled" : true
+  }
+]
