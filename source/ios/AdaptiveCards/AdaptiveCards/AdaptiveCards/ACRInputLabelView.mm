@@ -14,7 +14,10 @@
 #import "ValueChangedAction.h"
 #import "TextInput.h"
 
-@implementation ACRInputLabelView
+@implementation ACRInputLabelView {
+    __weak ACRView *_rootView;
+    __weak UIView<ACRIContentHoldingView> *_viewGroup;
+}
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
@@ -82,6 +85,8 @@
 {
     self = [self initWithFrame:CGRectMake(0, 0, viewGroup.frame.size.width, 0)];
     if (self) {
+        _rootView = rootView;
+        _viewGroup = viewGroup;
         const std::shared_ptr<HostConfig> config = [acoConfig getHostConfig];
         AdaptiveCards::InputsConfig inputConfig = config->GetInputs();
         self.stack.spacing = getSpacing(inputConfig.label.inputSpacing, config);
@@ -215,6 +220,53 @@
     }
     [self setRtl:rootView.context.rtl];
     return self;
+}
+
+- (void)inputViewIntrinsicContentSizeDidChange
+{
+    ACRView *rootView = _rootView;
+    CGSize oldCardSize = rootView ? rootView.intrinsicContentSize : CGSizeZero;
+    CGRect oldCardFrame = rootView ? [rootView convertRect:rootView.bounds toView:nil] : CGRectNull;
+
+    [self invalidateIntrinsicContentSize];
+    [self setNeedsLayout];
+
+    UIView *resizedView = self;
+    UIView<ACRIContentHoldingView> *viewGroup = _viewGroup;
+    while (viewGroup) {
+        [viewGroup decreaseIntrinsicContentSize:resizedView];
+        [viewGroup increaseIntrinsicContentSize:resizedView];
+
+        UIView *groupView = (UIView *)viewGroup;
+        [groupView invalidateIntrinsicContentSize];
+        [groupView setNeedsLayout];
+        resizedView = groupView;
+
+        UIView *parentView = groupView.superview;
+        while (parentView && ![parentView conformsToProtocol:@protocol(ACRIContentHoldingView)]) {
+            parentView = parentView.superview;
+        }
+        viewGroup = (UIView<ACRIContentHoldingView> *)parentView;
+    }
+
+    if (!rootView) {
+        return;
+    }
+
+    [rootView invalidateIntrinsicContentSize];
+    [rootView setNeedsLayout];
+
+    CGFloat heightDelta = rootView.intrinsicContentSize.height - oldCardSize.height;
+    if (heightDelta == 0) {
+        return;
+    }
+
+    id<ACRActionDelegate> actionDelegate = rootView.acrActionDelegate;
+    if ([actionDelegate respondsToSelector:@selector(didChangeViewLayout:newFrame:)]) {
+        CGRect newCardFrame = oldCardFrame;
+        newCardFrame.size.height = MAX(0, newCardFrame.size.height + heightDelta);
+        [actionDelegate didChangeViewLayout:oldCardFrame newFrame:newCardFrame];
+    }
 }
 
 - (void)addAccessibleItems:(NSArray *)items
