@@ -12,6 +12,7 @@
 #import "ACRChoiceSetFilteredStyleView.h"
 #import "ACRContrastTestUtils.h"
 #import "ACRMockViews.h"
+#import "ChoiceInput.h"
 #import "ChoiceSetInput.h"
 #import <UIKit/UIKit.h>
 #import <XCTest/XCTest.h>
@@ -50,6 +51,35 @@
     XCTAssertEqualObjects(selectedText, @"Option 1");
     res = [filteredView validate:nil];
     XCTAssertFalse(res);
+}
+
+- (void)testLongSelectedChoiceWrapsAndKeepsSubmittedValue
+{
+    NSString *longTitle = @"MultiGame - Aurora expedition across the Crimson Nebula, including its campaign, mission, and seasonal rewards";
+    std::shared_ptr<AdaptiveCards::ChoiceSetInput> choiceSet = std::make_shared<AdaptiveCards::ChoiceSetInput>();
+    choiceSet->SetId(std::string("multiGameChoices"));
+    choiceSet->SetPlaceholder("Please choose");
+    std::shared_ptr<AdaptiveCards::ChoiceInput> choice = std::make_shared<AdaptiveCards::ChoiceInput>();
+    choice->SetTitle(std::string([longTitle UTF8String]));
+    choice->SetValue(std::string("synthetic-multigame-01"));
+    choiceSet->GetChoices().push_back(choice);
+    ACOBaseCardElement *acoElem = [[ACOBaseCardElement alloc] initWithBaseCardElement:choiceSet];
+    ACRChoiceSetFilteredStyleView *filteredView = [[ACRChoiceSetFilteredStyleView alloc] initWithInputChoiceSet:acoElem rootView:_rootView hostConfig:_hostConfig searchStateParams:nil typeaheadViewTitle:@"typeahead"];
+    filteredView.frame = CGRectMake(0, 0, 354, 34);
+
+    CGFloat initialHeight = filteredView.intrinsicContentSize.height;
+    [filteredView updateSelectedChoiceInTextField:longTitle];
+    CGSize selectedSize = filteredView.intrinsicContentSize;
+
+    XCTAssertGreaterThan(selectedSize.height, initialHeight);
+    XCTAssertEqualObjects(filteredView.text, longTitle);
+    XCTAssertEqualObjects(filteredView.accessibilityValue, longTitle);
+    XCTAssertTrue((filteredView.accessibilityTraits & UIAccessibilityTraitButton) != 0);
+    XCTAssertFalse([filteredView textFieldShouldBeginEditing:filteredView]);
+
+    NSMutableDictionary *inputs = [NSMutableDictionary new];
+    [filteredView getInput:inputs];
+    XCTAssertEqualObjects(inputs[@"multiGameChoices"], @"synthetic-multigame-01");
 }
 
 - (void)testPlaceholderMeetsContrastRequirement
