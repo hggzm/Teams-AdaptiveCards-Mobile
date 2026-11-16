@@ -23,7 +23,7 @@ jobs:
           s = step['script']
           for a, b in {'$(Build.SourcesDirectory)': os.environ['GITHUB_WORKSPACE'],
                        '$(Agent.TempDirectory)': os.environ['RUNNER_TEMP'],
-                       '${{ parameters.configuration }}': 'Release'}.items():
+                       '$' + '{{ parameters.configuration }}': 'Release'}.items():
               s = s.replace(a, b)
           open(os.path.join(os.environ['RUNNER_TEMP'], 'package.sh'), 'w').write(s)
           print(s)
