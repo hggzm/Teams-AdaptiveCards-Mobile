@@ -1,0 +1,38 @@
+name: ios-demo-ipa-diag
+# DIAGNOSTIC-BRANCH-ONLY (fork): runs the packageApp script from .pipelines/templates/ios-build-template.yml
+# on a GitHub-hosted Mac, with the ADO macros substituted. Never merge.
+on:
+  push:
+    branches: [ 'proxy/ios-demo-ipa-diag' ]
+  workflow_dispatch:
+jobs:
+  archive:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Installing dependency via pod
+        working-directory: source/ios/AdaptiveCards
+        run: pod install
+      - name: Run the template's packageApp script
+        run: |
+          python3 - <<'PY'
+          import os, yaml
+          t = yaml.safe_load(open('.pipelines/templates/ios-build-template.yml'))
+          step = next(v for k, v in t['steps'][1].items() if 'packageApp' in k)[0]
+          s = step['script']
+          for a, b in {'$(Build.SourcesDirectory)': os.environ['GITHUB_WORKSPACE'],
+                       '$(Agent.TempDirectory)': os.environ['RUNNER_TEMP'],
+                       '${{ parameters.configuration }}': 'Release'}.items():
+              s = s.replace(a, b)
+          open(os.path.join(os.environ['RUNNER_TEMP'], 'package.sh'), 'w').write(s)
+          print(s)
+          PY
+          APPLE_PROV_PROFILE_UUID=none-in-diag bash "$RUNNER_TEMP/package.sh"
+      - name: Upload archive Info.plist
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: archive-info
+          path: output/ADCIOSVisualizer.xcarchive/Info.plist
+          if-no-files-found: warn
