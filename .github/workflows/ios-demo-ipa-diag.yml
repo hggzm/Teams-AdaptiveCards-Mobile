@@ -16,18 +16,14 @@ jobs:
         run: pod install
       - name: Run the template's packageApp script
         run: |
-          python3 - <<'PY'
-          import os, yaml
-          t = yaml.safe_load(open('.pipelines/templates/ios-build-template.yml'))
-          step = next(v for k, v in t['steps'][1].items() if 'packageApp' in k)[0]
-          s = step['script']
-          for a, b in {'$(Build.SourcesDirectory)': os.environ['GITHUB_WORKSPACE'],
-                       '$(Agent.TempDirectory)': os.environ['RUNNER_TEMP'],
-                       '$' + '{{ parameters.configuration }}': 'Release'}.items():
-              s = s.replace(a, b)
-          open(os.path.join(os.environ['RUNNER_TEMP'], 'package.sh'), 'w').write(s)
-          print(s)
-          PY
+          ruby -ryaml -e '
+            t = YAML.load_file(".pipelines/templates/ios-build-template.yml")
+            s = t["steps"][1].find { |k, _| k.include?("packageApp") }[1][0]["script"]
+            { "$(Build.SourcesDirectory)" => ENV["GITHUB_WORKSPACE"],
+              "$(Agent.TempDirectory)" => ENV["RUNNER_TEMP"],
+              "$" + "{{ parameters.configuration }}" => "Release" }.each { |a, b| s = s.gsub(a, b) }
+            File.write(File.join(ENV["RUNNER_TEMP"], "package.sh"), s)
+            puts s'
           APPLE_PROV_PROFILE_UUID=none-in-diag bash "$RUNNER_TEMP/package.sh"
       - name: Upload archive Info.plist
         if: always()
